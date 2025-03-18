@@ -45,10 +45,10 @@ const dltiktok2 = async (m, sock) => {
         if (!msg.message || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
 
         const userReply = msg.message.conversation || msg.message.extendedTextMessage?.text;
-        if (!userReply) return;
 
-        if (userReply !== "1" && userReply !== "2" && userReply !== "3") {
-          return;
+        // ✅ Check if the message is a reply (quoted)
+        if (!msg.message.extendedTextMessage?.contextInfo?.quotedMessage) {
+          return; // ❌ If the message is not a reply, ignore it
         }
 
         if (userReply === "1") {
