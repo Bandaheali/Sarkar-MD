@@ -58,7 +58,7 @@ const update = async (m, sock) => {
       await sock.sendMessage(m.from, { text: "```🔄 Replacing files...```" }, { quoted: m });
 
       // Replace files with updated versions
-      const sourcePath = path.join(extractPath, "Sarka-MD-main");
+      const sourcePath = path.join(extractPath, "Sarkar-MD-main");
       copyFolderSync(sourcePath, process.cwd());
       console.log("✅ Files replaced.");
 
