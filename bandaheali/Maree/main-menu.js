@@ -179,7 +179,7 @@ const menu = async (m, sock) => {
 *│* 💙 *${prefix}multicolored*
 *│* 💙 *${prefix}effectclouds*
 *│* 💙 *${prefix}gradienttext*
- ╰───────────❍\n\n*_POWERED BY SARKAR-MD_*`;`;
+ ╰───────────❍\n\n*_POWERED BY SARKAR-MD_*`;
           break;
         case "6":
           menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
