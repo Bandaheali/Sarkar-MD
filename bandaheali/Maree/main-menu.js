@@ -64,7 +64,7 @@ const menu = async (m, sock) => {
 2️⃣ ⬇️ *Download Menu*  
 3️⃣ 🤖 *AI Menu*  
 4️⃣ 👥 *Group Menu*  
-5️⃣ 🎨 *Custom Menu 1*  
+5️⃣ 🎨 *LOGO MENU*  
 6️⃣ 🛠️ *Custom Menu 2*  
 7️⃣ ⚡ *Custom Menu 3*  
 8️⃣ 🎁 *Extra Features*  
@@ -156,7 +156,30 @@ const menu = async (m, sock) => {
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
 │ 📅 𝙳𝚊𝚝𝚎: *${realDate}*  
-╰───────────❍`;
+╰───────────❍
+ ╭───❍「 *DOWNLOAD 𝙼𝙴𝙽𝚄 𝙾𝚏 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+*│* 💙 *${prefix}LOGO*
+*│* 💙 *${prefix}glossysilver*
+*│* 💙 *${prefix}writetext*
+*│* 💙 *${prefix}blackpinklogo*
+*│* 💙 *${prefix}glitchtext*
+*│* 💙 *${prefix}advancedglow*
+*│* 💙 *${prefix}typographytext*
+*│* 💙 *${prefix}pixelglitch*
+*│* 💙 *${prefix}neonglitch*
+*│* 💙 *${prefix}nigerianflag*
+*│* 💙 *${prefix}americanflag*
+*│* 💙 *${prefix}deletingtext*
+*│* 💙 *${prefix}blackpinkstyle*
+*│* 💙 *${prefix}glowingtext*
+*│* 💙 *${prefix}underwater*
+*│* 💙 *${prefix}logomaker*
+*│* 💙 *${prefix}cartoonstyle*
+*│* 💙 *${prefix}papercut*
+*│* 💙 *${prefix}multicolored*
+*│* 💙 *${prefix}effectclouds*
+*│* 💙 *${prefix}gradienttext*
+ ╰───────────❍\n\n*_POWERED BY SARKAR-MD_*`;`;
           break;
         case "6":
           menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
