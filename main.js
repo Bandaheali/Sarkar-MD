@@ -1,7 +1,7 @@
 import _0x2f665a from 'dotenv';
 _0x2f665a.config();
 import { makeWASocket, fetchLatestBaileysVersion, DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
-import { Handler, Callupdate, GroupUpdate } from './Bandaheali/Sarkar/index.js';
+import { Handler, Callupdate, GroupUpdate } from './bandaheali/Sarkar/index.js';
 import _0x4ecc7b from 'express';
 import _0x416691 from 'pino';
 import _0x5687e2 from 'fs';
