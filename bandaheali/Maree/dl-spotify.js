@@ -17,31 +17,38 @@ const spotify = async (m, sock) => {
 
     const api = `https://apis.giftedtech.web.id/api/download/spotifydl?apikey=gifted&url=${encodeURIComponent(text)}`;
 
-    await sock.sendMessage(m.from, {
+    // Send "Fetching" message and store it (so we can delete it later)
+    const loadingMsg = await sock.sendMessage(m.from, {
       text: "🔄 *Fetching Spotify track...*",
     }, { quoted: m });
 
     try {
       const response = await axios.get(api);
-      const { success, result } = response.data;
+      console.log("Spotify API Response:", response.data); // Debugging log
 
-      if (!success || !result.download_url) {
-        return sock.sendMessage(m.from, {
+      if (!response.data.success || !response.data.result.download_url) {
+        await sock.sendMessage(m.from, {
           text: "*❌ Failed to retrieve the song. The API may be down or the link is invalid.*",
         }, { quoted: m });
+        return;
       }
 
+      const { title, duration, quality, download_url } = response.data.result;
+
+      // Delete fetching message (to clean UI)
+      await sock.sendMessage(m.from, { delete: loadingMsg.key });
+
       await sock.sendMessage(m.from, {
-        audio: { url: result.download_url },
+        audio: { url: download_url },
         mimetype: "audio/mp3",
         ptt: false,
-        fileName: `${result.title}.mp3`,
-        caption: `🎶 *Song:* ${result.title}\n⏳ *Duration:* ${result.duration}\n🔊 *Quality:* ${result.quality}`,
+        fileName: `${title}.mp3`,
+        caption: `🎶 *Song:* ${title}\n⏳ *Duration:* ${duration}\n🔊 *Quality:* ${quality}\n\n> *Powered by Sarkar-MD*`,
       }, { quoted: m });
 
     } catch (error) {
-      console.error(error);
-      return sock.sendMessage(m.from, {
+      console.error("Spotify API Error:", error);
+      await sock.sendMessage(m.from, {
         text: "*❌ An error occurred while processing your request. Please try again later.*",
       }, { quoted: m });
     }
