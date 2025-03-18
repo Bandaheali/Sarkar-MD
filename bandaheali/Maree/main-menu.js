@@ -124,6 +124,9 @@ const menu = async (m, sock) => {
 *│* 💙 *${prefix}INSTA2*
 *│* 💙 *${prefix}TIKTOK*
 *│* 💙 *${prefix}TIKTOK2*
+*│* 💙 *${prefix}SNACK*
+*│* 💙 *${prefix}TWEET*
+*│* 💙 *${prefix}APK*
 ╰───────────❍\n\n*_POWERED BY SARKAR-MD_*`;
           break;
         case "3":
@@ -132,7 +135,12 @@ const menu = async (m, sock) => {
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
 │ 📅 𝙳𝚊𝚝𝚎: *${realDate}*  
-╰───────────❍`;
+╰───────────❍
+ ╭───❍「 *MAIN 𝙼𝙴𝙽𝚄 𝙾𝚏 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+*│* 💙 *${prefix}Alive*
+*│* 💙 *${prefix}FB*
+ ╰───────────❍\n\n*_POWERED BY SARKAR-MD_*
+`;
           break;
         case "4":
           menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
