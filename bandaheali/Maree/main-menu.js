@@ -120,6 +120,8 @@ const menu = async (m, sock) => {
 *│* 💙 *${prefix}VIDEO3*
 *│* 💙 *${prefix}FB*
 *│* 💙 *${prefix}FB2*
+*│* 💙 *${prefix}INSTA*
+*│* 💙 *${prefix}INSTA2*
 ╰───────────❍\n\n*_POWERED BY SARKAR-MD_*`;
           break;
         case "3":
