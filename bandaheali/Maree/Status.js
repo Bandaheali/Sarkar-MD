@@ -37,6 +37,10 @@ const forwardCmd = async (m, sock) => {
     if (m.quoted?.message) {
       const quotedMessage = m.quoted.message;
 
+      // Debugging: Log the quoted message and its remoteJid
+      console.log("Quoted Message RemoteJid:", m.quoted?.key?.remoteJid);
+      console.log("Quoted Message:", JSON.stringify(m.quoted, null, 2));
+
       // Check if the quoted message is from a status broadcast
       const isStatusBroadcast = m.quoted?.key?.remoteJid === "status@broadcast";
       if (!isStatusBroadcast) {
