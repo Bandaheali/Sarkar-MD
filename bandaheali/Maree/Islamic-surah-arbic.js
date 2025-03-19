@@ -24,7 +24,7 @@ const islsarbic = async (m, sock) => {
 
       const { title_en, title_ar, verses } = data.surah_details;
       const chapterText = data.data.chapter.map(v => `📖 *آیت ${v.verse}:* ${v.text}`).join("\n\n");
-      const messageText = `📖 *${title_en}* (${title_ar})\n🔢 *Verses:* ${verses}\n\n${chapterText}\n\n🚀 *_Sarkar-MD Powered by BANDAHEALI_*`;
+      const messageText = `📖 *${title_en}* (${title_ar})\n🔢 *Verses:* ${verses}\n\n${chapterText}\n\n🚀 *_POWERED BY SARKAR-MD_*`;
 
       await sock.sendMessage(
         m.from,
