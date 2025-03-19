@@ -15,22 +15,16 @@ const praytime = async (m, sock) => {
 
     try {
       const response = await fetch(apiUrl);
-      if (!response.ok) {
-        await sock.sendMessage(m.from, { text: '*Error fetching prayer times!*' }, { quoted: m });
-        return;
-      }
+      if (!response.ok) return m.reply('*Error fetching prayer times!*');
 
       const data = await response.json();
-      if (data.status !== 200 || !data.result || !data.result.items || data.result.items.length === 0) {
-        await sock.sendMessage(m.from, { text: '*Failed to get prayer times. Try again later.*' }, { quoted: m });
-        return;
-      }
+      if (data.status !== 200 || !data.result.items || data.result.items.length === 0)
+        return m.reply('*Failed to get prayer times. Try again later.*');
 
       const prayerTimes = data.result.items[0];
       const weather = data.result.today_weather;
       const location = data.result.city;
 
-      // Random emojis
       const reactionEmojis = ['🕌', '📿', '🙏', '🌅', '☪️', '🕋'];
       const textEmojis = ['🌙', '⭐', '📖', '🕌', '🕋', '🔭'];
 
@@ -41,21 +35,19 @@ const praytime = async (m, sock) => {
         textEmoji = textEmojis[Math.floor(Math.random() * textEmojis.length)];
       }
 
-      await m.React(reactionEmoji); // Send a random reaction emoji
+      await m.React(reactionEmoji);
 
       let msg = `*🕌 Prayer Times for ${location}, ${data.result.state}*\n\n`;
       msg += `📍 *Location*: ${location}, ${data.result.state}, ${data.result.country}\n`;
       msg += `🕌 *Method*: ${data.result.prayer_method_name}\n\n`;
-
       msg += `🌅 *Fajr*: ${prayerTimes.fajr}\n`;
       msg += `🌄 *Shurooq*: ${prayerTimes.shurooq}\n`;
       msg += `☀️ *Dhuhr*: ${prayerTimes.dhuhr}\n`;
       msg += `🌇 *Asr*: ${prayerTimes.asr}\n`;
       msg += `🌆 *Maghrib*: ${prayerTimes.maghrib}\n`;
       msg += `🌃 *Isha*: ${prayerTimes.isha}\n\n`;
-
       msg += `🧭 *Qibla Direction*: ${data.result.qibla_direction}°\n`;
-      msg += `🌡️ *Temperature*: ${weather.temperature !== null ? `${weather.temperature}°C` : 'Data not available'}\n`;
+      msg += `🌡️ *Temperature*: ${weather.temperature ? `${weather.temperature}°C` : 'Data not available'}\n`;
 
       await sock.sendMessage(
         m.from,
@@ -84,23 +76,16 @@ const praytime = async (m, sock) => {
         { quoted: m }
       );
 
-      // Send Islamic Audio with error handling
-      const audioUrl = 'https://github.com/MRSHABAN40/SHABAN-MD_DATABASE/raw/refs/heads/main/autovoice/sarkar-tum%20pay%20karudon.mp3';
-      try {
-        await sock.sendMessage(m.from, {
-          audio: { url: audioUrl },
-          mimetype: 'audio/mp4',
-          ptt: false
-        }, { quoted: m });
-      } catch (error) {
-        console.error("Audio failed to send:", error);
-        await sock.sendMessage(m.from, { text: "*⚠️ Audio could not be sent.*" }, { quoted: m });
-      }
+      await sock.sendMessage(m.from, {
+        audio: { url: 'https://github.com/MRSHABAN40/SHABAN-MD_DATABASE/raw/refs/heads/main/autovoice/sarkar-tum%20pay%20karudon.mp3' },
+        mimetype: 'audio/mp4',
+        ptt: false
+      }, { quoted: m });
 
-      await m.React('✅'); // React with success emoji
+      await m.React('✅');
     } catch (e) {
       console.error(e);
-      await sock.sendMessage(m.from, { text: '*Error fetching prayer times. Please try again later.*' }, { quoted: m });
+      m.reply('*Error fetching prayer times. Please try again later.*');
     }
   }
 };
