@@ -10,21 +10,27 @@ const praytime = async (m, sock) => {
   if (["praytime", "prayertimes", "prayertime", "ptime"].includes(cmd)) {
     await m.React('⏳'); // React with a loading icon
 
-    const city = m.body.split(" ").slice(1).join(" ") || "Nawabshah"; // Default city
-    const apiUrl = `https://api.nexoracle.com/islamic/prayer-times?city=${city}`;
+    const city = m.body.split(" ").slice(1).join(" ").trim() || "Nawabshah"; // Default city
+    const apiUrl = `https://api.nexoracle.com/islamic/prayer-times?city=${encodeURIComponent(city)}`;
 
     try {
       const response = await fetch(apiUrl);
-      if (!response.ok) return reply('*Error fetching prayer times!*');
+      if (!response.ok) {
+        await sock.sendMessage(m.from, { text: '*Error fetching prayer times!*' }, { quoted: m });
+        return;
+      }
 
       const data = await response.json();
-      if (data.status !== 200) return reply('*Failed to get prayer times. Try again later.*');
+      if (data.status !== 200 || !data.result || !data.result.items || data.result.items.length === 0) {
+        await sock.sendMessage(m.from, { text: '*Failed to get prayer times. Try again later.*' }, { quoted: m });
+        return;
+      }
 
       const prayerTimes = data.result.items[0];
       const weather = data.result.today_weather;
       const location = data.result.city;
 
-      // Random emojis for reaction & text
+      // Random emojis
       const reactionEmojis = ['🕌', '📿', '🙏', '🌅', '☪️', '🕋'];
       const textEmojis = ['🌙', '⭐', '📖', '🕌', '🕋', '🔭'];
 
@@ -78,17 +84,23 @@ const praytime = async (m, sock) => {
         { quoted: m }
       );
 
-      // Send Islamic Audio
-      await sock.sendMessage(m.from, {
-        audio: { url: 'https://github.com/MRSHABAN40/SHABAN-MD_DATABASE/raw/refs/heads/main/autovoice/sarkar-tum%20pay%20karudon.mp3' },
-        mimetype: 'audio/mp4',
-        ptt: false
-      }, { quoted: m });
+      // Send Islamic Audio with error handling
+      const audioUrl = 'https://github.com/MRSHABAN40/SHABAN-MD_DATABASE/raw/refs/heads/main/autovoice/sarkar-tum%20pay%20karudon.mp3';
+      try {
+        await sock.sendMessage(m.from, {
+          audio: { url: audioUrl },
+          mimetype: 'audio/mp4',
+          ptt: false
+        }, { quoted: m });
+      } catch (error) {
+        console.error("Audio failed to send:", error);
+        await sock.sendMessage(m.from, { text: "*⚠️ Audio could not be sent.*" }, { quoted: m });
+      }
 
       await m.React('✅'); // React with success emoji
     } catch (e) {
       console.error(e);
-      reply('*Error fetching prayer times. Please try again later.*');
+      await sock.sendMessage(m.from, { text: '*Error fetching prayer times. Please try again later.*' }, { quoted: m });
     }
   }
 };
