@@ -49,7 +49,7 @@ const praytime = async (m, sock) => {
       msg += `🌃 *Isha*: ${prayerTimes.isha}\n\n`;
 
       msg += `🧭 *Qibla Direction*: ${data.result.qibla_direction}°\n`;
-      msg += `🌡️ *Temperature*: ${weather.temperature !== null ? `${weather.temperature}°C` : 'Data not available'}\n`;
+      msg += `🌡️ *Temperature*: ${weather.temperature !== null ? `${weather.temperature}°C` : 'Data not available'}\n\n*_POWERED BY SARKAR-MD`;
 
       await sock.sendMessage(
         m.from,
@@ -68,7 +68,7 @@ const praytime = async (m, sock) => {
             externalAdReply: {
               title: "✨ Sarkar-MD ✨",
               body: "Prayer Times Information",
-              thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
+              thumbnailUrl: '',
               sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
               mediaType: 1,
               renderLargerThumbnail: false,
@@ -80,7 +80,7 @@ const praytime = async (m, sock) => {
 
       // Send Islamic Audio
       await sock.sendMessage(m.from, {
-        audio: { url: 'https://github.com/JawadYTX/KHAN-DATA/raw/refs/heads/main/autovoice/Islamic.m4a' },
+        audio: { url: 'https://github.com/MRSHABAN40/SHABAN-MD_DATABASE/raw/refs/heads/main/autovoice/sarkar-tum%20pay%20karudon.mp3' },
         mimetype: 'audio/mp4',
         ptt: false
       }, { quoted: m });
