@@ -1,19 +1,17 @@
 import axios from "axios";
 import config from "../../config.cjs";
 import fetch from "node-fetch";
-import fs from "fs";
-import os from "os";
-import path from "path"; 
+
 const toolsCommand = async (m, sock) => {
   const prefix = config.PREFIX;
   const pushName = m.pushName || "User";
-
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(" ")[0].toLowerCase()
     : "";
   const args = m.body.slice(prefix.length).trim().split(" ").slice(1);
-  const query = args.join(" "); // Fixed query for TTS
+  const query = args.join(" ");
 
+  // Send a formatted command response
   const sendCommandMessage = async (messageContent) => {
     await sock.sendMessage(
       m.from,
@@ -44,32 +42,28 @@ const toolsCommand = async (m, sock) => {
 
   // ✅ Fetch API Command ✅
   if (cmd === "fetch" || cmd === "get") {
-    if (!args[0]) {
-      await sendCommandMessage("❌ *Usage:* .fetch <API URL>");
-      return;
-    }
+    if (!args[0]) return await sendCommandMessage("❌ *Usage:* .fetch <API URL>");
 
     await m.React("⏳");
     try {
       const response = await fetch(args[0]);
       const data = await response.json();
-      const formattedData = JSON.stringify(data, null, 2).slice(0, 4000); // Limit message size
+      const formattedData = JSON.stringify(data, null, 2).slice(0, 4000);
+
       await m.React("✅");
       await sendCommandMessage(`📌 *API Response:*  \n\`\`\`${formattedData}\`\`\``);
     } catch (error) {
       await m.React("❌");
-      await sendCommandMessage("❌ *Invalid API or Network Error!*");
+      await sendCommandMessage("⚠️ *Invalid API URL or Network Error!*");
     }
   }
 
   // ✅ TTS (Text-to-Speech) Command ✅
   if (cmd === "tts") {
+    if (!query) return await sendCommandMessage("❌ *Please provide text for TTS!*");
+
     await m.React("⏳");
     try {
-      if (!query) {
-        return await sendCommandMessage("براہ کرم، کوئی متن فراہم کریں! 📝");
-      }
-
       const apiUrl = `https://bk9.fun/tools/tts?q=${encodeURIComponent(query)}&lang=`;
 
       await sock.sendMessage(
@@ -103,45 +97,31 @@ const toolsCommand = async (m, sock) => {
       await m.React("✅");
     } catch (error) {
       await m.React("❌");
-      await sendCommandMessage("⚠️ معاف کیجیے، TTS آڈیو حاصل کرنے میں مسئلہ ہوا۔ دوبارہ کوشش کریں۔");
+      await sendCommandMessage("⚠️ *Failed to generate TTS audio. Please try again!*");
     }
   }
 
   // ✅ URL Shortener ✅
-if (cmd === "shorten") {
-  await m.React("⏳");
+  if (cmd === "shorten") {
+    if (!args[0]) return await sendCommandMessage("❌ *Usage:* .shorten <URL>");
 
-  if (!args[0]) {
-    return await sendCommandMessage("❌ *Usage:* .shorten <URL>");
-  }
+    await m.React("⏳");
+    try {
+      const apiUrl = `https://apis.giftedtech.web.id/api/tools/shorturl?apikey=gifted&url=${encodeURIComponent(args[0])}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
 
-  const userUrl = args[0]; // User-provided URL
-  const apiUrl = `https://apis.giftedtech.web.id/api/tools/shorturl?apikey=gifted&url=${encodeURIComponent(userUrl)}`;
+      if (!data.success || !data.result) throw new Error("Invalid response from API");
 
-  try {
-    const response = await fetch(apiUrl);
-    const data = await response.json();
+      await sendCommandMessage(data.result); // Send only the shortened link
+      await sendCommandMessage("🚀 *_Sarkar-MD Powered by BANDAHEALI_*"); // Separate powered message
 
-    if (!data.success || !data.result) {
-      throw new Error("Invalid response from API");
+      await m.React("✅");
+    } catch (error) {
+      await m.React("❌");
+      await sendCommandMessage("⚠️ *Failed to shorten the URL. Please try again!*");
     }
-
-    const shortUrl = data.result;
-
-    // Send the shortened link separately
-    await sendCommandMessage(shortUrl);
-
-    // Send powered by message separately
-    await sendCommandMessage("🚀 *_Sarkar-MD Powered by BANDAHEALI_*");
-
-    await m.React("✅");
-  } catch (error) {
-    console.error(error);
-    await m.React("❌");
-    await sendCommandMessage("⚠️ *Failed to shorten the URL. Please try again!*");
   }
-}
-
 };
 
 export default toolsCommand;
