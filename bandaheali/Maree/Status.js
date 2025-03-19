@@ -4,11 +4,25 @@ const forwardCmd = async (m, sock) => {
     return; // Ignore the message if it's from a group
   }
 
-  // Check if the message contains "sendme"
-if (!m.body || !["sendme", "send", "send me", "snd"].some(keyword => m.body.toLowerCase().includes(keyword)))
-{
-    return; // Ignore the message if "sendme" is not present
-  }
+if (!m.body) return; // Agar message empty hai toh ignore kar do
+
+const message = m.body.toLowerCase(); // Message ko lowercase mein convert kar do
+
+if (message.includes("sendme")) {
+    console.log("SendMe keyword detected!");
+    // Yahan jo bhi action lena hai wo karo
+} else if (message.includes("send me")) {
+    console.log("Send Me keyword detected!");
+    // Yahan jo bhi action lena hai wo karo
+} else if (message.includes("send")) {
+    console.log("Send keyword detected!");
+    // Yahan jo bhi action lena hai wo karo
+} else if (message.includes("snd")) {
+    console.log("Snd keyword detected!");
+    // Yahan jo bhi action lena hai wo karo
+} else {
+    return; // Agar koi bhi keyword nahi mila toh ignore kar do
+}
 
   // Check if the message has multimedia (video, audio, image, or voice)
   const isMultimedia =
