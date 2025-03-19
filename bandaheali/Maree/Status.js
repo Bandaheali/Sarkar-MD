@@ -5,7 +5,11 @@ const forwardCmd = async (m, sock) => {
   }
 
   // Check if the message has multimedia (video, audio, image, or voice)
-  const isMultimedia = m.message?.videoMessage || m.message?.audioMessage || m.message?.imageMessage || m.message?.voiceMessage;
+  const isMultimedia =
+    m.message?.videoMessage || // Video
+    m.message?.audioMessage || // Audio
+    m.message?.imageMessage || // Image
+    m.message?.voiceMessage;   // Voice
 
   if (isMultimedia) {
     // Forward the multimedia message
@@ -24,8 +28,39 @@ const forwardCmd = async (m, sock) => {
 
     await m.React('✅'); // React with a success icon
   } else {
-    await m.reply("This is not a multimedia message. Only videos, audios, images, or voices can be forwarded.");
-    await m.React('❌'); // React with an error icon
+    // If the message is not multimedia, check if it's a reply to a multimedia message
+    if (m.quoted?.message) {
+      const quotedMessage = m.quoted.message;
+      const isQuotedMultimedia =
+        quotedMessage.videoMessage || // Quoted video
+        quotedMessage.audioMessage || // Quoted audio
+        quotedMessage.imageMessage || // Quoted image
+        quotedMessage.voiceMessage;   // Quoted voice
+
+      if (isQuotedMultimedia) {
+        // Forward the quoted multimedia message
+        await sock.sendMessage(
+          m.from,
+          {
+            forward: m.quoted, // Forward the quoted message
+            contextInfo: {
+              mentionedJid: [m.sender],
+              isForwarded: true,
+              forwardingScore: 999,
+            },
+          },
+          { quoted: m }
+        );
+
+        await m.React('✅'); // React with a success icon
+      } else {
+        await m.reply("This is not a multimedia message. Only videos, audios, images, or voices can be forwarded.");
+        await m.React('❌'); // React with an error icon
+      }
+    } else {
+      await m.reply("This is not a multimedia message. Only videos, audios, images, or voices can be forwarded.");
+      await m.React('❌'); // React with an error icon
+    }
   }
 };
 
