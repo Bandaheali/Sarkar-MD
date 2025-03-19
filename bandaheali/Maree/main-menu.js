@@ -60,14 +60,14 @@ const menu = async (m, sock) => {
 ╰───────────────❍  
 
 *📌 𝙼𝙴𝙽𝚄 𝙾𝙿𝚃𝙸𝙾𝙽𝚂:*  
-1️⃣ 🕌 *Islamic Menu*  
-2️⃣ ⬇️ *Download Menu*  
-3️⃣ 🤖 *AI Menu*  
-4️⃣ 👥 *Group Menu*  
-5️⃣ 🎨 *LOGO MENU*  
-6️⃣ 🛠️ *Custom Menu 2*  
-7️⃣ ⚡ *Custom Menu 3*  
-8️⃣ 🎁 *Extra Features*  
+1️⃣ 🕌 𝐈𝐬𝐥𝐚𝐦𝐢𝐜 𝐌𝐞𝐧𝐮
+2️⃣ ⬇️ 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝 𝐌𝐞𝐧𝐮
+3️⃣ 🤖 𝐀𝐢 𝐌𝐞𝐧𝐮
+4️⃣ 👥 𝐆𝐫𝐨𝐮𝐩 𝐌𝐞𝐧𝐮
+5️⃣ 🎨 𝐋𝐨𝐠𝐨 𝐌𝐞𝐧𝐮
+6️⃣ 🛠️ 𝐎𝐰𝐧𝐞𝐫 𝐌𝐞𝐧𝐮
+7️⃣ ⚡ 𝐎𝐭𝐡𝐞𝐫 𝐌𝐞𝐧𝐮
+8️⃣ 🎁 𝐄𝐱𝐭𝐫𝐚 𝐌𝐞𝐧𝐮 
 
 ➤ *Reply with a number (1-8) to select a menu.*  
 
@@ -97,7 +97,7 @@ const menu = async (m, sock) => {
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
 │ 📅 𝙳𝚊𝚝𝚎: *${realDate}*  
 ╰───────────❍
-╭───❍「 *𝙸𝚂𝙻𝙰𝙼𝙸𝙲 𝙼𝙴𝙽𝚄 𝙾𝚏 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+╭───❍「 *𝐈𝐒𝐋𝐀𝐌𝐈𝐂 𝐌𝐄𝐍𝐔* 」
 *│* 💙 *${prefix}𝚂𝚞𝚛𝚊𝚑𝚊𝚞𝚍𝚒𝚘*
 *│* 💙 *${prefix}𝚂𝚞𝚛𝚊𝚑𝚞𝚛𝚍𝚞*
 *│* 💙 *${prefix}𝙰𝚜𝚖𝚊𝚞𝚕𝚑𝚞𝚜𝚗𝚊*
@@ -106,28 +106,28 @@ const menu = async (m, sock) => {
           break;
         case "2":
           menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
-│ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
-│ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
-│ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
-│ 📅 𝙳𝚊𝚝𝚎: *${realDate}*  
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName}* *${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄*: *${realDate}* 
 ╰───────────❍
-╭───❍「 *DOWNLOAD 𝙼𝙴𝙽𝚄 𝙾𝚏 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
-*│* 💙 *${prefix}SONG*
-*│* 💙 *${prefix}SONG2*
-*│* 💙 *${prefix}SONG3*
-*│* 💙 *${prefix}VIDEO*
-*│* 💙 *${prefix}VIDEO2*
-*│* 💙 *${prefix}VIDEO3*
-*│* 💙 *${prefix}FB*
-*│* 💙 *${prefix}FB2*
-*│* 💙 *${prefix}INSTA*
-*│* 💙 *${prefix}INSTA2*
-*│* 💙 *${prefix}TIKTOK*
-*│* 💙 *${prefix}TIKTOK2*
-*│* 💙 *${prefix}SNACK*
-*│* 💙 *${prefix}TWEET*
-*│* 💙 *${prefix}APK*
-╰───────────❍\n\n*_POWERED BY SARKAR-MD_*`;
+ ╭───❍「 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃 𝐌𝐄𝐍𝐔 」
+*│* 💙 *${prefix}𝐒𝐨𝐧𝐠*
+*│* 💙 *${prefix}𝐒𝐨𝐧𝐠2*
+*│* 💙 *${prefix}𝐒𝐨𝐧𝐠3*
+*│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨*
+*│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨2*
+*│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨3*
+*│* 💙 *${prefix}𝐅𝐁*
+*│* 💙 *${prefix}𝐅𝐁2*
+*│* 💙 *${prefix}𝐈𝐧𝐬𝐭𝐚*
+*│* 💙 *${prefix}𝐈𝐧𝐬𝐭𝐚*
+*│* 💙 *${prefix}𝐓𝐢𝐤𝐓𝐨𝐤*
+*│*glossysilx}𝐓𝐢𝐤𝐓𝐨𝐤2*
+*│* 💙 *${prefix}𝐒𝐧𝐚𝐜𝐤*
+*│* 💙 *${prefix}𝐓𝐰𝐞𝐞𝐓*
+*│* 💙 *${prefix}𝐀𝐩𝐤*
+╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
           break;
         case "3":
           menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
@@ -136,10 +136,10 @@ const menu = async (m, sock) => {
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
 │ 📅 𝙳𝚊𝚝𝚎: *${realDate}*  
 ╰───────────❍
- ╭───❍「 *MAIN 𝙼𝙴𝙽𝚄 𝙾𝚏 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
-*│* 💙 *${prefix}Alive*
-*│* 💙 *${prefix}FB*
- ╰───────────❍\n\n*_POWERED BY SARKAR-MD_*
+ ╭───❍「 *𝐀𝐈 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}*
+*│* 💙 *${prefix}*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*
 `;
           break;
         case "4":
@@ -157,7 +157,7 @@ const menu = async (m, sock) => {
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
 │ 📅 𝙳𝚊𝚝𝚎: *${realDate}*  
 ╰───────────❍
- ╭───❍「 *DOWNLOAD 𝙼𝙴𝙽𝚄 𝙾𝚏 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+ ╭───❍「 *𝐋𝐎𝐆𝐎 𝐌𝐄𝐍𝐔* 」
 *│* 💙 *${prefix}LOGO*
 *│* 💙 *${prefix}glossysilver*
 *│* 💙 *${prefix}writetext*
