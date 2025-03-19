@@ -37,13 +37,8 @@ const forwardCmd = async (m, sock) => {
     if (m.quoted?.message) {
       const quotedMessage = m.quoted.message;
 
-      // Debugging: Log the quoted message and its remoteJid
-      console.log("Quoted Message RemoteJid:", m.quoted?.key?.remoteJid);
-      console.log("Quoted Message:", JSON.stringify(m.quoted, null, 2));
-
       // Check if the quoted message is from a status broadcast
-      const isStatusBroadcast = m.quoted?.key?.remoteJid === "status@broadcast";
-      if (!isStatusBroadcast) {
+      if (m.quoted?.chat != 'status@broadcast') {
         await m.reply("Only status broadcast messages can be forwarded.");
         await m.React('❌'); // React with an error icon
         return; // Ignore if the quoted message is not from a status broadcast
