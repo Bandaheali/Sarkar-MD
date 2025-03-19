@@ -25,7 +25,7 @@ const sahihalbukhari = async (m, sock) => {
       if (!data) throw new Error("Invalid API response");
 
       const { hadithnumber, arabicnumber, text } = data;
-      const messageText = `📖 *حدیث نمبر ${hadithnumber} (عربی نمبر ${arabicnumber}):*\n\n${text}\n\n🚀 *_Sarkar-MD Powered by BANDAHEALI_*\n\n⚠️ *نوٹ:* یہ احادیث ایک API سے حاصل کی گئی ہیں۔ براہ کرم صحیح بخاری کی کتاب سے بھی تصدیق کر لیں۔`;
+      const messageText = `📖 *حدیث نمبر ${hadithnumber} (عربی نمبر ${arabicnumber}):*\n\n${text}\n\n⚠️ *نوٹ:* یہ احادیث ایک API سے حاصل کی گئی ہیں۔ براہ کرم صحیح بخاری کی کتاب سے بھی تصدیق کر لیں۔\n\n*_POWERED BY SARKAR-MD_*`;
 
       await sock.sendMessage(
         m.from,
