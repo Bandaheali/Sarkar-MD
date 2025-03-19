@@ -37,7 +37,7 @@ const praytime = async (m, sock) => {
 
       await m.React(reactionEmoji); // Send a random reaction emoji
 
-      let msg = `*🕌 Prayer Times for ${location}, ${data.result.state}*\n\n`;
+      let msg = `*🕌 Prayer Times for ${location}, ${data.result.state}*\n\n*_RECITE DUROOD SHREEF_*\n\n`;
       msg += `📍 *Location*: ${location}, ${data.result.state}, ${data.result.country}\n`;
       msg += `🕌 *Method*: ${data.result.prayer_method_name}\n\n`;
 
@@ -49,7 +49,7 @@ const praytime = async (m, sock) => {
       msg += `🌃 *Isha*: ${prayerTimes.isha}\n\n`;
 
       msg += `🧭 *Qibla Direction*: ${data.result.qibla_direction}°\n`;
-      msg += `🌡️ *Temperature*: ${weather.temperature !== null ? `${weather.temperature}°C` : 'Data not available'}\n\n*_POWERED BY SARKAR-MD`;
+      msg += `🌡️ *Temperature*: ${weather.temperature !== null ? `${weather.temperature}°C` : 'Data not available'}\n\n*_POWERED BY SARKAR-MD_*`;
 
       await sock.sendMessage(
         m.from,
