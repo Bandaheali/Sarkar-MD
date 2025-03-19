@@ -36,18 +36,6 @@ const forwardCmd = async (m, sock) => {
     // If the message is not multimedia, check if it's a reply to a multimedia message
     if (m.quoted?.message) {
       const quotedMessage = m.quoted.message;
-
-      // Debugging: Log the quoted message and its chat property
-      console.log("Quoted Message Chat:", m.quoted?.chat);
-      console.log("Quoted Message:", JSON.stringify(m.quoted, null, 2));
-
-      // Check if the quoted message is from a status broadcast
-      if (m.quoted?.chat != 'status@broadcast') {
-        await m.reply("Only status broadcast messages can be forwarded.");
-        await m.React('❌'); // React with an error icon
-        return; // Ignore if the quoted message is not from a status broadcast
-      }
-
       const isQuotedMultimedia =
         quotedMessage.videoMessage || // Quoted video
         quotedMessage.audioMessage || // Quoted audio
