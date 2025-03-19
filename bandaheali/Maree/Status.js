@@ -10,9 +10,12 @@ const handleGreeting = async (m, gss) => {
       'send me', 'sent me', 'znt', 'snt', 'ayak', 'do', 'mee'
     ];
 
-    if (!triggerWords.includes(textLower)) return;
+    if (!triggerWords.some(word => textLower.includes(word))) return;
 
-    const quotedMessage = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    // Agar status reply hai toh yahan check hoga
+    const quotedMessage = m.message?.extendedTextMessage?.contextInfo?.quotedMessage ||
+                          m.message?.imageMessage || m.message?.videoMessage;
+
     if (!quotedMessage) return;
 
     let mediaType = null;
