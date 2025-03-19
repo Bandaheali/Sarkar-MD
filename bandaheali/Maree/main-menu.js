@@ -101,6 +101,7 @@ const menu = async (m, sock) => {
 *│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐀𝐮𝐝𝐢𝐨*
 *│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐔𝐫𝐝𝐮*
 *│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐀𝐫𝐛𝐢𝐜*
+*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡Eng*
 *│* 💙 *${prefix}𝐏𝐫𝐚𝐲𝐞𝐫𝐓𝐢𝐦𝐞*
 *│* 💙 *${prefix}𝐏𝐓𝐢𝐦𝐞*
 *│* 💙 *${prefix}𝐒𝐁𝐮𝐤𝐡𝐚𝐫𝐢*
