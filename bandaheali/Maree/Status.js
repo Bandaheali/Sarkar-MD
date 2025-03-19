@@ -5,7 +5,7 @@ const forwardCmd = async (m, sock) => {
   }
 
   // Check if the message contains "sendme"
-  if (!m.body || !m.body.toLowerCase().includes("sendme")) {
+  if (!m.body || !m.body.toLowerCase().includes("sendme" || "send" || "send me" || "snd")) {
     return; // Ignore the message if "sendme" is not present
   }
 
