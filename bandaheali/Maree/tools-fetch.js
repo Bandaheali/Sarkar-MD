@@ -108,40 +108,39 @@ const toolsCommand = async (m, sock) => {
   }
 
   // ✅ URL Shortener ✅
-  if (cmd === "shorten") {
-    await m.React("⏳");
+if (cmd === "shorten") {
+  await m.React("⏳");
 
-    if (!args[0]) {
-      return await sendCommandMessage("❌ *Usage:* .shorten <URL>");
-    }
-
-    const userUrl = args[0]; // User-provided URL
-    const apiUrl = `https://bk9.fun/tools/shorten?url=${encodeURIComponent(
-      userUrl
-    )}`;
-
-    try {
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-
-      if (!data.status || !data.BK9 || !data.BK9.url) {
-        throw new Error("Invalid response from API");
-      }
-
-      const originalUrl = data.BK9.origin;
-      const shortUrl = data.BK9.url;
-
-      const messageText = `🔗 *URL Shortened Successfully!*\n\n📌 *Original:* ${originalUrl}\n🔖 *Shortened:* ${shortUrl}\n\n🚀 *_Sarkar-MD Powered by BANDAHEALI_*`;
-
-      await sendCommandMessage(messageText);
-
-      await m.React("✅");
-    } catch (error) {
-      console.error(error);
-      await m.React("❌");
-      await sendCommandMessage("⚠️ *Failed to shorten the URL. Please try again!*");
-    }
+  if (!args[0]) {
+    return await sendCommandMessage("❌ *Usage:* .shorten <URL>");
   }
+
+  const userUrl = args[0]; // User-provided URL
+  const apiUrl = `https://apis.giftedtech.web.id/api/tools/shorturl?apikey=gifted&url=${encodeURIComponent(userUrl)}`;
+
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    if (!data.success || !data.result) {
+      throw new Error("Invalid response from API");
+    }
+
+    const shortUrl = data.result;
+
+    // Send the shortened link separately
+    await sendCommandMessage(shortUrl);
+
+    // Send powered by message separately
+    await sendCommandMessage("🚀 *_Sarkar-MD Powered by BANDAHEALI_*");
+
+    await m.React("✅");
+  } catch (error) {
+    console.error(error);
+    await m.React("❌");
+    await sendCommandMessage("⚠️ *Failed to shorten the URL. Please try again!*");
+  }
+}
 
 };
 
