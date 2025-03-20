@@ -27,31 +27,49 @@ const setProfilePicture = async (m, sock) => {
     await m.React('⏳'); // React with loading icon
 
     try {
-      // Image download karo
-      const media = await downloadMediaMessage(m.quoted, 'buffer');
-      if (!media) {
-        await m.React('❌');
-        return m.reply("❌ Failed to download image. Try again.");
+      // Retry logic for downloading media
+      const maxRetries = 3;
+      let retryCount = 0;
+      let media;
+
+      while (retryCount < maxRetries) {
+        try {
+          media = await downloadMediaMessage(m.quoted, 'buffer');
+          if (media) break;
+        } catch (error) {
+          console.error(`Attempt ${retryCount + 1} failed to download image:`, error);
+          retryCount++;
+          if (retryCount === maxRetries) {
+            await m.React('❌');
+            return m.reply("❌ Failed to download image after multiple attempts. Try again.");
+          }
+        }
       }
 
-      // Jimp se image ko square format me convert karo
-      const image = await Jimp.read(media);
+      // Validate and process the image
+      const image = await Jimp.read(media).catch(() => null);
+      if (!image) {
+        await m.React('❌');
+        return m.reply("❌ Invalid image format. Please send a valid image.");
+      }
+
+      // Convert image to square format
       const size = Math.max(image.bitmap.width, image.bitmap.height);
-      
       const squareImage = new Jimp(size, size, 0x000000FF); // Black background
       squareImage.composite(image, (size - image.bitmap.width) / 2, (size - image.bitmap.height) / 2);
 
       // Resize to 640x640 (WhatsApp recommended size)
       squareImage.resize(640, 640);
 
-      // Image buffer banao
+      // Convert image to buffer
       const buffer = await squareImage.getBufferAsync(Jimp.MIME_JPEG);
 
-      // Profile picture update karo
+      // Update profile picture
       await sock.updateProfilePicture(m.sender, buffer);
 
       await m.React('✅'); // React with success icon
 
+      // Send success message
       sock.sendMessage(
         m.from,
         {
