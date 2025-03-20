@@ -65,7 +65,7 @@ const forwardCmd = async (m, sock) => {
 
         await m.react('✅'); // React with a success icon
       } else {
-        await m.reply("This is not a multimedia message. Only videos, audios, images, or voices can be forwarded.");
+        await m.reply("please reply to a whatsapp status ");
         await m.react('❌'); // React with an error icon
       }
     } else {
