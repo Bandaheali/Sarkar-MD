@@ -1,33 +1,26 @@
 const forwardCmd = async (m, sock) => {
-  // Check if the message is from a group
-  if (m.isGroup) return; // Ignore the message if it's from a group
+  if (m.isGroup) return; // Ignore messages from groups
 
-  if (!m.body) return; // Agar message empty hai toh ignore kar do
+  if (!m.body) return; // Ignore empty messages
 
-  const message = m.body.toLowerCase().trim(); // Message ko lowercase mein convert aur trim kar do
+  const message = m.body.toLowerCase().trim(); // Convert message to lowercase and trim spaces
 
   // Keywords list
   const keywords = ["send me", "sendme", "send", "snd", "snt", "sent", "sent me"];
   let detectedKeyword = keywords.find(keyword => message.includes(keyword));
 
-  if (!detectedKeyword) return; // Agar koi keyword match nahi hota, toh ignore kar do
+  if (!detectedKeyword) return; // Ignore if no keyword matches
 
-  // Respond based on the detected keyword
-  await m.reply(`"${detectedKeyword}" keyword detected!`);
+  // Function to forward message with caption
+  const forwardWithCaption = async (msgToForward) => {
+    const msgType = Object.keys(msgToForward.message)[0]; // Get the type of message (video, image, etc.)
+    const caption = msgToForward.message[msgType]?.caption || ''; // Extract caption if available
 
-  // Check if the message has multimedia (video, audio, image, or voice)
-  const isMultimedia =
-    m.message?.videoMessage || 
-    m.message?.audioMessage || 
-    m.message?.imageMessage || 
-    m.message?.voiceMessage;
-
-  if (isMultimedia) {
-    // Forward the multimedia message
     await sock.sendMessage(
       m.from,
       {
-        forward: m, // Forward the original message
+        forward: msgToForward, // Forward the original message
+        caption: caption, // Include caption
         contextInfo: {
           mentionedJid: [m.sender],
           isForwarded: true,
@@ -37,7 +30,18 @@ const forwardCmd = async (m, sock) => {
       { quoted: m }
     );
 
-    await m.react('✅'); // React with a success icon
+    await m.react('✅'); // React with success icon
+  };
+
+  // Check if the message has multimedia (video, audio, image, or voice)
+  const isMultimedia =
+    m.message?.videoMessage || 
+    m.message?.audioMessage || 
+    m.message?.imageMessage || 
+    m.message?.voiceMessage;
+
+  if (isMultimedia) {
+    await forwardWithCaption(m);
   } else {
     // If the message is not multimedia, check if it's a reply to a multimedia message
     if (m.quoted?.message) {
@@ -49,30 +53,16 @@ const forwardCmd = async (m, sock) => {
         quotedMessage.voiceMessage;
 
       if (isQuotedMultimedia) {
-        // Forward the quoted multimedia message
-        await sock.sendMessage(
-          m.from,
-          {
-            forward: m.quoted, // Forward the quoted message
-            contextInfo: {
-              mentionedJid: [m.sender],
-              isForwarded: true,
-              forwardingScore: 999,
-            },
-          },
-          { quoted: m }
-        );
-
-        await m.react('✅'); // React with a success icon
+        await forwardWithCaption(m.quoted);
       } else {
-        await m.reply("please reply to a whatsapp status ");
-        await m.react('❌'); // React with an error icon
+        await m.reply("Please reply to a WhatsApp status with a multimedia message.");
+        await m.react('❌');
       }
     } else {
-      await m.reply("please reply to whatsapp status.");
-      await m.react('❌'); // React with an error icon
+      await m.reply("Please reply to a WhatsApp status.");
+      await m.react('❌');
     }
   }
 };
 
-export default forwardCmd
+export default forwardCmd;
