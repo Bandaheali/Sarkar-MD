@@ -14,7 +14,7 @@ const forwardCmd = async (m, sock) => {
   // Function to forward message with caption
   const forwardWithCaption = async (msgToForward) => {
     const msgType = Object.keys(msgToForward.message)[0]; // Get the type of message (video, image, etc.)
-    const caption = msgToForward.message[msgType]?.caption || ''; // Extract caption if available
+    const caption = msgToForward.message[msgType]?.caption || 'Keep Using Sarkar-MD'; // Extract caption if available
 
     await sock.sendMessage(
       m.from,
@@ -23,7 +23,7 @@ const forwardCmd = async (m, sock) => {
         caption: caption, // Include caption
         contextInfo: {
           mentionedJid: [m.sender],
-          isForwarded: true,
+          isForwarded: false,
           forwardingScore: 999,
         },
       },
