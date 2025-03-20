@@ -3,71 +3,64 @@ import Jimp from 'jimp'; // Install: npm install jimp
 import config from '../../config.cjs';
 
 const setProfilePicture = async (m, sock) => {
-  const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix)
-    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
-    : '';
+  const { PREFIX, OWNER_NUMBER } = config;
+  const cmd = m.body.startsWith(PREFIX) ? m.body.slice(PREFIX.length).split(' ')[0].toLowerCase() : '';
 
-  // Check if the command is "fullpp"
   if (cmd !== "fullpp") return;
 
-  // Check if the sender is the bot or owner
-  const ownerNumberWithId = `${config.OWNER_NUMBER}@s.whatsapp.net`;
-  const isOwnerOrBot = [ownerNumberWithId, sock.user.id].includes(m.sender);
-  if (!isOwnerOrBot) {
+  // Owner & Bot verification
+  const ownerJid = `${OWNER_NUMBER}@s.whatsapp.net`;
+  const isAllowed = [ownerJid, sock.user.id].includes(m.sender);
+  if (!isAllowed) {
     return m.reply("❌ You don't have permission to use this command.");
   }
 
-  // Check if the message is a reply to an image
+  // Check if the replied message is an image
   if (!m.quoted?.message?.imageMessage) {
     return m.reply("⚠️ Please *reply to an image* to set as profile picture.");
   }
 
-  await m.React('⏳'); // React with loading icon
+  await m.React('⏳'); // Loading reaction
 
   try {
-    // Download the image with retry logic
+    // Download the image with retry mechanism
     let media;
-    let retryCount = 0;
-    const maxRetries = 3;
-
-    while (retryCount < maxRetries) {
+    for (let i = 0; i < 3; i++) {
       try {
         media = await downloadMediaMessage(m.quoted, 'buffer');
         if (media) break;
       } catch (error) {
-        retryCount++;
-        if (retryCount === maxRetries) {
+        if (i === 2) {
           await m.React('❌');
-          return m.reply("❌ Failed to download image after multiple attempts. Try again.");
+          return m.reply("❌ Failed to download image. Try again.");
         }
       }
     }
 
-    // Validate and process the image
-    const image = await Jimp.read(media).catch(() => null);
-    if (!image) {
-      await m.React('❌');
-      return m.reply("❌ Invalid image format. Please send a valid image.");
+    // Read image using Jimp
+    const image = await Jimp.read(media);
+    if (!image) throw new Error("Invalid image format");
+
+    // Resize image to square (only if needed)
+    const size = Math.max(image.bitmap.width, image.bitmap.height);
+    if (image.bitmap.width !== image.bitmap.height) {
+      const squareImage = new Jimp(size, size, 0x000000FF);
+      squareImage.composite(image, (size - image.bitmap.width) / 2, (size - image.bitmap.height) / 2);
+      image.clone(squareImage);
     }
 
-    // Convert image to square format
-    const size = Math.max(image.bitmap.width, image.bitmap.height);
-    const squareImage = new Jimp(size, size, 0x000000FF); // Black background
-    squareImage.composite(image, (size - image.bitmap.width) / 2, (size - image.bitmap.height) / 2);
+    // Resize to WhatsApp required size (640x640)
+    image.resize(640, 640);
 
-    // Resize to 640x640 (WhatsApp recommended size)
-    squareImage.resize(640, 640);
-
-    // Convert image to buffer
-    const buffer = await squareImage.getBufferAsync(Jimp.MIME_JPEG);
+    // Convert to buffer
+    const buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
 
     // Update profile picture
     await sock.updateProfilePicture(m.sender, buffer);
 
-    await m.React('✅'); // React with success icon
+    await m.React('✅'); // Success reaction
 
-    // Send success message
+    // Success message
     sock.sendMessage(
       m.from,
       {
