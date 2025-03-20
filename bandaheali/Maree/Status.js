@@ -7,7 +7,7 @@ const forwardCmd = async (m, sock) => {
   const message = m.body.toLowerCase().trim(); // Message ko lowercase mein convert aur trim kar do
 
   // Keywords list
-  const keywords = ["send me", "sendme", "send", "snd"];
+  const keywords = ["send me", "sendme", "send", "snd", "snt", "sent", "sent me"];
   let detectedKeyword = keywords.find(keyword => message.includes(keyword));
 
   if (!detectedKeyword) return; // Agar koi keyword match nahi hota, toh ignore kar do
