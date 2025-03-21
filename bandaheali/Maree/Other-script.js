@@ -7,7 +7,7 @@ const sc = async (m, sock) => {
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
 
-  if (cmd === "sc") {
+  if (cmd === "sc" || cmd === "repo") {
     await m.React('⏳'); // React with a loading icon
 
     const repoUrl = "https://api.github.com/repos/Sarkar-Bandaheali/Sarkar-MD";
