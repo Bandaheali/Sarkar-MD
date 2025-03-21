@@ -21,12 +21,14 @@ const ping = async (m, sock) => {
     await new Promise(resolve => setTimeout(resolve, 500));
     await sock.sendMessage(m.from, { edit: sentMsg.key, text: "ping" });
 
-    // Final edit to calculate ping
+    // Calculate ping time after sending all edits
     const pingTime = Date.now() - startTime;
+
+    // Final edit to show accurate ping
     await new Promise(resolve => setTimeout(resolve, 500));
     await sock.sendMessage(m.from, { edit: sentMsg.key, text: `*Ping: ${pingTime}ms*` });
 
-    // Send External Ad Reply
+    // Send External Ad Reply with accurate ping
     await sock.sendMessage(
       m.from,
       {
