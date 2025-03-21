@@ -11,8 +11,9 @@ const about = async (m, sock) => {
 
     const botName = "Sarkar-MD";
     const ownerName = "Sarkar Bandaheali";
+    const ownerNumber = "923253617422";
     const teamMember = "Shaban-MD";
-    const ownerNumber = "923187377979";
+    const memberNumber = "923043788282";
     const githubRepo = "https://github.com/Sarkar-Bandaheali/Sarkar-MD";
     const bio = "A powerful WhatsApp bot built with Node.js and Baileys for entertainment, utility, and much more! ✨";
 
@@ -22,6 +23,7 @@ const about = async (m, sock) => {
 > Owner: ${ownerName}
 > Number: ${ownerNumber} (Contact me for assistance)
 > Helper: ${teamMember}
+> H-Number: ${memberNumber}
 > GitHub: ${githubRepo}
 > Bio: ${bio}
 
