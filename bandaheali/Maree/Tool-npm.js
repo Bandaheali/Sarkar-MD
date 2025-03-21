@@ -16,7 +16,7 @@ const npmInfo = async (m, sock) => {
     const packageName = args[0];
     const url = `https://registry.npmjs.org/${packageName}`;
 
-    let sentMsg = await sock.sendMessage(m.from, { text: "🔍 Searching NPM..." }, { quoted: m });
+    let sentMsg = await sock.sendMessage(m.from, { text: "🔍 𝐒𝐄𝐀𝐑𝐂𝐇𝐈𝐍𝐆 𝐍𝐏𝐌.." }, { quoted: m });
 
     try {
       const response = await fetch(url);
@@ -32,49 +32,37 @@ const npmInfo = async (m, sock) => {
 
       // Animated Typing Effect
       await new Promise(resolve => setTimeout(resolve, 500));
-      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "N" });
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍" });
 
       await new Promise(resolve => setTimeout(resolve, 500));
-      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "NP" });
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍𝐏" });
 
       await new Promise(resolve => setTimeout(resolve, 500));
-      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "NPM" });
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍𝐏𝐌" });
 
       await new Promise(resolve => setTimeout(resolve, 500));
-      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "NPM S" });
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍𝐏𝐌 𝐒" });
 
       await new Promise(resolve => setTimeout(resolve, 500));
-      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "NPM SE" });
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍𝐏𝐌 𝐒𝐄" });
 
       await new Promise(resolve => setTimeout(resolve, 500));
-      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "NPM SEARCH" });
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍𝐏𝐌 𝐒𝐄𝐀" });
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍𝐏𝐌 𝐒𝐄𝐀𝐑" });
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍𝐏𝐌 𝐒𝐄𝐀𝐑𝐂" });
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "𝐍𝐏𝐌 𝐒𝐄𝐀𝐑𝐂𝐇" });
 
       await new Promise(resolve => setTimeout(resolve, 500));
       await sock.sendMessage(m.from, { edit: sentMsg.key, text: message });
 
-      // External Ad Reply
-      await sock.sendMessage(
-        m.from,
-        {
-          text: `🔍 *NPM Search Result: ${packageName}*`,
-          contextInfo: {
-            externalAdReply: {
-              title: `NPM Package: ${packageName}`,
-              body: `Version: ${latestVersion} | Author: ${author}`,
-              thumbnailUrl: "https://upload.wikimedia.org/wikipedia/commons/d/db/Npm-logo.svg",
-              sourceUrl: homepage,
-              mediaType: 1,
-              renderLargerThumbnail: false,
-            },
-          },
-        },
-        { quoted: m }
-      );
-
-    } catch (error) {
-      await sock.sendMessage(m.from, { edit: sentMsg.key, text: "❌ *Package not found!*" });
-    }
-  }
+   
+      
 };
 
 export default npmInfo;
