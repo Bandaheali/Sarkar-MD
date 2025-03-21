@@ -34,15 +34,16 @@ const instaStalker = async (m, sock) => {
       const profileUrl = `https://www.instagram.com/${username}`;
 
       const message = `📸 *𝐒𝐚𝐫𝐤𝐚𝐫-𝐌𝐃 𝐈𝐧𝐬𝐭𝐚𝐠𝐫𝐚𝐦 𝐒𝐭𝐚𝐥𝐤𝐞𝐫*\n\n👤 *𝐍𝐚𝐦𝐞:* ${name}\n📜 *𝐁𝐢𝐨:* ${bio}\n📸 *𝐏𝐨𝐬𝐭𝐬:* ${posts}\n👥 *𝐅𝐨𝐥𝐥𝐨𝐰𝐞𝐫𝐬:* ${followers}\n👣 *𝐅𝐨𝐥𝐥𝐨𝐰𝐢𝐧𝐠:* ${following}\n🔗 *𝐏𝐫𝐨𝐟𝐢𝐥𝐞:* (${profileUrl})\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
-      // Animated Typing Effect
-      const searchSteps = ["𝐈", "𝐈𝐍", "𝐈𝐍𝐒", "𝐈𝐍𝐒𝐓", "𝐈𝐍𝐒𝐓𝐀", "𝐈𝐍𝐒𝐓𝐀𝐆𝐑𝐀𝐌", "𝐈𝐍𝐒𝐓𝐀𝐆𝐑𝐀𝐌 𝐒𝐄𝐀", "𝐈𝐍𝐒𝐓𝐀𝐆𝐑𝐀𝐌 𝐒𝐄𝐀𝐑𝐂𝐇"];
+
+      // Optimized Animated Typing Effect
+      const searchSteps = ["𝐈𝐍", "𝐈𝐍𝐒𝐓𝐀", "𝐈𝐍𝐒𝐓𝐀𝐆𝐑𝐀𝐌 𝐒", "𝐈𝐍𝐒𝐓𝐀𝐆𝐑𝐀𝐌 𝐒𝐄𝐀𝐑𝐂𝐇"];
       for (const step of searchSteps) {
         await new Promise(resolve => setTimeout(resolve, 500));
         await sock.sendMessage(m.from, { edit: sentMsg.key, text: step });
       }
 
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       if (profilePic) {
         await sock.sendMessage(m.from, { image: { url: profilePic }, caption: message });
       } else {
