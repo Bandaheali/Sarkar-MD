@@ -26,13 +26,9 @@ const wikiSearch = async (m, sock) => {
       }
 
       const result = data.BK9[0];
-      const message = `📖 *${query} کے بارے میں معلومات:*\n\n${result.BK9}\n\n🔗 *ماخذ:* [مزید پڑھیں](https://bk9.fun/search/wiki?q=${encodeURIComponent(query)})`;
+      const message = `📖 *${query}*\n🔗 [مزید پڑھیں](https://bk9.fun/search/wiki?q=${encodeURIComponent(query)})`;
 
-      await sock.sendMessage(m.from, { 
-        edit: sentMsg.key, 
-        image: { url: result.thumb },
-        caption: message
-      });
+      await sock.sendMessage(m.from, { edit: sentMsg.key, text: message });
 
     } catch (error) {
       console.error(error);
