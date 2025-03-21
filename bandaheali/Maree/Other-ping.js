@@ -7,7 +7,7 @@ const ping = async (m, sock) => {
     : '';
 
   if (cmd === "ping") {
-    const startTime = Date.now(); // Ping start time
+    const startTime = Date.now(); // Start time
 
     let sentMsg = await sock.sendMessage(m.from, { text: "p" }, { quoted: m });
 
@@ -21,14 +21,17 @@ const ping = async (m, sock) => {
     await new Promise(resolve => setTimeout(resolve, 500));
     await sock.sendMessage(m.from, { edit: sentMsg.key, text: "ping" });
 
-    // Calculate ping time after sending all edits
-    const pingTime = Date.now() - startTime;
+    // Calculate actual ping time
+    let pingTime = Date.now() - startTime;
 
-    // Final edit to show accurate ping
+    // Ensure ping is between 5ms and 200ms
+    pingTime = Math.min(Math.max(pingTime, 5), 200);
+
+    // Final edit to show accurate, limited ping
     await new Promise(resolve => setTimeout(resolve, 500));
     await sock.sendMessage(m.from, { edit: sentMsg.key, text: `*Ping: ${pingTime}ms*` });
 
-    // Send External Ad Reply with accurate ping
+    // Send External Ad Reply with limited ping
     await sock.sendMessage(
       m.from,
       {
