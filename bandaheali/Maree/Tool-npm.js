@@ -28,7 +28,7 @@ const npmInfo = async (m, sock) => {
       const author = data.author?.name || "Unknown";
       const homepage = data.homepage || `https://www.npmjs.com/package/${packageName}`;
 
-      const message = `🛠 *𝐒𝐚𝐫𝐤𝐚𝐫-𝐌𝐃 𝐍𝐩𝐦 𝐈𝐧𝐟𝐨*\n\n📦 *𝐏𝐚𝐜𝐤𝐚𝐠𝐞:* ${packageName}\n🔖 *𝐕𝐞𝐫𝐬𝐢𝐨𝐧:* ${latestVersion}\n👤 *𝐀𝐮𝐭𝐡𝐨𝐫:* ${author}\n📜 *𝐃𝐞𝐬𝐜𝐫𝐢𝐩𝐭𝐢𝐨𝐧:* ${description}\n🔗 *𝐇𝐨𝐦𝐞𝐏𝐚𝐠𝐞:*(${homepage}\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*)`;
+      const message = `🛠 *𝐒𝐚𝐫𝐤𝐚𝐫-𝐌𝐃 𝐍𝐩𝐦 𝐈𝐧𝐟𝐨*\n\n📦 *𝐏𝐚𝐜𝐤𝐚𝐠𝐞:* ${packageName}\n🔖 *𝐕𝐞𝐫𝐬𝐢𝐨𝐧:* ${latestVersion}\n👤 *𝐀𝐮𝐭𝐡𝐨𝐫:* ${author}\n📜 *𝐃𝐞𝐬𝐜𝐫𝐢𝐩𝐭𝐢𝐨𝐧:* ${description}\n🔗 *𝐇𝐨𝐦𝐞𝐏𝐚𝐠𝐞:*(${homepage})\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
 
       // Animated Typing Effect
       await new Promise(resolve => setTimeout(resolve, 500));
