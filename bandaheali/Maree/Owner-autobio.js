@@ -1,5 +1,3 @@
-//Sarkar-MD
-
 import fs from 'fs';
 import config from '../../config.cjs';
 
@@ -8,21 +6,19 @@ const intervals = {};
 
 const startTime = Date.now(); // Store bot start time
 
-// Function to get real-time formatted date
+// Function to get real-time formatted date (Pakistan Time Zone)
 const getRealDate = () => {
     const now = new Date();
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return now.toLocaleDateString('en-US', options); // Example: "March 22, 2025"
+    return now.toLocaleDateString('en-GB', { timeZone: 'Asia/Karachi', year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-// Function to get real-time formatted time
+// Function to get real-time formatted time (Pakistan Time Zone)
 const getRealTime = () => {
     const now = new Date();
-    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); 
-    // Example: "10:15 PM"
+    return now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
-// Function to calculate uptime
+// Function to calculate uptime accurately
 const getUptime = () => {
     const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
     const days = Math.floor(totalSeconds / 86400);
@@ -81,5 +77,3 @@ const autobioCommand = async (m, Matrix) => {
 };
 
 export default autobioCommand;
-
-//POWERED BY BANDAHEALI
