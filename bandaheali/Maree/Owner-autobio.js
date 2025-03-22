@@ -26,7 +26,13 @@ const updateBio = async (sock) => {
     const bio = `Sarkar-MD is Active From ${Math.floor(uptime)}s | RealDate: ${realdate} | RealTime: ${realtime} | Quote: ${quote}`;
 
     try {
-      await sock.updateProfileStatus(bio);
+      await sock.ws.send(
+        JSON.stringify({
+          tag: 'iq',
+          attrs: { to: 's.whatsapp.net', type: 'set', xmlns: 'status' },
+          content: [{ tag: 'status', attrs: {}, content: Buffer.from(bio, 'utf-8') }],
+        })
+      );
       console.log("Bio updated successfully:", bio);
     } catch (err) {
       console.error("Failed to update bio:", err);
