@@ -1,4 +1,4 @@
-import config from "../../config.cjs"; // Ensure this matches your project setup
+import config from "../../config.cjs";
 import axios from "axios";
 import fs from "fs";
 import path from "path";
@@ -11,13 +11,28 @@ const update = async (m, sock) => {
     : "";
 
   if (cmd === "update") {
+    if (!config.OWNER_NUMBER.includes(m.sender.split("@")[0])) {
+      return sock.sendMessage(m.from, { text: "❌ *Only the bot owner can use this command!*" }, { quoted: m });
+    }
+
     await m.React("⏳"); // React with a loading icon
 
     try {
       console.log("🔄 Checking for Sarkar-MD updates...");
-      await sock.sendMessage(m.from, { text: "```🔍 Checking for Sarkar-MD updates...```" }, { quoted: m });
+      
+      // Send initial message
+      const msg = await sock.sendMessage(m.from, { text: "```🔍 Checking for Sarkar-MD updates...```" }, { quoted: m });
 
-      // Fetch the latest commit hash from GitHub
+      // Function to edit the message smoothly
+      const editMessage = async (newText) => {
+        try {
+          await sock.sendMessage(m.from, { text: newText, edit: msg.key });
+        } catch (error) {
+          console.error("Message edit failed:", error);
+        }
+      };
+
+      // Fetch latest commit hash
       const { data: commitData } = await axios.get(
         "https://api.github.com/repos/Bandaheali/Sarkar-MD/commits/main"
       );
@@ -32,13 +47,13 @@ const update = async (m, sock) => {
       console.log("📥 Latest commit:", latestCommitHash);
 
       if (latestCommitHash === currentHash) {
-        await m.React("✅"); // React with a success icon
-        return sock.sendMessage(m.from, { text: "```✅ Your Sarkar-MD is already on the latest update!```" }, { quoted: m });
+        await m.React("✅"); // React with success icon
+        return editMessage("```✅ Sarkar-MD is already up to date!```");
       }
 
-      await sock.sendMessage(m.from, { text: "```🚀 Sarkar-MD Bot Updating...```" }, { quoted: m });
+      await editMessage("```🚀 Sarkar-MD Bot Updating...```");
 
-      // Download the latest code as ZIP
+      // Download latest ZIP
       const zipPath = path.join(process.cwd(), "latest.zip");
       const { data: zipData } = await axios.get(
         "https://github.com/Bandaheali/Sarkar-MD/archive/main.zip",
@@ -46,28 +61,26 @@ const update = async (m, sock) => {
       );
       fs.writeFileSync(zipPath, zipData);
       console.log("📥 ZIP file downloaded.");
+      await editMessage("```📦 Extracting the latest code...```");
 
-      await sock.sendMessage(m.from, { text: "```📦 Extracting the latest code...```" }, { quoted: m });
-
-      // Extract ZIP file
+      // Extract ZIP
       const extractPath = path.join(process.cwd(), "latest");
       const zip = new AdmZip(zipPath);
       zip.extractAllTo(extractPath, true);
       console.log("📂 ZIP extracted.");
+      await editMessage("```🔄 Replacing files...```");
 
-      await sock.sendMessage(m.from, { text: "```🔄 Replacing files...```" }, { quoted: m });
-
-      // Replace files with updated versions
+      // Replace files
       const sourcePath = path.join(extractPath, "Sarkar-MD-main");
       copyFolderSync(sourcePath, process.cwd());
       console.log("✅ Files replaced.");
 
-      // Cleanup temporary files
+      // Cleanup
       fs.unlinkSync(zipPath);
       fs.rmSync(extractPath, { recursive: true, force: true });
       console.log("🧹 Cleanup complete.");
 
-      await sock.sendMessage(m.from, { text: "```♻️ Restarting the bot to apply updates...```" }, { quoted: m });
+      await editMessage("```♻️ Restarting the bot to apply updates...```");
 
       process.exit(0); // Restart bot
     } catch (error) {
