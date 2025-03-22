@@ -8,56 +8,42 @@ const ping = async (m, sock) => {
 
   if (["ping", "speed", "p"].includes(cmd)) {
     const start = performance.now();
-    await m.React('⏳'); // Loading reaction
+    await m.React('⚡'); // React with lightning icon
 
-    const animations = ['🔄', '🔃', '⏳', '⏱️', '🌀'];
-    const speedEmojis = ['💨', '🚀', '⚡', '🔥', '🎯', '✨', '🌪️', '💥'];
+    // Speed effect emojis
+    const effects = ['⚡', '🔥', '💥', '🚀', '🎯', '🔮', '🌀', '💎', '🌪️', '✨'];
+    
+    // Randomize effects
+    const randomEffect = () => effects[Math.floor(Math.random() * effects.length)];
 
-    const animation = animations[Math.floor(Math.random() * animations.length)];
-    let speedEmoji = speedEmojis[Math.floor(Math.random() * speedEmojis.length)];
+    // Initial animated message
+    const msg = await sock.sendMessage(m.from, { 
+      text: `*⚡ BOOSTING SPEED...* ${randomEffect()}`
+    }, { quoted: m });
 
-    while (animation === speedEmoji) {
-      speedEmoji = speedEmojis[Math.floor(Math.random() * speedEmojis.length)];
-    }
+    const editMessage = async (newText) => {
+      await sock.sendMessage(m.from, { 
+        text: newText, 
+        edit: msg.key 
+      });
+    };
 
-    await m.React(animation); // Intermediate animation emoji
+    // ⚡ Animated speed boost sequence
+    await new Promise(res => setTimeout(res, 600));
+    await editMessage(`*🚀 SYSTEM OPTIMIZING...* ${randomEffect()}`);
 
+    await new Promise(res => setTimeout(res, 600));
+    await editMessage(`*💨 TURBOCHARGING SPEED...* ${randomEffect()}`);
+
+    await new Promise(res => setTimeout(res, 600));
+    await editMessage(`*🔮 ENHANCING PERFORMANCE...* ${randomEffect()}`);
+
+    // Speed Calculation
     const end = performance.now();
     const responseTime = (end - start).toFixed(2);
 
-    const loadingPhases = [
-      `*⏳ Calculating speed...*`,
-      `*🚀 Almost done...*`,
-      `*🎯 Getting results...*`
-    ];
-
-    for (const phase of loadingPhases) {
-      await sock.sendMessage(m.from, { text: phase }, { quoted: m });
-      await new Promise(res => setTimeout(res, 500));
-    }
-
-    const responseText = `> *SARKAR-MD SPEED:* *${responseTime}ms* ${speedEmoji}`;
-
-    await sock.sendMessage(
-      m.from,
-      {
-        text: responseText,
-        contextInfo: {
-          mentionedJid: [m.sender],
-          isForwarded: true,
-          forwardingScore: 999,
-          externalAdReply: {
-            title: "🚀 Sarkar-MD Speed Test",
-            body: "Fastest WhatsApp Bot",
-            thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
-            sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD/fork',
-            mediaType: 1,
-            renderLargerThumbnail: false,
-          },
-        },
-      },
-      { quoted: m }
-    );
+    await new Promise(res => setTimeout(res, 600));
+    await editMessage(`> *⚡ SARKAR-MD SPEED:* *${responseTime}ms* ${randomEffect()}`);
 
     await m.React('✅'); // Success reaction
   }
