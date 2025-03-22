@@ -1,6 +1,5 @@
 // Sarkar-MD AutoBio System
 import config from '../../config.cjs';
-import { exec } from 'child_process';
 
 const quotes = [
   "Stay focused and never give up!",
@@ -27,11 +26,10 @@ const updateBio = async (sock) => {
     const bio = `Sarkar-MD is Active From ${Math.floor(uptime)}s | RealDate: ${realdate} | RealTime: ${realtime} | Quote: ${quote}`;
 
     try {
-      exec(`termux-contact-bio "${bio}"`, (error) => {
-        if (error) console.error("Failed to update bio:", error);
-      });
+      await sock.updateProfileStatus(bio);
+      console.log("Bio updated successfully:", bio);
     } catch (err) {
-      console.error("Error updating bio:", err);
+      console.error("Failed to update bio:", err);
     }
   }, 60000); // Updates every 1 minute
 };
