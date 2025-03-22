@@ -34,34 +34,29 @@ const configVar = async (m, sock) => {
   let envData = fs.readFileSync('.env', 'utf8').split('\n');
   let updated = false;
 
+  // ✅ Properly check if key exists in .env
+  const envExists = envData.some(line => line.startsWith(settingKey + "="));
+
   if (args[0].toLowerCase() === "addvar") {
-    // ✅ `addvar`: Add only if it doesn't exist
-    if (config[settingKey] !== undefined) {
+    if (envExists) {
       return await sock.sendMessage(m.from, { text: `⚠️ *${settingKey} already exists! Use .editvar instead.*` }, { quoted: m });
     }
     envData.push(`${settingKey}=${settingValue}`);
     updated = true;
   } else if (args[0].toLowerCase() === "editvar") {
-    // ✅ `editvar`: Update only if it exists
-    let found = false;
-    envData = envData.map(line => {
-      if (line.startsWith(settingKey)) {
-        found = true;
-        return `${settingKey}=${settingValue}`;
-      }
-      return line;
-    });
-
-    if (!found) {
+    if (!envExists) {
       return await sock.sendMessage(m.from, { text: `⚠️ *${settingKey} does not exist! Use .addvar instead.*` }, { quoted: m });
     }
+    envData = envData.map(line => line.startsWith(settingKey + "=") ? `${settingKey}=${settingValue}` : line);
     updated = true;
   }
 
   if (updated) {
     fs.writeFileSync('.env', envData.join('\n'), 'utf8');
-    config[settingKey] = settingValue; // ✅ Update runtime config
 
+    // ✅ Reload `.env` to apply changes dynamically
+    dotenv.config();
+    
     await sock.sendMessage(m.from, {
       text: `✅ *Updated:* ${settingKey} → *${settingValue}*`,
     }, { quoted: m });
