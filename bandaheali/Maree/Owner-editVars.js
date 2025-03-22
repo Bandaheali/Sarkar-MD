@@ -4,53 +4,44 @@ import config from '../../config.cjs';
 
 dotenv.config(); // Load .env file
 
-const configVar = async (m, sock) => {
+const configUpdate = async (m, sock) => {
   const ownerNumber = config.OWNER_NUMBER.replace(/[^0-9]/g, ""); // Owner number clean
   const senderNumber = m.sender.split('@')[0]; // Sender number clean
 
   const prefix = config.PREFIX;
   const cmdArgs = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ') : [];
 
-  if (["addvar", "editvar"].includes(cmdArgs[0].toLowerCase())) {
+  if (cmdArgs[0].toLowerCase() === "editvar") {
     if (senderNumber !== ownerNumber) {
       return await sock.sendMessage(m.from, { text: "❌ *Only the Owner can update settings!*" }, { quoted: m });
     }
 
     if (cmdArgs.length < 3) {
-      return await sock.sendMessage(m.from, { text: "⚠️ *Usage:*\n`.addvar NEW_VARIABLE value`\n`.editvar EXISTING_VARIABLE new_value`" }, { quoted: m });
+      return await sock.sendMessage(m.from, { text: "⚠️ *Usage:* `.configupdate AUTO_STATUS_SEEN true/false`" }, { quoted: m });
     }
 
-    const settingKey = cmdArgs[1].toUpperCase(); // Variable name (e.g., AUTO_STATUS_SEEN)
-    const settingValue = cmdArgs.slice(2).join(' '); // Value (string/boolean)
+    const settingKey = cmdArgs[1].toUpperCase(); // Setting name (e.g., AUTO_STATUS_SEEN)
+    const settingValue = cmdArgs[2].toLowerCase() === 'true'; // Convert to boolean
 
-    let envData = fs.readFileSync('.env', 'utf8').split('\n');
-    let updated = false;
-
-    if (cmdArgs[0].toLowerCase() === "addvar") {
-      // ✅ `addvar`: Add only if it doesn't exist
-      if (config[settingKey] !== undefined) {
-        return await sock.sendMessage(m.from, { text: `⚠️ *${settingKey} already exists! Use .editvar instead.*` }, { quoted: m });
-      }
-      envData.push(`${settingKey}=${settingValue}`);
-      updated = true;
-    } else if (cmdArgs[0].toLowerCase() === "editvar") {
-      // ✅ `editvar`: Update only if it exists
-      if (config[settingKey] === undefined) {
-        return await sock.sendMessage(m.from, { text: `⚠️ *${settingKey} does not exist! Use .addvar instead.*` }, { quoted: m });
-      }
-      envData = envData.map(line => line.startsWith(settingKey) ? `${settingKey}=${settingValue}` : line);
-      updated = true;
+    if (!(settingKey in config)) {
+      return await sock.sendMessage(m.from, { text: `❌ *Invalid setting:* ${settingKey}` }, { quoted: m });
     }
 
-    if (updated) {
-      fs.writeFileSync('.env', envData.join('\n'), 'utf8');
-      config[settingKey] = settingValue; // ✅ Update runtime config
+    // ✅ Update config object in runtime
+    config[settingKey] = settingValue;
 
-      await sock.sendMessage(m.from, {
-        text: `✅ *Updated:* ${settingKey} → *${settingValue}*`,
-      }, { quoted: m });
-    }
+    // ✅ Update .env file
+    const envData = fs.readFileSync('.env', 'utf8').split('\n');
+    const newEnvData = envData.map(line =>
+      line.startsWith(settingKey) ? `${settingKey}=${settingValue}` : line
+    );
+
+    fs.writeFileSync('.env', newEnvData.join('\n'), 'utf8');
+
+    await sock.sendMessage(m.from, {
+      text: `✅ *Updated:* ${settingKey} → *${settingValue}*`,
+    }, { quoted: m });
   }
 };
 
-export default configVar;
+export default configUpdate;
