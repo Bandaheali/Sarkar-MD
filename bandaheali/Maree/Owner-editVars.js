@@ -11,7 +11,7 @@ const configVar = async (m, sock) => {
   const prefix = config.PREFIX;
   const args = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ') : [];
 
-  if (!["addvar", "editvar"].includes(args[0].toLowerCase())) return; // ❌ If not a config command, ignore
+  if (!["addvar", "editvar"].includes(args[0]?.toLowerCase())) return; // ❌ Ignore if not a config command
 
   if (senderNumber !== ownerNumber) {
     return await sock.sendMessage(m.from, { text: "❌ *Only the Owner can update settings!*" }, { quoted: m });
@@ -26,6 +26,11 @@ const configVar = async (m, sock) => {
   const settingKey = args[1].toUpperCase(); // Convert key to uppercase
   const settingValue = args.slice(2).join(' '); // Get value (string)
 
+  // ✅ Ensure .env file exists
+  if (!fs.existsSync('.env')) {
+    fs.writeFileSync('.env', '', 'utf8'); // Create empty .env file
+  }
+
   let envData = fs.readFileSync('.env', 'utf8').split('\n');
   let updated = false;
 
@@ -38,10 +43,18 @@ const configVar = async (m, sock) => {
     updated = true;
   } else if (args[0].toLowerCase() === "editvar") {
     // ✅ `editvar`: Update only if it exists
-    if (config[settingKey] === undefined) {
+    let found = false;
+    envData = envData.map(line => {
+      if (line.startsWith(settingKey)) {
+        found = true;
+        return `${settingKey}=${settingValue}`;
+      }
+      return line;
+    });
+
+    if (!found) {
       return await sock.sendMessage(m.from, { text: `⚠️ *${settingKey} does not exist! Use .addvar instead.*` }, { quoted: m });
     }
-    envData = envData.map(line => line.startsWith(settingKey) ? `${settingKey}=${settingValue}` : line);
     updated = true;
   }
 
