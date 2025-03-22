@@ -29,20 +29,20 @@ const ping = async (m, sock) => {
     };
 
     // ⚡ Animated speed boost sequence
-    await new Promise(res => setTimeout(res, 600));
+    await new Promise(res => setTimeout(res, 200));
     await editMessage(`*🚀 SYSTEM OPTIMIZING...* ${randomEffect()}`);
 
-    await new Promise(res => setTimeout(res, 600));
+    await new Promise(res => setTimeout(res, 200));
     await editMessage(`*💨 TURBOCHARGING SPEED...* ${randomEffect()}`);
 
-    await new Promise(res => setTimeout(res, 600));
+    await new Promise(res => setTimeout(res, 200));
     await editMessage(`*🔮 ENHANCING PERFORMANCE...* ${randomEffect()}`);
 
     // Speed Calculation
     const end = performance.now();
     const responseTime = (end - start).toFixed(2);
 
-    await new Promise(res => setTimeout(res, 600));
+    await new Promise(res => setTimeout(res, 100));
     await editMessage(`> *⚡ SARKAR-MD SPEED:* *${responseTime}ms* ${randomEffect()}`);
 
     await m.React('✅'); // Success reaction
