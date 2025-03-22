@@ -30,7 +30,7 @@ const ytSearch = async (m, sock) => {
         message += `*${index + 1}. ${video.title}*\n`;
         message += `📌 *Channel:* ${video.author.name}\n`;
         message += `⏳ *Duration:* ${video.timestamp}\n`;
-        message += `🔗 *Link:* ${video.url}\n\n𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃`;
+        message += `🔗 *Link:* ${video.url}\n\n𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃\n\n`;
       });
 
       await sock.sendMessage(
