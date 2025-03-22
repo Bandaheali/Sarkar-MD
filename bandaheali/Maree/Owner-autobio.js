@@ -1,43 +1,85 @@
-// Sarkar-MD AutoBio System
+//Sarkar-MD
+
+import fs from 'fs';
 import config from '../../config.cjs';
 
-const quotes = [
-  "Stay focused and never give up!",
-  "Success comes to those who work for it.",
-  "Every moment is a fresh beginning.",
-  "Dream big, work hard, stay humble.",
-  "Your only limit is your mind.",
-  "Believe in yourself and all that you are.",
-  "Great things take time, keep pushing forward.",
-  "Hustle until your haters ask if you're hiring.",
-  "Don't stop until you're proud.",
-  "Opportunities don't happen, you create them."
-];
+// For tracking auto-bio interval
+const intervals = {}; 
 
-const updateBio = async (sock) => {
-  if (!config.AUTO_BIO) return;
+const startTime = Date.now(); // Store bot start time
 
-  setInterval(async () => {
-    const uptime = process.uptime();
-    const realdate = new Date().toLocaleDateString('en-GB');
-    const realtime = new Date().toLocaleTimeString('en-GB');
-    const quote = quotes[Math.floor(Math.random() * quotes.length)];
-
-    const bio = `Sarkar-MD is Active From ${Math.floor(uptime)}s | RealDate: ${realdate} | RealTime: ${realtime} | Quote: ${quote}`;
-
-    try {
-      await sock.ws.send(
-        JSON.stringify({
-          tag: 'iq',
-          attrs: { to: 's.whatsapp.net', type: 'set', xmlns: 'status' },
-          content: [{ tag: 'status', attrs: {}, content: Buffer.from(bio, 'utf-8') }],
-        })
-      );
-      console.log("Bio updated successfully:", bio);
-    } catch (err) {
-      console.error("Failed to update bio:", err);
-    }
-  }, 60000); // Updates every 1 minute
+// Function to get real-time formatted date
+const getRealDate = () => {
+    const now = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return now.toLocaleDateString('en-US', options); // Example: "March 22, 2025"
 };
 
-export default updateBio;
+// Function to get real-time formatted time
+const getRealTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); 
+    // Example: "10:15 PM"
+};
+
+// Function to calculate uptime
+const getUptime = () => {
+    const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    return `${days}d ${hours}h ${minutes}m`;
+};
+
+// Function to get a random quote
+const getRandomQuote = () => {
+    const randomQuotes = [
+        "The best way to predict the future is to create it.",
+        "Success is not final, failure is not fatal.",
+        "Believe you can and you're halfway there.",
+        "Hardships prepare people for an extraordinary destiny.",
+        "Your time is limited, don't waste it.",
+        "The only way to do great work is to love what you do.",
+        "Success usually comes to those who are too busy to look for it.",
+        "The only limit to our realization of tomorrow is our doubts of today.",
+        "It always seems impossible until it’s done."
+    ];
+    return randomQuotes[Math.floor(Math.random() * randomQuotes.length)];
+};
+
+// Function to update Bio with real-time date, time, uptime, and quote
+const updateBio = async (Matrix) => {
+    const currentDate = getRealDate();  // Get real-time date
+    const currentTime = getRealTime();  // Get real-time time
+    const uptime = getUptime();         // Calculate uptime
+    const randomQuote = getRandomQuote(); 
+
+    const newBio = `Sarkar-MD Active | ${currentDate} | ${currentTime} | Uptime: ${uptime} | Quote: "${randomQuote}"`;
+
+    try {
+        await Matrix.updateProfileStatus(newBio);
+        console.log("Bio updated successfully:", newBio);
+    } catch (error) {
+        console.error("Failed to update bio:", error);
+    }
+};
+
+// Command function to enable/disable Auto Bio
+const autobioCommand = async (m, Matrix) => {
+    if (config.AUTO_BIO) {
+        if (!intervals['autobio']) {
+            intervals['autobio'] = setInterval(() => updateBio(Matrix), 60000); // Update every 1 min
+            console.log("Auto-Bio updates enabled.");
+        }
+    } else {
+        if (intervals['autobio']) {
+            clearInterval(intervals['autobio']);
+            delete intervals['autobio'];
+            console.log("Auto-Bio updates disabled.");
+        }
+    }
+};
+
+export default autobioCommand;
+
+//POWERED BY BANDAHEALI
