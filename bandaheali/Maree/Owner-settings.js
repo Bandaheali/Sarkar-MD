@@ -23,7 +23,7 @@ const configCheck = async (m, sock) => {
       .map(([key, value]) => `*${key}:* ${value}`)
       .join("\n");
 
-    const responseText = `> *BOT CONFIG SETTINGS:*\n\n${configValues}`;
+    const responseText = `> *𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃 𝐂𝐎𝐍𝐅𝐈𝐆 𝐒𝐄𝐓𝐓𝐈𝐍𝐆𝐒:*\n\n${configValues}\n\n𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃`;
 
     await sock.sendMessage(
       m.from,
