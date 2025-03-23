@@ -12,7 +12,20 @@ const pair = async (m, sock) => {
         if (!text) {
             return await sock.sendMessage(
                 m.from,
-                { text: "❌ *Invalid Format!*\n\n✅ *Example:* `.pair +923477868XXX`" },
+                {
+                    text: "❌ *Invalid Format!*\n\n✅ *Example:* `.pair +923477868XXX`",
+                    contextInfo: {
+                        forwardingScore: 999,
+                        externalAdReply: {
+                            title: "✨ Sarkar-MD ✨",
+                            body: "Pairing Code Generator",
+                            thumbnailUrl: 'https://i.imgur.com/NkUITKj.mp4', // Add any image or video if needed
+                            sourceUrl: 'https://whatsapp.com/channel/0029VajGHyh2phHOH5zJl73P',
+                            mediaType: 1,
+                            renderLargerThumbnail: false,
+                        },
+                    },
+                },
                 { quoted: m }
             );
         }
@@ -32,24 +45,33 @@ const pair = async (m, sock) => {
 
             const pairingCode = data.pairing_code;
 
-            // Step 1: React with loading emoji
-            await m.react('⏳'); 
+            // React with loading and success icons
+            await m.React('⏳'); 
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await m.React('✅');
 
-            // Step 2: Send "Pairing Code Generator" message
+            // Send stylish alive-styled pairing message
+            const responseText = `*${pairingCode}*`;
+
             await sock.sendMessage(
                 m.from,
-                { text: "🔥 *SARKAR-MD Pairing Code Generator*\n\n⏳ *Generating Code...*" },
+                {
+                    text: responseText,
+                    contextInfo: {
+                        isForwarded: true, // Forwarding enabled
+                        forwardingScore: 999,
+                        externalAdReply: {
+                            title: "🔥 Sarkar-MD 🔥",
+                            body: "Pairing Code Generator",
+                            thumbnailUrl: 'https://i.imgur.com/NkUITKj.mp4', // Add any cool image or video if needed
+                            sourceUrl: 'https://whatsapp.com/channel/0029VajGHyh2phHOH5zJl73P',
+                            mediaType: 1,
+                            renderLargerThumbnail: false,
+                        },
+                    },
+                },
                 { quoted: m }
             );
-
-            // Step 3: Wait for 2 seconds
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Step 4: React with success emoji
-            await m.react('✅');
-
-            // Step 5: Send only the pairing code
-            await sock.sendMessage(m.from, { text: pairingCode }, { quoted: m });
 
         } catch (error) {
             console.error(error);
