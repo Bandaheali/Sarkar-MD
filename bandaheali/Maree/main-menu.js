@@ -163,6 +163,9 @@ const menu = async (m, sock) => {
 *│* 💙 *${prefix}HideTag*
 *│* 💙 *${prefix}Open*
 *│* 💙 *${prefix}Close*
+*│* 💙 *${prefix}Add*
+*│* 💙 *${prefix}Invite*
+*│* 💙 *${prefix}Kick*
 *│* 💙 *${prefix}Dis*
  ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
           break;
