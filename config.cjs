@@ -14,7 +14,6 @@ const config = {
   AUTO_REACT: process.env.AUTO_REACT !== undefined ? process.env.AUTO_REACT === 'true' : false,
   PM_BLOCK: process.env.PM_BLOCK !== undefined ? process.env.PM_BLOCK === 'true' : false,
   AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
-  CHAT_BOT: process.env.CHAT_BOT !== undefined ? process.env.CHAT_BOT === 'false' : false,
   HEART_REACT: process.env.HEART_REACT !== undefined ? process.env.HEART_REACT === 'true' : false,
   REJECT_CALL: process.env.REJECT_CALL !== undefined ? process.env.REJECT_CALL === 'true' : false, 
   NOT_ALLOW: process.env.NOT_ALLOW !== undefined ? process.env.NOT_ALLOW === 'true' : true,
