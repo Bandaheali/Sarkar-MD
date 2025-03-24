@@ -70,6 +70,9 @@ const update = async (m, sock) => {
       console.log("📂 ZIP extracted.");
       await editMessage("```🔄 Replacing files...```");
 
+      // Cleanup old files before replacing
+      deleteOldFiles(process.cwd());
+
       // Replace files
       const sourcePath = path.join(extractPath, "Sarkar-MD-main");
       copyFolderSync(sourcePath, process.cwd());
@@ -108,6 +111,24 @@ function copyFolderSync(source, target) {
       fs.copyFileSync(srcPath, destPath);
     }
   }
+}
+
+// Helper function to delete all old files and folders
+function deleteOldFiles(directory) {
+  const files = fs.readdirSync(directory);
+  
+  // Delete each file/folder in the directory
+  for (const file of files) {
+    const fullPath = path.join(directory, file);
+    const stat = fs.lstatSync(fullPath);
+
+    if (stat.isDirectory()) {
+      fs.rmSync(fullPath, { recursive: true, force: true });
+    } else {
+      fs.unlinkSync(fullPath);
+    }
+  }
+  console.log("🗑️ Old files deleted.");
 }
 
 export default update;
