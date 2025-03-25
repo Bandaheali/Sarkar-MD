@@ -51,19 +51,15 @@ export const handleAntilink = async (m, sock, logger, isBotAdmins, isAdmins, isC
     }
 
     if (antilinkSettings[m.from]) {
-        if (m.body.match(/(chat.whatsapp.com\/)/gi)) {
+        // ✅ Updated Regex: Now detects **all types of links**
+        const linkRegex = /(https?:\/\/[^\s]+)/gi;
+
+        if (m.body.match(linkRegex)) {
             if (!isBotAdmins) {
                 await sock.sendMessage(m.from, { text: `The bot needs to be an admin to remove links.` });
                 return;
             }
 
-            let gclink = `https://chat.whatsapp.com/${await sock.groupInviteCode(m.from)}`;
-            let isLinkThisGc = new RegExp(gclink, 'i');
-            let isgclink = isLinkThisGc.test(m.body);
-            if (isgclink) {
-                await sock.sendMessage(m.from, { text: `The link you shared is for this group, so you won't be removed.` });
-                return;
-            }
             if (isAdmins) {
                 await sock.sendMessage(m.from, { text: `Admins are allowed to share links.` });
                 return;
@@ -95,7 +91,7 @@ export const handleAntilink = async (m, sock, logger, isBotAdmins, isAdmins, isC
 
             if (warningCounts[m.from][m.sender] < 3) {
                 await sock.sendMessage(m.from, {
-                    text: `\`\`\`「 Group Link Detected 」\`\`\`\n\n@${m.sender.split("@")[0]}, please do not share group links in this group.\n\n⚠️ Warning: ${warningCounts[m.from][m.sender]}/3`,
+                    text: `\`\`\`「 Link Detected 」\`\`\`\n\n@${m.sender.split("@")[0]}, please do not share links in this group.\n\n⚠️ Warning: ${warningCounts[m.from][m.sender]}/3`,
                     contextInfo: { mentionedJid: [m.sender] }
                 }, { quoted: m });
             } else {
