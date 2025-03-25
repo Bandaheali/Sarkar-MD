@@ -10,40 +10,12 @@ const ping = async (m, sock) => {
     const start = performance.now();
     await m.React('⚡'); // React with lightning icon
 
-    // Speed effect emojis
-    const effects = ['⚡', '🔥', '💥', '🚀', '🎯', '🔮', '🌀', '💎', '🌪️', '✨'];
-    
-    // Randomize effects
-    const randomEffect = () => effects[Math.floor(Math.random() * effects.length)];
-
-    // Initial animated message
-    const msg = await sock.sendMessage(m.from, { 
-      text: `*⚡ BOOSTING SPEED...* ${randomEffect()}`
-    }, { quoted: m });
-
-    const editMessage = async (newText) => {
-      await sock.sendMessage(m.from, { 
-        text: newText, 
-        edit: msg.key 
-      });
-    };
-
-    // ⚡ Animated speed boost sequence
-    await new Promise(res => setTimeout(res, 200));
-    await editMessage(`*🚀 SYSTEM OPTIMIZING...* ${randomEffect()}`);
-
-    await new Promise(res => setTimeout(res, 200));
-    await editMessage(`*💨 TURBOCHARGING SPEED...* ${randomEffect()}`);
-
-    await new Promise(res => setTimeout(res, 200));
-    await editMessage(`*🔮 ENHANCING PERFORMANCE...* ${randomEffect()}`);
-
-    // Speed Calculation
     const end = performance.now();
     const responseTime = (end - start).toFixed(2);
 
-    await new Promise(res => setTimeout(res, 100));
-    await editMessage(`> *⚡ SARKAR-MD SPEED:* *${responseTime}ms* ${randomEffect()}`);
+    await sock.sendMessage(m.from, { 
+      text: `*SARKAR-MD SPEED:* *${responseTime}ms*`
+    }, { quoted: m });
 
     await m.React('✅'); // Success reaction
   }
