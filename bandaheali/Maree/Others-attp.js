@@ -1,4 +1,5 @@
 import config from '../../config.cjs';
+import axios from 'axios';
 
 const attp = async (m, sock) => {
   const prefix = config.PREFIX;
