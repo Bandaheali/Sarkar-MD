@@ -1,7 +1,7 @@
 import { serialize } from '../../lib/Serializer.js';
 
-const antilinkSettings = {}; // In-memory database for antilink settings
-const userWarnings = {}; // Store user warning count
+const antilinkSettings = {}; // Stores antilink settings for each chat
+const warningCounts = {}; // Stores warning counts for each user in each chat
 
 export const handleAntilink = async (m, sock, logger, isBotAdmins, isAdmins, isCreator) => {
     const PREFIX = /^[\\/!#.]/;
@@ -27,7 +27,8 @@ export const handleAntilink = async (m, sock, logger, isBotAdmins, isAdmins, isC
         if (action === 'on') {
             if (isAdmins) {
                 antilinkSettings[m.from] = true;
-                await sock.sendMessage(m.from, { text: 'Antilink feature has been enabled for this group.' }, { quoted: m });
+                warningCounts[m.from] = {}; // Reset warnings when enabling
+                await sock.sendMessage(m.from, { text: 'Antilink feature has been enabled for this chat.' }, { quoted: m });
             } else {
                 await sock.sendMessage(m.from, { text: 'Only admins can enable the antilink feature.' }, { quoted: m });
             }
@@ -37,7 +38,8 @@ export const handleAntilink = async (m, sock, logger, isBotAdmins, isAdmins, isC
         if (action === 'off') {
             if (isAdmins) {
                 antilinkSettings[m.from] = false;
-                await sock.sendMessage(m.from, { text: 'Antilink feature has been disabled for this group.' }, { quoted: m });
+                warningCounts[m.from] = {}; // Clear warnings when disabling
+                await sock.sendMessage(m.from, { text: 'Antilink feature has been disabled for this chat.' }, { quoted: m });
             } else {
                 await sock.sendMessage(m.from, { text: 'Only admins can disable the antilink feature.' }, { quoted: m });
             }
@@ -58,7 +60,6 @@ export const handleAntilink = async (m, sock, logger, isBotAdmins, isAdmins, isC
             let gclink = `https://chat.whatsapp.com/${await sock.groupInviteCode(m.from)}`;
             let isLinkThisGc = new RegExp(gclink, 'i');
             let isgclink = isLinkThisGc.test(m.body);
-
             if (isgclink) {
                 await sock.sendMessage(m.from, { text: `The link you shared is for this group, so you won't be removed.` });
                 return;
@@ -72,40 +73,44 @@ export const handleAntilink = async (m, sock, logger, isBotAdmins, isAdmins, isC
                 return;
             }
 
-            // Initialize warning count if not exists
-            if (!userWarnings[m.sender]) {
-                userWarnings[m.sender] = 1;
-            } else {
-                userWarnings[m.sender]++;
+            // Initialize warnings if not already set
+            if (!warningCounts[m.from]) {
+                warningCounts[m.from] = {};
+            }
+            if (!warningCounts[m.from][m.sender]) {
+                warningCounts[m.from][m.sender] = 0;
             }
 
-            if (userWarnings[m.sender] < 4) {
-                // Send warning message
+            warningCounts[m.from][m.sender] += 1; // Increase warning count
+
+            // Delete the message
+            await sock.sendMessage(m.from, {
+                delete: {
+                    remoteJid: m.from,
+                    fromMe: false,
+                    id: m.key.id,
+                    participant: m.key.participant
+                }
+            });
+
+            if (warningCounts[m.from][m.sender] < 3) {
                 await sock.sendMessage(m.from, {
-                    text: `\`\`\`「 Group Link Detected 」\`\`\`\n\n@${m.sender.split("@")[0]}, please do not share group links in this group.\nWarning: ${userWarnings[m.sender]}/3`,
+                    text: `\`\`\`「 Group Link Detected 」\`\`\`\n\n@${m.sender.split("@")[0]}, please do not share group links in this group.\n\n⚠️ Warning: ${warningCounts[m.from][m.sender]}/3`,
                     contextInfo: { mentionedJid: [m.sender] }
                 }, { quoted: m });
-
-                // Delete message
-                await sock.sendMessage(m.from, {
-                    delete: {
-                        remoteJid: m.from,
-                        fromMe: false,
-                        id: m.key.id,
-                        participant: m.key.participant
-                    }
-                });
             } else {
-                // If 4th warning, remove user
                 await sock.sendMessage(m.from, {
-                    text: `\`\`\`「 Group Link Detected 」\`\`\`\n\n@${m.sender.split("@")[0]} has been removed for repeatedly sharing group links.`,
+                    text: `🚨 @${m.sender.split("@")[0]} has been removed from the group for sharing links multiple times.`,
                     contextInfo: { mentionedJid: [m.sender] }
                 });
 
-                await sock.groupParticipantsUpdate(m.from, [m.sender], 'remove');
+                // Remove user from group after 5 seconds
+                setTimeout(async () => {
+                    await sock.groupParticipantsUpdate(m.from, [m.sender], 'remove');
+                }, 5000);
 
-                // Reset warning count after removal
-                delete userWarnings[m.sender];
+                // Reset warning count for the removed user
+                delete warningCounts[m.from][m.sender];
             }
         }
     }
