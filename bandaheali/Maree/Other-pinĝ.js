@@ -10,34 +10,40 @@ const ping = async (m, sock) => {
     const start = performance.now();
     await m.React('⚡'); // React with lightning icon
 
+    // Speed effect emojis
+    const effects = ['⚡', '🔥', '💥', '🚀', '🎯', '🔮', '🌀', '💎', '🌪️', '✨'];
+    
+    // Randomize effects
+    const randomEffect = () => effects[Math.floor(Math.random() * effects.length)];
+
+    // Initial animated message
+    const msg = await sock.sendMessage(m.from, { 
+      text: `*⚡ BOOSTING SPEED...* ${randomEffect()}`
+    }, { quoted: m });
+
+    const editMessage = async (newText) => {
+      await sock.sendMessage(m.from, { 
+        text: newText, 
+        edit: msg.key 
+      });
+    };
+
+    // ⚡ Animated speed boost sequence
+    await new Promise(res => setTimeout(res, 100));
+    await editMessage(`*🚀 SYSTEM OPTIMIZING...* ${randomEffect()}`);
+
+    await new Promise(res => setTimeout(res, 100));
+    await editMessage(`*💨 TURBOCHARGING SPEED...* ${randomEffect()}`);
+
+    await new Promise(res => setTimeout(res, 100));
+    await editMessage(`*🔮 ENHANCING PERFORMANCE...* ${randomEffect()}`);
+
+    // Speed Calculation
     const end = performance.now();
     const responseTime = (end - start).toFixed(2);
-    const responseText = `*⚡ SARKAR-MD SPEED:* *${responseTime}ms*`;
 
-    await sock.sendMessage(
-      m.from,
-      {
-        text: responseText,
-        contextInfo: {
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363315182578784@newsletter',
-            newsletterName: "Sarkar-MD",
-            serverMessageId: -1,
-          },
-          forwardingScore: 999, // Score to indicate it has been forwarded
-          externalAdReply: {
-            title: "✨ Sarkar-MD ✨",
-            body: "Ping Speed Calculation",
-            thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp', // Thumbnail image
-            sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD/fork', // Source link
-            mediaType: 1,
-            renderLargerThumbnail: false,
-          },
-        },
-      },
-      { quoted: m }
-    );
+    await new Promise(res => setTimeout(res, 100));
+    await editMessage(`> *⚡ SARKAR-MD SPEED:* *${responseTime}ms* ${randomEffect()}`);
 
     await m.React('✅'); // Success reaction
   }
