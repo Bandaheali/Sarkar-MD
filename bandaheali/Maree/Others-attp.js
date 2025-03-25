@@ -1,5 +1,4 @@
 import config from '../../config.cjs';
-import axios from 'axios';
 
 const attp = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -19,10 +18,11 @@ const attp = async (m, sock) => {
         return;
       }
 
-      await m.React('🪀'); // React with yo-yo emoji
+      await m.React('🪀');
 
-  
-      const gifBuffer = await axios.get(`https://api.nexoracle.com/image-creating/attp?apikey=2f9b02060a600d6c88&text=${encodeURIComponent(args)}`);
+      // Using plain text without styling
+      const text = args;
+      const gifBuffer = await fetchGif(`https://api.nexoracle.com/image-creating/attp?apikey=2f9b02060a600d6c88&text=${encodeURIComponent(text)}`);
       const stickerBuffer = await gifToSticker(gifBuffer);
 
       await sock.sendMessage(
@@ -31,14 +31,14 @@ const attp = async (m, sock) => {
         { quoted: m }
       );
 
-      await m.React('✅'); // Success reaction
+      await m.React('✅');
     } catch (error) {
       await sock.sendMessage(
         m.from,
         { text: `❌ ${error.message}` },
         { quoted: m }
       );
-      await m.React('❌'); // Error reaction
+      await m.React('❌');
     }
   }
 };
