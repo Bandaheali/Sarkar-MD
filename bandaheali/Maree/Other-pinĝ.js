@@ -11,16 +11,14 @@ const fancyStyles = [
   "🌀 *ＳＡＲＫＡＲＭＤ ＳＰＥＥＤ:* ⚡",
   "🎯 *𝕊𝔸ℝ𝕂𝔸ℝ 𝕄𝔻 𝕊ℙ𝔼𝔼𝔻:* 💥",
   "⚡ *𝗦𝗔𝗥𝗞𝗔𝗥-𝗠𝗗 𝗦𝗣𝗘𝗘𝗗:* 🌪️",
-  "💫 *𝘚𝘈𝘙𝘒𝘈𝘙-𝘔𝘋 𝘚𝘗𝘌𝘌𝘿:* 🚀",
+  "💫 *𝘚𝘈𝘙𝘒𝘈𝘙-𝘔𝘋 𝘚𝘗𝘌𝘌𝘋:* 🚀",
   "🌟 *𝚂𝙰𝚁𝙺𝙰𝚁-𝙼𝙳 𝚂𝙿𝙴𝙴𝙳:* 🔥",
   "🔰 *ＳＡＲＫＡＲ －ＭＤ ＳＰＥＥＤ:* ⚡",
   "🛸 *𝒮𝒜𝑅𝒦𝒜𝑅-𝑀𝒟 𝒮𝒫𝐸𝐸𝒟:* 💨",
   "🌪️ *𝙎𝘼𝙍𝙆𝘼𝙍-𝙈𝘿 𝙎𝙋𝙀𝙴𝘿:* 💎"
 ];
 
-const colors = [
-  "🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "🟤", "⚫", "⚪", "🟡", "🔵", "🟣", "🔴"
-];
+const colors = ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "🟤", "⚫", "⚪"];
 
 const ping = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -28,18 +26,19 @@ const ping = async (m, sock) => {
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
 
-  if (["ping", "speed", "p"].includes(cmd)) {
-    const start = performance.now();
-    await m.React('⚡'); // React with lightning icon
-
-    const end = performance.now();
+  if (cmd === "ping") {
+    const start = new Date().getTime();
+    await m.React('⏳'); // Loading reaction
+    const end = new Date().getTime();
     const responseTime = (end - start).toFixed(2);
 
-    // Random fancy text variant & color emoji
+    // Select a random fancy style and color
     const fancyText = fancyStyles[Math.floor(Math.random() * fancyStyles.length)];
     const colorEmoji = colors[Math.floor(Math.random() * colors.length)];
 
     const responseText = `${colorEmoji} *${fancyText}* *${responseTime}ms*`;
+
+    await m.React('✅'); // Success reaction
 
     await sock.sendMessage(
       m.from,
@@ -56,8 +55,8 @@ const ping = async (m, sock) => {
           externalAdReply: {
             title: "✨ Sarkar-MD ✨",
             body: "Ping Speed Calculation",
-            thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp', // Thumbnail image
-            sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD/fork', // Source link
+            thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
+            sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD/fork',
             mediaType: 1,
             renderLargerThumbnail: false,
           },
@@ -65,8 +64,6 @@ const ping = async (m, sock) => {
       },
       { quoted: m }
     );
-
-    await m.React('✅'); // Success reaction
   }
 };
 
