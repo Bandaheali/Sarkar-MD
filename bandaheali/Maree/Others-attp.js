@@ -1,5 +1,6 @@
 import axios from 'axios';
 import config from '../../config.cjs';
+import { writeFile } from 'fs/promises';
 
 const attp = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -13,21 +14,26 @@ const attp = async (m, sock) => {
       return await sock.sendMessage(m.from, { text: "⚠️ *Please provide text for the sticker!*" }, { quoted: m });
     }
 
-    await m.React('⏳'); // Loading reaction
+    await m.React('⏳'); // Reacting with loading emoji
 
     try {
       const apiUrl = `https://api.nexoracle.com/image-creating/attp?apikey=sarkar_786&text=${encodeURIComponent(text)}`;
       const response = await axios.get(apiUrl, { responseType: 'arraybuffer' });
 
+      // **Save sticker to a temporary file**
+      const stickerPath = `./temp/${Date.now()}.webp`;
+      await writeFile(stickerPath, response.data);
+
+      // **Send sticker**
       await sock.sendMessage(
         m.from,
-        { sticker: Buffer.from(response.data) }, // Sticker as WebP
+        { sticker: { url: stickerPath } }, // Sending sticker using file URL
         { quoted: m }
       );
 
-      await m.React('✅'); // Success reaction
+      await m.React('✅'); // Reacting with success emoji
     } catch (error) {
-      await m.React('❌'); // Error reaction
+      await m.React('❌'); // Reacting with error emoji
       await sock.sendMessage(m.from, { text: "⚠️ *Error fetching ATTP sticker!*" }, { quoted: m });
       console.error("ATTP API Error:", error);
     }
