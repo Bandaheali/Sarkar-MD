@@ -7,10 +7,9 @@ const ping = async (m, sock) => {
     : '';
 
   if (["ping", "speed", "p"].includes(cmd)) {
- 
+    const start = performance.now();
     await m.React('⚡'); // React with lightning icon
 
-    const start = performance.now();
     const end = performance.now();
     const responseTime = (end - start).toFixed(2);
     const responseText = `*⚡ SARKAR-MD SPEED:* *${responseTime}ms*`;
