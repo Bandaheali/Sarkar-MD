@@ -20,14 +20,14 @@ const attp = async (m, sock) => {
       const apiUrl = `https://api.nexoracle.com/image-creating/attp?apikey=sarkar_786&text=${encodeURIComponent(text)}`;
       const response = await axios.get(apiUrl, { responseType: 'arraybuffer' });
 
-      // **Save sticker to a temporary file**
+      // **Save sticker as WebP file**
       const stickerPath = `./temp/${Date.now()}.webp`;
       await writeFile(stickerPath, response.data);
 
-      // **Send sticker**
+      // **Send as Sticker**
       await sock.sendMessage(
         m.from,
-        { sticker: { url: stickerPath } }, // Sending sticker using file URL
+        { sticker: { url: stickerPath } }, // Sending sticker as WebP
         { quoted: m }
       );
 
