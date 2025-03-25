@@ -21,7 +21,7 @@ const attp = async (m, sock) => {
       await m.React('🪀'); // React with yo-yo emoji
 
   
-      const gifBuffer = await fetchGif(`https://api.nexoracle.com/image-creating/attp?apikey=2f9b02060a600d6c88&text=${encodeURIComponent(args)}`);
+      const gifBuffer = await axios.get(`https://api.nexoracle.com/image-creating/attp?apikey=2f9b02060a600d6c88&text=${encodeURIComponent(args)}`);
       const stickerBuffer = await gifToSticker(gifBuffer);
 
       await sock.sendMessage(
