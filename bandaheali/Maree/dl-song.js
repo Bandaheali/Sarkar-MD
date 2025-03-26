@@ -19,7 +19,7 @@ const dlSong = async (m, sock) => {
       // Search for the video using yt-search
       const searchResults = await yts(text);
       if (!searchResults.videos.length) {
-        return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
+        return sock.sendMessage(m.from, { text: "❌ No results found!\n\nif this command gone fail try song2 || song3" }, { quoted: m });
       }
 
       const video = searchResults.videos[0]; // Get the first result
@@ -31,7 +31,7 @@ const dlSong = async (m, sock) => {
       const result = await response.json();
 
       if (!result.success || !result.result || !result.result.download_url) {
-        return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
+        return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!\n\nif this command gone fail use .song2 || .song3 " }, { quoted: m });
       }
 
       const { title, download_url, thumbnail } = result.result;
@@ -63,7 +63,7 @@ const dlSong = async (m, sock) => {
       );
     } catch (error) {
       console.error("Error in dlSong command:", error);
-      sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
+      sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!\n\nIf this command gone fail use .song2 || song3 " }, { quoted: m });
     }
   }
 };
