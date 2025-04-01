@@ -12,7 +12,6 @@ import 'moment-timezone';
 import _0x5a7360 from 'axios';
 import _0xccedb8 from './config.cjs';
 import _0x11fa72 from './lib/autoreact.cjs';
-import { fileURLToPath } from 'url';
 const {
   emojis,
   doReact
@@ -147,31 +146,9 @@ async function init() {
   }
 }
 init();
-app.use(_0x4ecc7b.static(_0x374270.join(__dirname, 'public')));
-
-
 app.get('/', (_0x1ecf21, _0x282bcc) => {
-  _0x282bcc.sendFile(_0x374270.join(__dirname, 'public', 'main.html'));
+  _0x282bcc.send("SARKAR-MD IS CONNECTED SUCCESSFULLY ✅");
 });
 app.listen(PORT, () => {
   console.log("Sarkar-MD daily users " + PORT);
 });
-
-
-
-// Add this near the top with other imports
-
-
-// Replace this line:
-// const __filename = new URL(import.meta.url).pathname;
-// With:
-//const __filename = fileURLToPath(import.meta.url);
-
-// Add this before your routes:
-
-
-// Replace this route:
-// app.get('/', (_0x1ecf21, _0x282bcc) => {
-//   _0x282bcc.send("SARKAR-MD IS CONNECTED SUCCESSFULLY ✅");
-// });
-// With:
