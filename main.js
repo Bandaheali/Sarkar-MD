@@ -19,166 +19,210 @@ let useQR = false;
 let initialConnection = true;
 const PORT = process.env.PORT || 3000;
 
-// Logger setup
-const mainLogger = pino({
-  timestamp: () => `,"time":"${new Date().toJSON()}"`
-});
-const logger = mainLogger.child({});
-logger.level = "trace";
+// Enhanced logger setup
+const logger = pino({
+  timestamp: () => `,"time":"${new Date().toJSON()}"`,
+  level: 'trace'
+}).child({ module: 'main' });
 
 // Session directory setup
-const __filename = new URL(import.meta.url).pathname;
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const sessionDir = path.join(__dirname, "session");
 const credsPath = path.join(sessionDir, 'creds.json');
 
-// Create session directory if it doesn't exist
+// Ensure session directory exists
 if (!fs.existsSync(sessionDir)) {
   fs.mkdirSync(sessionDir, { recursive: true });
+  logger.info('Created session directory');
 }
 
 /**
  * Downloads session data from Pastebin
- * @returns {Promise<boolean>} True if download was successful
  */
 async function downloadSessionData() {
   if (!config.SESSION_ID) {
-    console.error("Please add your session to SESSION_ID env !!");
+    logger.error("SESSION_ID not found in config!");
     return false;
   }
   
-  const pastebinId = config.SESSION_ID.split("Sarkarmd$")[1];
-  const pastebinUrl = `https://pastebin.com/raw/${pastebinId}`;
-  
   try {
-    const response = await axios.get(pastebinUrl);
-    const sessionData = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+    const pastebinId = config.SESSION_ID.split("Sarkarmd$")[1];
+    const pastebinUrl = `https://pastebin.com/raw/${pastebinId}`;
+    
+    logger.debug(`Fetching session from: ${pastebinUrl}`);
+    const response = await axios.get(pastebinUrl, {
+      timeout: 10000 // 10 second timeout
+    });
+    
+    const sessionData = typeof response.data === 'string' 
+      ? response.data 
+      : JSON.stringify(response.data);
+    
     await fs.promises.writeFile(credsPath, sessionData);
-    console.log("🌏 Sarkar-MD ONLINE 🌏");
+    logger.info("Session data downloaded successfully");
     return true;
   } catch (error) {
-    console.error("Failed to download session data:", error);
+    logger.error({ error }, "Failed to download session data");
     return false;
   }
 }
 
 /**
- * Starts the WhatsApp connection
+ * Initializes WhatsApp connection
  */
-async function startBot() {
+async function startWhatsApp() {
   try {
-    // Initialize authentication state
+    logger.info("Initializing WhatsApp connection...");
+    
     const { state: authState, saveCreds } = await useMultiFileAuthState(sessionDir);
-    
-    // Get latest Baileys version
     const { version, isLatest } = await fetchLatestBaileysVersion();
-    console.log(`Sarkar-MD is running on v${version.join('.')}, isLatest: ${isLatest}`);
     
-    // Create WhatsApp socket connection
+    logger.info(`Using Baileys v${version.join('.')}, Latest: ${isLatest}`);
+    
     const sock = makeWASocket({
-      version: version,
+      version,
       logger: pino({ level: 'silent' }),
       printQRInTerminal: useQR,
-      browser: ['Ethix-MD', 'safari', '3.3'],
+      browser: ['Sarkar-MD', 'safari', '3.3'],
       auth: authState,
       getMessage: async (key) => {
-        // Placeholder for message retrieval
-        return {
-          conversation: "BEST WHATSAPP BOT MADE BY Sarkar Bandaheali"
-        };
+        return { conversation: "Sarkar-MD WhatsApp Bot" };
       }
     });
 
-    // Connection update handler
+    // Connection event handlers
     sock.ev.on("connection.update", (update) => {
       const { connection, lastDisconnect } = update;
       
       if (connection === "close") {
-        // Reconnect if not logged out
-        if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
-          startBot();
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        logger.warn(`Connection closed. ${shouldReconnect ? 'Reconnecting...' : 'Not reconnecting'}`);
+        
+        if (shouldReconnect) {
+          setTimeout(startWhatsApp, 5000); // Reconnect after 5 seconds
         }
-      } else if (connection === 'open') {
+      } 
+      else if (connection === 'open') {
         if (initialConnection) {
-          console.log(chalk.green("Sarkar-MD CONNECTED SUCCESSFULLY ✅"));
-          // Send connection success message
+          logger.info("Connected successfully");
+          initialConnection = false;
+          
+          // Send connection notification
           sock.sendMessage(sock.user.id, {
             text: `╭─────────────━┈⊷
-│ *Sarkar is connected*
+│ *Sarkar-MD Connected*
 ╰─────────────━┈⊷
 
 ╭─────────────━┈⊷
-│🤖 Bot Name: *Sarkar-MD*
-│👨‍💻 Owner : *Sarkar Bandaheali*
-╰─────────────━┈⊷
-
-*Message Me on WhatsApp 😈*
-_https://wa.me/923253617422_`
-          });
-          initialConnection = false;
+│🤖 Version: ${version.join('.')}
+│👨‍💻 Owner: Sarkar Bandaheali
+╰─────────────━┈⊷`
+          }).catch(e => logger.error(e, "Failed to send connection message"));
         } else {
-          console.log(chalk.blue("Restarted Successfully...!."));
+          logger.info("Reconnected successfully");
         }
       }
     });
 
-    // Event handlers
+    // Credentials update handler
     sock.ev.on('creds.update', saveCreds);
-    sock.ev.on("messages.upsert", async (messages) => await Handler(messages, sock, logger));
-    sock.ev.on("call", async (call) => await Callupdate(call, sock));
-    sock.ev.on("group-participants.update", async (update) => await GroupUpdate(sock, update));
-    
-    // Set public/private mode
-    sock.public = config.MODE === "public";
-    
-    // Auto-react to messages if enabled
-    if (config.AUTO_REACT) {
-      sock.ev.on("messages.upsert", async (messages) => {
-        try {
+
+    // Message handler
+    sock.ev.on("messages.upsert", async (messages) => {
+      try {
+        await Handler(messages, sock, logger);
+        
+        // Auto-react if enabled
+        if (config.AUTO_REACT) {
           const message = messages.messages[0];
-          if (!message.key.fromMe && message.message) {
+          if (message && !message.key.fromMe && message.message) {
             const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
             await doReact(randomEmoji, message, sock);
           }
-        } catch (error) {
-          console.error("Error during auto reaction:", error);
         }
-      });
-    }
+      } catch (error) {
+        logger.error(error, "Error handling message");
+      }
+    });
+
+    // Call handler
+    sock.ev.on("call", async (call) => {
+      try {
+        await Callupdate(call, sock);
+      } catch (error) {
+        logger.error(error, "Error handling call");
+      }
+    });
+
+    // Group update handler
+    sock.ev.on("group-participants.update", async (update) => {
+      try {
+        await GroupUpdate(sock, update);
+      } catch (error) {
+        logger.error(error, "Error handling group update");
+      }
+    });
+
+    // Set public/private mode
+    sock.public = config.MODE === "public";
+    logger.info(`Running in ${sock.public ? 'public' : 'private'} mode`);
+
   } catch (error) {
-    console.error("Critical Error:", error);
+    logger.fatal(error, "Critical error in WhatsApp connection");
     process.exit(1);
   }
 }
 
 /**
- * Initializes the bot
+ * Main initialization
  */
 async function initialize() {
-  if (fs.existsSync(credsPath)) {
-    console.log("Session Connected Successfully ✅.");
-    await startBot();
-  } else {
-    const downloadSuccess = await downloadSessionData();
-    if (downloadSuccess) {
-      console.log("Sarkar-MD IS RUNNING...⏳");
-      await startBot();
+  try {
+    if (fs.existsSync(credsPath)) {
+      logger.info("Using existing session credentials");
+      await startWhatsApp();
     } else {
-      console.log("Session ID error ❌ - Falling back to QR code");
-      useQR = true;
-      await startBot();
+      logger.info("No session found, attempting download...");
+      const downloadSuccess = await downloadSessionData();
+      
+      if (downloadSuccess) {
+        await startWhatsApp();
+      } else {
+        logger.warn("Falling back to QR code authentication");
+        useQR = true;
+        await startWhatsApp();
+      }
     }
+  } catch (error) {
+    logger.fatal(error, "Initialization failed");
+    process.exit(1);
   }
 }
 
-// Start the bot
-initialize();
-
-// Express routes
+// Express setup
 app.get('/', (req, res) => {
-  res.send("SARKAR-MD IS CONNECTED SUCCESSFULLY ✅");
+  res.status(200).json({
+    status: 'online',
+    bot: 'Sarkar-MD',
+    owner: 'Sarkar Bandaheali'
+  });
 });
 
-app.listen(PORT, () => {
-  console.log(`Sarkar-MD running on port ${PORT}`);
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Start everything
+initialize();
+
+const server = app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+});
+
+// Handle shutdown gracefully
+process.on('SIGTERM', () => {
+  logger.info("Shutting down gracefully...");
+  server.close(() => {
+    process.exit(0);
+  });
 });
