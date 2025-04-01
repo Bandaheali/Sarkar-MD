@@ -4,225 +4,197 @@ import { makeWASocket, fetchLatestBaileysVersion, DisconnectReason, useMultiFile
 import { Handler, Callupdate, GroupUpdate } from './bandaheali/Sarkar/index.js';
 import express from 'express';
 import pino from 'pino';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import chalk from 'chalk';
 import axios from 'axios';
 import config from './config.cjs';
-import autoreact from './lib/autoreact.cjs';
+import { emojis, doReact } from './lib/autoreact.cjs';
 
-const { emojis, doReact } = autoreact;
-
-// Initialize Express app
+// Initialize with performance optimizations
 const app = express();
 let useQR = false;
 let initialConnection = true;
 const PORT = process.env.PORT || 3000;
 
-// Enhanced logger setup
+// Turbocharged logger with async logging
 const logger = pino({
-  timestamp: () => `,"time":"${new Date().toJSON()}"`,
-  level: 'trace'
-}).child({ module: 'main' });
+  timestamp: pino.stdTimeFunctions.isoTime,
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  formatters: {
+    level: (label) => ({ level: label.toUpperCase() })
+  },
+  transport: {
+    target: 'pino-pretty',
+    options: { colorize: true }
+  }
+}).child({ module: 'Sarkar-MD' });
 
-// Session directory setup
+// Memory-efficient session handling
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const sessionDir = path.join(__dirname, "session");
 const credsPath = path.join(sessionDir, 'creds.json');
 
-// Ensure session directory exists
-if (!fs.existsSync(sessionDir)) {
-  fs.mkdirSync(sessionDir, { recursive: true });
-  logger.info('Created session directory');
+// Cache for frequently accessed data
+const cache = new Map();
+
+// Async session directory setup
+async function setupSession() {
+  try {
+    await fs.access(sessionDir);
+  } catch {
+    await fs.mkdir(sessionDir, { recursive: true });
+    logger.debug('Session directory created');
+  }
 }
 
-/**
- * Downloads session data from Pastebin
- */
+// High-performance session download
 async function downloadSessionData() {
   if (!config.SESSION_ID) {
-    logger.error("SESSION_ID not found in config!");
+    logger.error('SESSION_ID missing in config');
     return false;
   }
-  
+
   try {
     const pastebinId = config.SESSION_ID.split("Sarkarmd$")[1];
     const pastebinUrl = `https://pastebin.com/raw/${pastebinId}`;
     
-    logger.debug(`Fetching session from: ${pastebinUrl}`);
-    const response = await axios.get(pastebinUrl, {
-      timeout: 10000 // 10 second timeout
+    logger.debug(`Fetching session from ${pastebinUrl}`);
+    const { data } = await axios.get(pastebinUrl, {
+      timeout: 5000,
+      responseType: 'json'
     });
-    
-    const sessionData = typeof response.data === 'string' 
-      ? response.data 
-      : JSON.stringify(response.data);
-    
-    await fs.promises.writeFile(credsPath, sessionData);
-    logger.info("Session data downloaded successfully");
+
+    await fs.writeFile(credsPath, typeof data === 'string' ? data : JSON.stringify(data));
+    logger.info('Session data downloaded successfully');
     return true;
   } catch (error) {
-    logger.error({ error }, "Failed to download session data");
+    logger.error({ error }, 'Session download failed');
     return false;
   }
 }
 
-/**
- * Initializes WhatsApp connection
- */
+// Optimized WhatsApp connection
 async function startWhatsApp() {
   try {
-    logger.info("Initializing WhatsApp connection...");
-    
-    const { state: authState, saveCreds } = await useMultiFileAuthState(sessionDir);
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    
-    logger.info(`Using Baileys v${version.join('.')}, Latest: ${isLatest}`);
-    
+    const [{ state: authState, saveCreds }, { version }] = await Promise.all([
+      useMultiFileAuthState(sessionDir),
+      fetchLatestBaileysVersion()
+    ]);
+
+    logger.info(`Initializing WhatsApp v${version.join('.')}`);
+
     const sock = makeWASocket({
       version,
-      logger: pino({ level: 'silent' }),
+      logger: pino({ level: 'error' }), // Only log errors
       printQRInTerminal: useQR,
-      browser: ['Sarkar-MD', 'safari', '3.3'],
       auth: authState,
-      getMessage: async (key) => {
-        return { conversation: "Sarkar-MD WhatsApp Bot" };
-      }
+      browser: ['Sarkar-MD', 'Edge', '12.0'],
+      markOnlineOnConnect: true,
+      syncFullHistory: false,
+      generateHighQualityLinkPreview: true,
+      getMessage: async () => ({ conversation: 'Sarkar-MD Active' })
     });
 
-    // Connection event handlers
-    sock.ev.on("connection.update", (update) => {
-      const { connection, lastDisconnect } = update;
-      
-      if (connection === "close") {
-        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-        logger.warn(`Connection closed. ${shouldReconnect ? 'Reconnecting...' : 'Not reconnecting'}`);
-        
-        if (shouldReconnect) {
-          setTimeout(startWhatsApp, 5000); // Reconnect after 5 seconds
-        }
-      } 
-      else if (connection === 'open') {
-        if (initialConnection) {
-          logger.info("Connected successfully");
-          initialConnection = false;
-          
-          // Send connection notification
-          sock.sendMessage(sock.user.id, {
-            text: `╭─────────────━┈⊷
-│ *Sarkar-MD Connected*
-╰─────────────━┈⊷
-
-╭─────────────━┈⊷
-│🤖 Version: ${version.join('.')}
-│👨‍💻 Owner: Sarkar Bandaheali
-╰─────────────━┈⊷`
-          }).catch(e => logger.error(e, "Failed to send connection message"));
-        } else {
-          logger.info("Reconnected successfully");
-        }
-      }
-    });
-
-    // Credentials update handler
-    sock.ev.on('creds.update', saveCreds);
-
-    // Message handler
-    sock.ev.on("messages.upsert", async (messages) => {
-      try {
-        await Handler(messages, sock, logger);
-        
-        // Auto-react if enabled
-        if (config.AUTO_REACT) {
-          const message = messages.messages[0];
-          if (message && !message.key.fromMe && message.message) {
-            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-            await doReact(randomEmoji, message, sock);
+    // Event handlers with performance optimizations
+    const handlers = {
+      'connection.update': (update) => {
+        if (update.connection === 'close') {
+          const shouldReconnect = update.lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+          logger.warn(`Connection closed. ${shouldReconnect ? 'Reconnecting...' : ''}`);
+          shouldReconnect && setTimeout(startWhatsApp, 2000);
+        } else if (update.connection === 'open') {
+          logger.info('Connected to WhatsApp');
+          if (initialConnection) {
+            notifyOwner(sock, version);
+            initialConnection = false;
           }
         }
-      } catch (error) {
-        logger.error(error, "Error handling message");
-      }
-    });
+      },
+      'creds.update': saveCreds,
+      'messages.upsert': async (m) => {
+        try {
+          await Handler(m, sock, logger);
+          config.AUTO_REACT && await autoReact(m, sock);
+        } catch (error) {
+          logger.error(error, 'Message handling error');
+        }
+      },
+      'call': (call) => Callupdate(call, sock).catch(e => logger.error(e, 'Call error')),
+      'group-participants.update': (update) => GroupUpdate(sock, update).catch(e => logger.error(e, 'Group update error'))
+    };
 
-    // Call handler
-    sock.ev.on("call", async (call) => {
-      try {
-        await Callupdate(call, sock);
-      } catch (error) {
-        logger.error(error, "Error handling call");
-      }
-    });
+    Object.entries(handlers).forEach(([event, handler]) => sock.ev.on(event, handler));
 
-    // Group update handler
-    sock.ev.on("group-participants.update", async (update) => {
-      try {
-        await GroupUpdate(sock, update);
-      } catch (error) {
-        logger.error(error, "Error handling group update");
-      }
-    });
-
-    // Set public/private mode
     sock.public = config.MODE === "public";
-    logger.info(`Running in ${sock.public ? 'public' : 'private'} mode`);
+    logger.info(`Running in ${sock.public ? 'PUBLIC' : 'PRIVATE'} mode`);
 
   } catch (error) {
-    logger.fatal(error, "Critical error in WhatsApp connection");
+    logger.fatal(error, 'WhatsApp initialization failed');
     process.exit(1);
   }
 }
 
-/**
- * Main initialization
- */
-async function initialize() {
+// Helper functions
+async function autoReact({ messages }, sock) {
+  const message = messages[0];
+  if (message && !message.key.fromMe && message.message) {
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    await doReact(emoji, message, sock).catch(e => logger.debug(e, 'React failed'));
+  }
+}
+
+async function notifyOwner(sock, version) {
   try {
-    if (fs.existsSync(credsPath)) {
-      logger.info("Using existing session credentials");
-      await startWhatsApp();
-    } else {
-      logger.info("No session found, attempting download...");
-      const downloadSuccess = await downloadSessionData();
-      
-      if (downloadSuccess) {
-        await startWhatsApp();
-      } else {
-        logger.warn("Falling back to QR code authentication");
-        useQR = true;
-        await startWhatsApp();
-      }
-    }
+    await sock.sendMessage(sock.user.id, {
+      text: `╭─────────────━┈⊷\n│ *Sarkar-MD ONLINE*\n╰─────────────━┈⊷\n\n` +
+            `Version: ${version.join('.')}\n` +
+            `Mode: ${config.MODE.toUpperCase()}\n` +
+            `Memory: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB`
+    });
   } catch (error) {
-    logger.fatal(error, "Initialization failed");
-    process.exit(1);
+    logger.error(error, 'Failed to send connection message');
   }
 }
 
-// Express setup
-app.get('/', (req, res) => {
-  res.status(200).json({
-    status: 'online',
-    bot: 'Sarkar-MD',
-    owner: 'Sarkar Bandaheali'
-  });
-});
+// Fast initialization
+async function initialize() {
+  await setupSession();
+  
+  if (await fs.access(credsPath).then(() => true).catch(() => false)) {
+    await startWhatsApp();
+  } else if (await downloadSessionData()) {
+    await startWhatsApp();
+  } else {
+    useQR = true;
+    await startWhatsApp();
+  }
+}
 
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
-});
+// High-performance Express server
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Start everything
-initialize();
+app.get('/', (req, res) => res.status(200).json({
+  status: 'online',
+  uptime: process.uptime(),
+  memory: process.memoryUsage()
+}));
+
+app.get('/health', (req, res) => res.sendStatus(200));
 
 const server = app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
+  initialize().catch(error => {
+    logger.fatal(error, 'Startup failed');
+    process.exit(1);
+  });
 });
 
-// Handle shutdown gracefully
-process.on('SIGTERM', () => {
-  logger.info("Shutting down gracefully...");
-  server.close(() => {
-    process.exit(0);
+// Graceful shutdown
+['SIGINT', 'SIGTERM'].forEach(signal => {
+  process.on(signal, () => {
+    logger.info(`Received ${signal}, shutting down...`);
+    server.close(() => process.exit(0));
   });
 });
