@@ -27,8 +27,9 @@ const logger = mainLogger.child({});
 logger.level = "trace";
 
 // Session directory setup
-const currentDir = path.dirname(new URL(import.meta.url).pathname;
-const sessionDir = path.join(currentDir, "session");
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
+const sessionDir = path.join(__dirname, "session");
 const credsPath = path.join(sessionDir, 'creds.json');
 
 // Create session directory if it doesn't exist
@@ -179,5 +180,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Sarkar-MD daily users ${PORT}`);
+  console.log(`Sarkar-MD running on port ${PORT}`);
 });
