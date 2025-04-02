@@ -4,6 +4,11 @@ const privacyMenu = async (m, sock) => {
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
 
+  // Check if the user is the owner
+  if (m.sender !== config.OWNER_NUMBER) {
+    return sock.sendMessage(m.from, { text: 'HUSH HUSH YOU ARE NOT THE OWNER' });
+  }
+
   if (['privacy', 'privacymenu'].includes(cmd)) {
     const privacyText = `╭━━〔 *Privacy Settings* 〕━━┈⊷
 ┃◈╭─────────────·๏
