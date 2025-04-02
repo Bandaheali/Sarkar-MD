@@ -8,7 +8,7 @@ const privacyMenu = async (m, sock) => {
   
 
   if (['privacy', 'privacymenu'].includes(cmd)) {
-    if (m.sender !== config.OWNER_NUMBER) {
+    if (m.sender !== config.OWNER_NUMBER + "@s.whatsapp.net") {
     return sock.sendMessage(m.from, { text: 'HUSH HUSH YOU ARE NOT THE OWNER' });
     }
     
