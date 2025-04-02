@@ -11,26 +11,34 @@ const fullpp = async (m, sock) => {
 
   // Check if the command is 'fullpp' and reply to an image
   if (cmd === "fullpp") {
-    // Check if the message is a reply and if the replied message is an image
+    // Ensure the message is a reply and the reply is an image
     if (!m.quoted || !m.quoted.mimetype.startsWith('image')) {
       return sock.sendMessage(m.from, { text: 'Please reply to an image with the command *!fullpp* to update the profile picture.' }, { quoted: m });
     }
 
     try {
-      // Get the media (image) from the reply
+      // Download the media (image) from the quoted message
       const media = await sock.downloadMediaMessage(m.quoted);
 
-      // Update the profile picture with the received image
+      if (!media) {
+        throw new Error('No media found in the quoted message');
+      }
+
+      // Logging to ensure media is being correctly fetched
+      console.log('Media successfully downloaded.');
+
+      // Attempt to update profile picture with the downloaded media
       await sock.updateProfilePicture(m.from, media);
 
       // Send a success message after profile picture update
       await sock.sendMessage(m.from, { text: 'Profile picture updated successfully!' }, { quoted: m });
     } catch (error) {
-      console.error('Error updating profile picture:', error);
+      // Log the error on the server
+      console.error('Error during profile picture update:', error);
 
-      // Send error message if profile picture update fails
+      // Send an error message to the user
       await sock.sendMessage(m.from, {
-        text: 'Error: Profile picture update failed! There was an issue processing your request. Please try again later.',
+        text: `Error: Profile picture update failed! Reason: ${error.message}. Please try again later.`,
       }, { quoted: m });
     }
   }
