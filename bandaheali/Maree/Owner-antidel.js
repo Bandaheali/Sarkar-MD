@@ -28,10 +28,34 @@ const AntiDelete = async (m, Matrix) => {
         return 'Private Chat';
     };
 
-    // Restrict command usage to owner only
-    if (!m.key.fromMe && m.key.remoteJid !== ownerJid) {
-        await m.reply('🚫 *You are not authorized to use this command!*');
-        return;
+    // Handle anti-delete commands (restricted to owner only)
+    if (cmd === 'antidelete') {
+        if (m.key.remoteJid !== ownerJid) {
+            await m.reply('🚫 *You are not authorized to use this command!*');
+            return;
+        }
+        
+        try {
+            if (subCmd === 'on') {
+                antiDeleteEnabled = true;
+                await m.reply(`🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats & Groups*\n\n✅ Deleted messages will be recovered!`);
+                await m.React('✅');
+            } 
+            else if (subCmd === 'off') {
+                antiDeleteEnabled = false;
+                messageCache.clear();
+                await m.reply(`⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Deleted messages will not be recovered.`);
+                await m.React('✅');
+            }
+            else {
+                await m.reply(`⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}`);
+                await m.React('ℹ️');
+            }
+            return;
+        } catch (error) {
+            console.error('AntiDelete Command Error:', error);
+            await m.React('❌');
+        }
     }
 
     // Cache all messages (for content recovery)
@@ -70,31 +94,6 @@ const AntiDelete = async (m, Matrix) => {
             });
         }
     });
-
-    // Handle anti-delete commands
-    if (cmd === 'antidelete') {
-        try {
-            if (subCmd === 'on') {
-                antiDeleteEnabled = true;
-                await m.reply(`🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats & Groups*\n\n✅ Deleted messages will be recovered!`);
-                await m.React('✅');
-            } 
-            else if (subCmd === 'off') {
-                antiDeleteEnabled = false;
-                messageCache.clear();
-                await m.reply(`⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Deleted messages will not be recovered.`);
-                await m.React('✅');
-            }
-            else {
-                await m.reply(`⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}`);
-                await m.React('ℹ️');
-            }
-            return;
-        } catch (error) {
-            console.error('AntiDelete Command Error:', error);
-            await m.React('❌');
-        }
-    }
 
     // Handle message deletions globally when enabled
     Matrix.ev.on('messages.update', async (update) => {
