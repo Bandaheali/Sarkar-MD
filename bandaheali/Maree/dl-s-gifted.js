@@ -33,14 +33,14 @@ const dlSong = async (m, sock) => {
         return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
       }
 
-      const { title, downloadUrl, thumbnail } = audioData;
+      const { title, download_Url, thumbnail } = audioData;
 
       await m.React('✅'); // React with a success icon
 
       sock.sendMessage(
         m.from,
         {
-          audio: { url: downloadUrl },
+          audio: { url: download_Url },
           mimetype: "audio/mpeg", // ✅ Correct mimetype for MP3 files
           ptt: false, // ✅ Set to true for voice note format
           fileName: `${title}.mp3`, // ✅ Proper filename
