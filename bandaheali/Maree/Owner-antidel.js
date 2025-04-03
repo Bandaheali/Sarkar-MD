@@ -1,5 +1,5 @@
 import pkg from '@whiskeysockets/baileys';
-const { proto } = pkg;
+const { proto, downloadMediaMessage } = pkg;
 import config from '../../config.cjs';
 
 // Global toggle for anti-delete
@@ -17,27 +17,27 @@ const AntiDelete = async (m, Matrix) => {
     const subCmd = text[1]?.toLowerCase();
 
     // Cache all messages (for content recovery)
-    Matrix.ev.on('messages.upsert', ({ messages }) => {
+    Matrix.ev.on('messages.upsert', async ({ messages }) => {
         if (!antiDeleteEnabled) return;
         
-        messages.forEach(msg => {
-            if (msg.key.fromMe || !msg.message) return;
+        for (const msg of messages) {
+            if (msg.key.fromMe || !msg.message) continue;
             
             let content = msg.message.conversation || msg.message.extendedTextMessage?.text || null;
             let media = null;
             let type = null;
             
             if (msg.message.imageMessage) {
-                media = msg.message.imageMessage;
+                media = await downloadMediaMessage(msg, 'buffer');
                 type = 'image';
             } else if (msg.message.videoMessage) {
-                media = msg.message.videoMessage;
+                media = await downloadMediaMessage(msg, 'buffer');
                 type = 'video';
             } else if (msg.message.audioMessage) {
-                media = msg.message.audioMessage;
+                media = await downloadMediaMessage(msg, 'buffer');
                 type = 'audio';
             } else if (msg.message.stickerMessage) {
-                media = msg.message.stickerMessage;
+                media = await downloadMediaMessage(msg, 'buffer');
                 type = 'sticker';
             }
             
@@ -45,11 +45,12 @@ const AntiDelete = async (m, Matrix) => {
                 content,
                 media,
                 type,
+                mimetype: msg.message[type + 'Message']?.mimetype,
                 sender: msg.key.participant || msg.key.remoteJid,
                 timestamp: new Date().getTime(), // Save timestamp in milliseconds
                 chatJid: msg.key.remoteJid
             });
-        });
+        }
     });
 
     // Handle anti-delete commands
@@ -121,6 +122,7 @@ Current Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}
                 if (cachedMsg.media && cachedMsg.type) {
                     await Matrix.sendMessage(destination, {
                         [cachedMsg.type]: cachedMsg.media,
+                        mimetype: cachedMsg.mimetype,
                         caption: `*Deleted ${cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)} Recovered!*\n\n*Sender:* ${cachedMsg.sender}\n*Chat:* ${cachedMsg.chatJid}`
                     });
                 } else if (cachedMsg.content) {
