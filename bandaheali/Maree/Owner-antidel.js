@@ -1,17 +1,13 @@
 import pkg from '@whiskeysockets/baileys';
-const { proto, downloadMediaMessage } = pkg;
+const { proto, downloadContentFromMessage } = pkg;
 import config from '../../config.cjs';
 
 class AntiDeleteSystem {
     constructor() {
         this.enabled = false;
         this.messageCache = new Map();
-        this.cacheExpiry = 5 * 60 * 1000; // 5 minutes cache expiry
-        this.initCleanupInterval();
-    }
-
-    initCleanupInterval() {
-        setInterval(() => this.cleanExpiredMessages(), this.cacheExpiry);
+        this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
+        this.cleanupInterval = setInterval(() => this.cleanExpiredMessages(), this.cacheExpiry);
     }
 
     cleanExpiredMessages() {
@@ -36,6 +32,10 @@ class AntiDeleteSystem {
         };
         return new Date(timestamp).toLocaleString('en-PK', options) + ' (PKT)';
     }
+
+    destroy() {
+        clearInterval(this.cleanupInterval);
+    }
 }
 
 const antiDelete = new AntiDeleteSystem();
@@ -47,7 +47,6 @@ const AntiDelete = async (m, Matrix) => {
     const cmd = text[0]?.toLowerCase();
     const subCmd = text[1]?.toLowerCase();
 
-    // Optimized helper functions
     const formatJid = (jid) => jid ? jid.replace(/@s\.whatsapp\.net|@g\.us/g, '') : 'Unknown';
     
     const getChatInfo = async (jid) => {
@@ -58,11 +57,10 @@ const AntiDelete = async (m, Matrix) => {
                 const groupMetadata = await Matrix.groupMetadata(jid);
                 return {
                     name: groupMetadata?.subject || 'Unknown Group',
-                    isGroup: true,
-                    participants: groupMetadata?.participants || []
+                    isGroup: true
                 };
             } catch {
-                return { name: 'Unknown Group', isGroup: true, participants: [] };
+                return { name: 'Unknown Group', isGroup: true };
             }
         }
         return { name: 'Private Chat', isGroup: false };
@@ -103,74 +101,89 @@ const AntiDelete = async (m, Matrix) => {
         }
     }
 
-    // Optimized message caching
+    // Message caching
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
         if (!antiDelete.enabled || !messages?.length) return;
         
         for (const msg of messages) {
-            // Skip if: from me, no message, status broadcast, or protocol message
-            if (msg.key.fromMe || !msg.message || msg.key.remoteJid === 'status@broadcast' || 
-                msg.message.protocolMessage) continue;
+            if (msg.key.fromMe || !msg.message || msg.key.remoteJid === 'status@broadcast') continue;
             
             try {
                 const content = msg.message.conversation || 
-                              msg.message.extendedTextMessage?.text;
-                
-                // Skip if empty message (no content and no media)
-                if (!content && !msg.message.imageMessage && !msg.message.videoMessage && 
-                    !msg.message.audioMessage && !msg.message.stickerMessage && 
-                    !msg.message.documentMessage) continue;
+                              msg.message.extendedTextMessage?.text ||
+                              msg.message.imageMessage?.caption ||
+                              msg.message.videoMessage?.caption ||
+                              msg.message.documentMessage?.caption;
 
                 let media, type, mimetype;
                 
-                // Handle media types more efficiently
-                const mediaType = ['image', 'video', 'audio', 'sticker', 'document'].find(
-                    t => msg.message[`${t}Message`]
-                );
-                
-                if (mediaType) {
-                    media = await downloadMediaMessage(msg, 'buffer');
-                    type = mediaType;
-                    mimetype = msg.message[`${mediaType}Message`].mimetype;
+                const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
+                for (const mediaType of mediaTypes) {
+                    if (msg.message[`${mediaType}Message`]) {
+                        const mediaMsg = msg.message[`${mediaType}Message`];
+                        try {
+                            const stream = await downloadContentFromMessage(mediaMsg, mediaType);
+                            let buffer = Buffer.from([]);
+                            for await (const chunk of stream) {
+                                buffer = Buffer.concat([buffer, chunk]);
+                            }
+                            media = buffer;
+                            type = mediaType;
+                            mimetype = mediaMsg.mimetype;
+                            break;
+                        } catch (e) {
+                            console.error(`Error downloading ${mediaType} media:`, e);
+                        }
+                    }
                 }
                 
-                // Special handling for voice messages
+                // Voice note handling
                 if (msg.message.audioMessage?.ptt) {
-                    type = 'voice';
-                    media = media || await downloadMediaMessage(msg, 'buffer');
-                    mimetype = msg.message.audioMessage.mimetype;
+                    try {
+                        const stream = await downloadContentFromMessage(msg.message.audioMessage, 'audio');
+                        let buffer = Buffer.from([]);
+                        for await (const chunk of stream) {
+                            buffer = Buffer.concat([buffer, chunk]);
+                        }
+                        media = buffer;
+                        type = 'voice';
+                        mimetype = msg.message.audioMessage.mimetype;
+                    } catch (e) {
+                        console.error('Error downloading voice message:', e);
+                    }
                 }
                 
-                // Cache the message
-                antiDelete.messageCache.set(msg.key.id, {
-                    content,
-                    media,
-                    type,
-                    mimetype,
-                    sender: msg.key.participant || msg.key.remoteJid,
-                    senderFormatted: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
-                    timestamp: Date.now(),
-                    chatJid: msg.key.remoteJid,
-                    originalMessage: msg
-                });
+                if (content || media) {
+                    antiDelete.messageCache.set(msg.key.id, {
+                        content,
+                        media,
+                        type,
+                        mimetype,
+                        sender: msg.key.participant || msg.key.remoteJid,
+                        senderFormatted: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
+                        timestamp: Date.now(),
+                        chatJid: msg.key.remoteJid
+                    });
+                }
             } catch (error) {
                 console.error('Error caching message:', error);
             }
         }
     });
 
-    // Optimized deletion handler
-    Matrix.ev.on('messages.update', async (update) => {
-        if (!antiDelete.enabled || !update?.length) return;
+    // Deletion handler
+    Matrix.ev.on('messages.update', async (updates) => {
+        if (!antiDelete.enabled || !updates?.length) return;
 
-        for (const item of update) {
+        for (const update of updates) {
             try {
-                const { key, update: updateData } = item;
+                const { key, update: updateData } = update;
                 
-                // Skip if: from me, not in cache, or not a deletion
-                if (key.fromMe || !antiDelete.messageCache.has(key.id) || 
-                    !(updateData?.messageStubType === proto.MessageStubType.REVOKE || 
-                      updateData?.status === proto.WebMessageInfo.Status.DELETED)) {
+                // Check if message was actually deleted
+                const isDeleted = updateData?.messageStubType === proto.WebMessageInfo.StubType.REVOKE || 
+                                 updateData?.status === proto.WebMessageInfo.Status.DELETED;
+                
+                if (!isDeleted || key.fromMe || !antiDelete.messageCache.has(key.id)) {
                     continue;
                 }
 
@@ -186,7 +199,7 @@ const AntiDelete = async (m, Matrix) => {
 
                 const messageType = cachedMsg.type ? 
                     cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 
-                    'Message';
+                    'Text';
                 
                 const baseInfo = `🚨 *Deleted ${messageType} Recovered!*\n\n` +
                                `📌 *Sender:* ${cachedMsg.senderFormatted}\n` +
@@ -196,16 +209,15 @@ const AntiDelete = async (m, Matrix) => {
                                `⏱️ *Deleted At:* ${antiDelete.formatTime(Date.now())}`;
 
                 if (cachedMsg.media) {
-                    const messageOptions = cachedMsg.type === 'voice' ? {
-                        audio: cachedMsg.media,
-                        mimetype: cachedMsg.mimetype,
-                        ptt: true,
-                        caption: baseInfo
-                    } : {
+                    const messageOptions = {
                         [cachedMsg.type]: cachedMsg.media,
                         mimetype: cachedMsg.mimetype,
                         caption: baseInfo
                     };
+
+                    if (cachedMsg.type === 'voice') {
+                        messageOptions.ptt = true;
+                    }
 
                     await Matrix.sendMessage(destination, messageOptions);
                 } 
