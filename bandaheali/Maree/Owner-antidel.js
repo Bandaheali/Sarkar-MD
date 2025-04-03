@@ -22,6 +22,21 @@ class AntiDeleteSystem {
             }
         }
     }
+
+    // Format time in Asia/Karachi timezone
+    formatTime(timestamp) {
+        const options = {
+            timeZone: 'Asia/Karachi',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+        return new Date(timestamp).toLocaleString('en-PK', options) + ' (PKT)';
+    }
 }
 
 const antiDelete = new AntiDeleteSystem();
@@ -91,7 +106,7 @@ const AntiDelete = async (m, Matrix) => {
         }
     }
 
-    // Message caching
+    // Message caching with enhanced media handling
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
         if (!antiDelete.enabled) return;
         
@@ -108,7 +123,7 @@ const AntiDelete = async (m, Matrix) => {
                     content = msg.message.extendedTextMessage.text;
                 }
                 
-                // Handle media messages
+                // Handle all media types including voice messages
                 const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
                 for (const mediaType of mediaTypes) {
                     if (msg.message[`${mediaType}Message`]) {
@@ -117,6 +132,13 @@ const AntiDelete = async (m, Matrix) => {
                         mimetype = msg.message[`${mediaType}Message`].mimetype;
                         break;
                     }
+                }
+                
+                // Special handling for voice messages
+                if (msg.message.audioMessage && msg.message.audioMessage.ptt) {
+                    type = 'voice';
+                    media = await downloadMediaMessage(msg, 'buffer');
+                    mimetype = msg.message.audioMessage.mimetype;
                 }
                 
                 // Cache the message
@@ -137,7 +159,7 @@ const AntiDelete = async (m, Matrix) => {
         }
     });
 
-    // Deletion handler
+    // Enhanced deletion handler with proper media support
     Matrix.ev.on('messages.update', async (update) => {
         if (!antiDelete.enabled) return;
 
@@ -170,15 +192,34 @@ const AntiDelete = async (m, Matrix) => {
                                `📌 *Sender:* ${cachedMsg.senderFormatted}\n` +
                                `✂️ *Deleted By:* ${deletedBy}\n` +
                                `📍 *Chat:* ${chatInfo.name}${chatInfo.isGroup ? ' (Group)' : ''}\n` +
-                               `🕒 *Time:* ${new Date(cachedMsg.timestamp).toLocaleString()}`;
+                               `🕒 *Sent At:* ${antiDelete.formatTime(cachedMsg.timestamp)}\n` +
+                               `⏱️ *Deleted At:* ${antiDelete.formatTime(Date.now())}`;
 
-                if (cachedMsg.media && cachedMsg.type) {
-                    await Matrix.sendMessage(destination, {
+                // Handle different media types with proper messaging
+                if (cachedMsg.media) {
+                    let messageOptions = {
                         [cachedMsg.type]: cachedMsg.media,
-                        mimetype: cachedMsg.mimetype,
-                        caption: baseInfo
-                    });
-                } else if (cachedMsg.content) {
+                        mimetype: cachedMsg.mimetype
+                    };
+
+                    // For voice messages, we need to send as audio with ptt: true
+                    if (cachedMsg.type === 'voice') {
+                        messageOptions = {
+                            audio: cachedMsg.media,
+                            mimetype: cachedMsg.mimetype,
+                            ptt: true,
+                            caption: baseInfo
+                        };
+                    } 
+                    // For other media types, use their respective types
+                    else {
+                        messageOptions.caption = baseInfo;
+                    }
+
+                    await Matrix.sendMessage(destination, messageOptions);
+                } 
+                // For text messages
+                else if (cachedMsg.content) {
                     await Matrix.sendMessage(destination, {
                         text: `${baseInfo}\n\n💬 *Content:* \n${cachedMsg.content}`
                     });
