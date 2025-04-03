@@ -2,7 +2,6 @@ import pkg from '@whiskeysockets/baileys';
 const { proto, downloadMediaMessage } = pkg;
 import config from '../../config.cjs';
 
-// Enhanced anti-delete system
 class AntiDeleteSystem {
     constructor() {
         this.enabled = false;
@@ -35,21 +34,27 @@ const AntiDelete = async (m, Matrix) => {
     const subCmd = text[1]?.toLowerCase();
 
     // Helper functions
-    const formatJid = (jid) => jid.replace(/@s\.whatsapp\.net|@g\.us/g, '');
+    const formatJid = (jid) => {
+        if (!jid) return 'Unknown';
+        return jid.replace(/@s\.whatsapp\.net|@g\.us/g, '');
+    };
     
     const getChatInfo = async (jid) => {
+        if (!jid) return { name: 'Unknown Chat', isGroup: false };
+        
         if (jid.includes('@g.us')) {
             try {
                 const groupMetadata = await Matrix.groupMetadata(jid);
                 return {
                     name: groupMetadata?.subject || 'Unknown Group',
-                    isGroup: true
+                    isGroup: true,
+                    participants: groupMetadata?.participants || []
                 };
             } catch {
-                return { name: 'Unknown Group', isGroup: true };
+                return { name: 'Unknown Group', isGroup: true, participants: [] };
             }
         }
-        return { name: 'Private Chat', isGroup: false };
+        return { name: 'Private Chat', isGroup: false, participants: [] };
     };
 
     // Command handler
@@ -61,9 +66,9 @@ const AntiDelete = async (m, Matrix) => {
         
         try {
             const responses = {
-                on: `🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats*\n🔹 Cache: *5 minutes*\n\n✅ Deleted messages will be recovered!`,
+                on: `🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats*\n🔹 Cache: *5 minutes*\n🔹 Mode: *${config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM"}*\n\n✅ Deleted messages will be recovered!`,
                 off: `⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Cache cleared\n🔸 Deleted messages will not be recovered.`,
-                help: `⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDelete.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}`
+                help: `⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDelete.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\nCurrent Mode: ${config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM"}`
             };
 
             if (subCmd === 'on') {
@@ -120,9 +125,11 @@ const AntiDelete = async (m, Matrix) => {
                     media,
                     type,
                     mimetype,
-                    sender: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
+                    sender: msg.key.participant || msg.key.remoteJid,
+                    senderFormatted: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
                     timestamp: Date.now(),
-                    chatJid: msg.key.remoteJid
+                    chatJid: msg.key.remoteJid,
+                    originalMessage: msg
                 });
             } catch (error) {
                 console.error('Error caching message:', error);
@@ -136,16 +143,34 @@ const AntiDelete = async (m, Matrix) => {
 
         for (const item of update) {
             try {
-                const { key } = item;
+                const { key, update } = item;
                 if (key.fromMe || !antiDelete.messageCache.has(key.id)) continue;
 
                 const cachedMsg = antiDelete.messageCache.get(key.id);
                 antiDelete.messageCache.delete(key.id);
                 
+                // Determine destination based on DELETE_PATH
                 const destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
                 const chatInfo = await getChatInfo(cachedMsg.chatJid);
                 
-                const baseInfo = `🚨 *Deleted ${cachedMsg.type ? cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 'Message'} Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${chatInfo.name}${chatInfo.isGroup ? ' (Group)' : ''}`;
+                // Try to identify who deleted the message
+                let deletedBy = 'Unknown';
+                if (update && update.participant) {
+                    deletedBy = `@${formatJid(update.participant)}`;
+                } else if (key.participant) {
+                    deletedBy = `@${formatJid(key.participant)}`;
+                }
+
+                // Prepare message info
+                const messageType = cachedMsg.type ? 
+                    cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 
+                    'Message';
+                
+                const baseInfo = `🚨 *Deleted ${messageType} Recovered!*\n\n` +
+                               `📌 *Sender:* ${cachedMsg.senderFormatted}\n` +
+                               `✂️ *Deleted By:* ${deletedBy}\n` +
+                               `📍 *Chat:* ${chatInfo.name}${chatInfo.isGroup ? ' (Group)' : ''}\n` +
+                               `🕒 *Time:* ${new Date(cachedMsg.timestamp).toLocaleString()}`;
 
                 if (cachedMsg.media && cachedMsg.type) {
                     await Matrix.sendMessage(destination, {
