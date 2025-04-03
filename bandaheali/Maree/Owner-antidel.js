@@ -221,7 +221,7 @@ const AntiDelete = async (m, Matrix) => {
                 // For text messages
                 else if (cachedMsg.content) {
                     await Matrix.sendMessage(destination, {
-                        text: `${baseInfo}\n\n💬 *Content:* \n${cachedMsg.content}`
+                        text: `${baseInfo}\n\n💬 *Content:* \n${cachedMsg.content}\n\n*_POWERED BY SARKAR-MD_*`
                     });
                 }
             } catch (error) {
