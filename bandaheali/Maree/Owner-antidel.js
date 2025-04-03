@@ -6,6 +6,9 @@ import config from '../../config.cjs';
 let antiDeleteEnabled = false;
 const messageCache = new Map();
 
+// Default delete path
+config.DELETE_PATH = config.DELETE_PATH || "pm";
+
 const AntiDelete = async (m, Matrix) => {
     const prefix = config.PREFIX;
     const ownerJid = config.OWNER_NUMBER + '@s.whatsapp.net'; // Owner JID
@@ -100,19 +103,19 @@ Current Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}
                 // Only send the content of the deleted message
                 const deletedMsgContent = cachedMsg.content;
 
-                // Send the deleted message content in the chat
-                await Matrix.sendMessage(key.remoteJid, { 
-                    text: `*DELETED MESSAGE*:
-                    \n\n${deletedMsgContent}`,
-                });
-
-                // Forward the deleted message to the owner
-                await Matrix.sendMessage(ownerJid, { 
-                    text: `*Deleted Message Alert!*
+                if (config.DELETE_PATH === "same") {
+                    await Matrix.sendMessage(key.remoteJid, { 
+                        text: `*DELETED MESSAGE*:
+                        \n\n${deletedMsgContent}`,
+                    });
+                } else {
+                    await Matrix.sendMessage(ownerJid, { 
+                        text: `*Deleted Message Alert!*
 \n*Sender:* ${cachedMsg.sender}
 *Chat:* ${cachedMsg.chatJid}
 *Content:* \n${deletedMsgContent}`,
-                });
+                    });
+                }
 
                 // Remove the deleted message from cache
                 messageCache.delete(key.id);
