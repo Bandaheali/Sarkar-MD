@@ -81,9 +81,9 @@ const AntiDelete = async (m, Matrix) => {
         
         try {
             const responses = {
-                on: `🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats*\n🔹 Cache: *5 minutes*\n🔹 Mode: *${config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM"}*\n\n✅ Deleted messages will be recovered!`,
-                off: `⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Cache cleared\n🔸 Deleted messages will not be recovered.`,
-                help: `⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDelete.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\nCurrent Mode: ${config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM"}`
+                on: `🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats*\n🔹 Cache: *5 minutes*\n🔹 Mode: *${config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM"}*\n\n✅ Deleted messages will be recovered!\n\n*_POWERED BY SARKAR-MD_*`,
+                off: `⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Cache cleared\n🔸 Deleted messages will not be recovered.\n\n*_POWERED BY SARKAR-MD_*`,
+                help: `⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDelete.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\nCurrent Mode: ${config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM"}\n\n*_POWERED BY SARKAR-MD_*`
             };
 
             if (subCmd === 'on') {
