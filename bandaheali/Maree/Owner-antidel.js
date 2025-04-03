@@ -7,7 +7,7 @@ let antiDeleteEnabled = false;
 const messageCache = new Map();
 
 // Default delete path
-config.DELETE_PATH = config.DELETE_PATH || "pm";
+config.DELETE_PATH = config.DELETE_PATH || "same";
 
 const AntiDelete = async (m, Matrix) => {
     const prefix = config.PREFIX;
