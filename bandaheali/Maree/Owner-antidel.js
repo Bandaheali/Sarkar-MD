@@ -23,7 +23,6 @@ class AntiDeleteSystem {
         }
     }
 
-    // Format time in Asia/Karachi timezone
     formatTime(timestamp) {
         const options = {
             timeZone: 'Asia/Karachi',
@@ -48,11 +47,8 @@ const AntiDelete = async (m, Matrix) => {
     const cmd = text[0]?.toLowerCase();
     const subCmd = text[1]?.toLowerCase();
 
-    // Helper functions
-    const formatJid = (jid) => {
-        if (!jid) return 'Unknown';
-        return jid.replace(/@s\.whatsapp\.net|@g\.us/g, '');
-    };
+    // Optimized helper functions
+    const formatJid = (jid) => jid ? jid.replace(/@s\.whatsapp\.net|@g\.us/g, '') : 'Unknown';
     
     const getChatInfo = async (jid) => {
         if (!jid) return { name: 'Unknown Chat', isGroup: false };
@@ -69,7 +65,7 @@ const AntiDelete = async (m, Matrix) => {
                 return { name: 'Unknown Group', isGroup: true, participants: [] };
             }
         }
-        return { name: 'Private Chat', isGroup: false, participants: [] };
+        return { name: 'Private Chat', isGroup: false };
     };
 
     // Command handler
@@ -80,10 +76,11 @@ const AntiDelete = async (m, Matrix) => {
         }
         
         try {
+            const mode = config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM";
             const responses = {
-                on: `🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats*\n🔹 Cache: *5 minutes*\n🔹 Mode: *${config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM"}*\n\n✅ Deleted messages will be recovered!`,
+                on: `🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats*\n🔹 Cache: *5 minutes*\n🔹 Mode: *${mode}*\n\n✅ Deleted messages will be recovered!`,
                 off: `⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Cache cleared\n🔸 Deleted messages will not be recovered.`,
-                help: `⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDelete.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\nCurrent Mode: ${config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM"}`
+                help: `⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDelete.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\nCurrent Mode: ${mode}`
             };
 
             if (subCmd === 'on') {
@@ -106,38 +103,41 @@ const AntiDelete = async (m, Matrix) => {
         }
     }
 
-    // Message caching with enhanced media handling
+    // Optimized message caching
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
-        if (!antiDelete.enabled) return;
+        if (!antiDelete.enabled || !messages?.length) return;
         
         for (const msg of messages) {
-            if (msg.key.fromMe || !msg.message) continue;
+            // Skip if: from me, no message, status broadcast, or protocol message
+            if (msg.key.fromMe || !msg.message || msg.key.remoteJid === 'status@broadcast' || 
+                msg.message.protocolMessage) continue;
             
             try {
-                let content, media, type, mimetype;
+                const content = msg.message.conversation || 
+                              msg.message.extendedTextMessage?.text;
                 
-                // Extract message content
-                if (msg.message.conversation) {
-                    content = msg.message.conversation;
-                } else if (msg.message.extendedTextMessage?.text) {
-                    content = msg.message.extendedTextMessage.text;
-                }
+                // Skip if empty message (no content and no media)
+                if (!content && !msg.message.imageMessage && !msg.message.videoMessage && 
+                    !msg.message.audioMessage && !msg.message.stickerMessage && 
+                    !msg.message.documentMessage) continue;
+
+                let media, type, mimetype;
                 
-                // Handle all media types including voice messages
-                const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
-                for (const mediaType of mediaTypes) {
-                    if (msg.message[`${mediaType}Message`]) {
-                        media = await downloadMediaMessage(msg, 'buffer');
-                        type = mediaType;
-                        mimetype = msg.message[`${mediaType}Message`].mimetype;
-                        break;
-                    }
+                // Handle media types more efficiently
+                const mediaType = ['image', 'video', 'audio', 'sticker', 'document'].find(
+                    t => msg.message[`${t}Message`]
+                );
+                
+                if (mediaType) {
+                    media = await downloadMediaMessage(msg, 'buffer');
+                    type = mediaType;
+                    mimetype = msg.message[`${mediaType}Message`].mimetype;
                 }
                 
                 // Special handling for voice messages
-                if (msg.message.audioMessage && msg.message.audioMessage.ptt) {
+                if (msg.message.audioMessage?.ptt) {
                     type = 'voice';
-                    media = await downloadMediaMessage(msg, 'buffer');
+                    media = media || await downloadMediaMessage(msg, 'buffer');
                     mimetype = msg.message.audioMessage.mimetype;
                 }
                 
@@ -159,31 +159,31 @@ const AntiDelete = async (m, Matrix) => {
         }
     });
 
-    // Enhanced deletion handler with proper media support
+    // Optimized deletion handler
     Matrix.ev.on('messages.update', async (update) => {
-        if (!antiDelete.enabled) return;
+        if (!antiDelete.enabled || !update?.length) return;
 
         for (const item of update) {
             try {
-                const { key, update } = item;
-                if (key.fromMe || !antiDelete.messageCache.has(key.id)) continue;
+                const { key, update: updateData } = item;
+                
+                // Skip if: from me, not in cache, or not a deletion
+                if (key.fromMe || !antiDelete.messageCache.has(key.id) || 
+                    !(updateData?.messageStubType === proto.MessageStubType.REVOKE || 
+                      updateData?.status === proto.WebMessageInfo.Status.DELETED)) {
+                    continue;
+                }
 
                 const cachedMsg = antiDelete.messageCache.get(key.id);
                 antiDelete.messageCache.delete(key.id);
                 
-                // Determine destination based on DELETE_PATH
                 const destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
                 const chatInfo = await getChatInfo(cachedMsg.chatJid);
                 
-                // Try to identify who deleted the message
-                let deletedBy = 'Unknown';
-                if (update && update.participant) {
-                    deletedBy = `@${formatJid(update.participant)}`;
-                } else if (key.participant) {
-                    deletedBy = `@${formatJid(key.participant)}`;
-                }
+                const deletedBy = updateData?.participant ? 
+                    `@${formatJid(updateData.participant)}` : 
+                    (key.participant ? `@${formatJid(key.participant)}` : 'Unknown');
 
-                // Prepare message info
                 const messageType = cachedMsg.type ? 
                     cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 
                     'Message';
@@ -195,30 +195,20 @@ const AntiDelete = async (m, Matrix) => {
                                `🕒 *Sent At:* ${antiDelete.formatTime(cachedMsg.timestamp)}\n` +
                                `⏱️ *Deleted At:* ${antiDelete.formatTime(Date.now())}`;
 
-                // Handle different media types with proper messaging
                 if (cachedMsg.media) {
-                    let messageOptions = {
+                    const messageOptions = cachedMsg.type === 'voice' ? {
+                        audio: cachedMsg.media,
+                        mimetype: cachedMsg.mimetype,
+                        ptt: true,
+                        caption: baseInfo
+                    } : {
                         [cachedMsg.type]: cachedMsg.media,
-                        mimetype: cachedMsg.mimetype
+                        mimetype: cachedMsg.mimetype,
+                        caption: baseInfo
                     };
-
-                    // For voice messages, we need to send as audio with ptt: true
-                    if (cachedMsg.type === 'voice') {
-                        messageOptions = {
-                            audio: cachedMsg.media,
-                            mimetype: cachedMsg.mimetype,
-                            ptt: true,
-                            caption: baseInfo
-                        };
-                    } 
-                    // For other media types, use their respective types
-                    else {
-                        messageOptions.caption = baseInfo;
-                    }
 
                     await Matrix.sendMessage(destination, messageOptions);
                 } 
-                // For text messages
                 else if (cachedMsg.content) {
                     await Matrix.sendMessage(destination, {
                         text: `${baseInfo}\n\n💬 *Content:* \n${cachedMsg.content}`
