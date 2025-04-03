@@ -1,14 +1,16 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
 
-const dlSong2 = async (m, sock) => { 
-  const prefix = config.PREFIX; 
-  const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : ''; 
+const dlSong2 = async (m, sock) => {
+  const prefix = config.PREFIX;
+  const cmd = m.body.startsWith(prefix)
+    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
+    : '';
   const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd === "song2" || cmd === "yta2") { 
-    if (!text) { 
-      return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m }); 
+  if (cmd === "song2" || cmd === "yta2") {
+    if (!text) {
+      return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
     }
 
     await m.React('⏳'); // React with a loading icon
@@ -24,7 +26,7 @@ const dlSong2 = async (m, sock) => {
       const videoUrl = video.url;
 
       // Fetch audio download link from new API
-      const apiUrl = `https://apis.giftedtech.web.id/api/download/dlmp3?apikey=gifted&url=${videoUrl}`;
+      const apiUrl = `https://apis.davidcyriltech.my.id/download/ytmp3?url=${videoUrl}`;
       const response = await fetch(apiUrl);
       const result = await response.json();
 
@@ -32,18 +34,18 @@ const dlSong2 = async (m, sock) => {
         return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
       }
 
-      const { title, download_url, thumbnail, quality } = result.result;
+      const { title, download_url: downloadUrl, thumbnail } = result.result;
 
       await m.React('✅'); // React with a success icon
 
       sock.sendMessage(
         m.from,
         {
-          audio: { url: download_url },
-          mimetype: "audio/mpeg",
-          ptt: false,
-          fileName: `${title}.mp3`,
-          caption: `🎵 *Title:* ${title}\n🎚️ *Quality:* ${quality}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY BANDAHEALI`,
+          audio: { url: downloadUrl },
+          mimetype: "audio/mpeg", // ✅ Correct mimetype for MP3 files
+          ptt: false, // ✅ Set to true for voice note format
+          fileName: `${title}.mp3`, // ✅ Proper filename
+          caption: `🎵 *Title:* ${title}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY BANDAHEALI`,
           contextInfo: {
             isForwarded: false,
             forwardingScore: 999,
@@ -60,9 +62,8 @@ const dlSong2 = async (m, sock) => {
         { quoted: m }
       );
     } catch (error) {
-      console.error("Error in dlSong command:", error);
+      console.error("Error in dlSong2 command:", error);
       sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
-      await m.React('❌'); // React with error icon if something fails
     }
   }
 };
