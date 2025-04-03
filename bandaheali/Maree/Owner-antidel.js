@@ -19,6 +19,21 @@ const AntiDelete = async (m, Matrix) => {
     // Helper function to format JID
     const formatJid = (jid) => jid.replace(/@s\.whatsapp\.net|@g\.us/g, '');
 
+    // Helper function to get group name
+    const getGroupName = async (jid) => {
+        if (jid.includes('@g.us')) {
+            const groupMetadata = await Matrix.groupMetadata(jid).catch(() => null);
+            return groupMetadata?.subject || 'Unknown Group';
+        }
+        return 'Private Chat';
+    };
+
+    // Restrict command usage to owner only
+    if (!m.key.fromMe && m.key.remoteJid !== ownerJid) {
+        await m.reply('🚫 *You are not authorized to use this command!*');
+        return;
+    }
+
     // Cache all messages (for content recovery)
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
         if (!antiDeleteEnabled) return;
@@ -49,9 +64,9 @@ const AntiDelete = async (m, Matrix) => {
                 media,
                 type,
                 mimetype: msg.message[type + 'Message']?.mimetype,
-                sender: formatJid(msg.key.participant || msg.key.remoteJid),
+                sender: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
                 timestamp: new Date().getTime(), // Save timestamp in milliseconds
-                chatJid: formatJid(msg.key.remoteJid)
+                chatJid: msg.key.remoteJid
             });
         }
     });
@@ -93,16 +108,17 @@ const AntiDelete = async (m, Matrix) => {
                 const cachedMsg = messageCache.get(key.id);
                 messageCache.delete(key.id); // Prevent duplicate sending
                 let destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
+                let groupName = await getGroupName(cachedMsg.chatJid);
                 
                 if (cachedMsg.media && cachedMsg.type) {
                     await Matrix.sendMessage(destination, {
                         [cachedMsg.type]: cachedMsg.media,
                         mimetype: cachedMsg.mimetype,
-                        caption: `🚨 *Deleted ${cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)} Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${cachedMsg.chatJid}`
+                        caption: `🚨 *Deleted ${cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)} Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${groupName}`
                     });
                 } else if (cachedMsg.content) {
                     await Matrix.sendMessage(destination, {
-                        text: `🚨 *Deleted Message Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${cachedMsg.chatJid}\n💬 *Content:* \n${cachedMsg.content}`
+                        text: `🚨 *Deleted Message Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${groupName}\n💬 *Content:* \n${cachedMsg.content}`
                     });
                 }
             }
