@@ -7,8 +7,7 @@ const roast = async (m, sock) => {
     : '';
   const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  // Roast database
-  const roasts = [
+    const roasts = [
         "Abe bhai, tera IQ wifi signal se bhi kam hai!",
         "Bhai, teri soch WhatsApp status jaisi hai, 24 ghante baad gayab ho jaati hai!",
         "Abe sochta kitna hai, tu kya NASA ka scientist hai?",
@@ -94,29 +93,32 @@ const roast = async (m, sock) => {
     try {
       await m.React('🔥'); // React with fire icon
 
+      // Check if someone is mentioned
+      if (!m.mentionedIds || m.mentionedIds.length === 0) {
+        await sock.sendMessage(
+          m.from,
+          { text: "⚠️ Please mention someone to roast!\nExample: *" + prefix + "roast @user*" },
+          { quoted: m }
+        );
+        await m.React('❌');
+        return;
+      }
+
       // Get random roast
       const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
       
-      // Check if someone is mentioned
-      let mentionedUser = m.mentionedIds && m.mentionedIds[0];
-      let responseText;
-
-      if (mentionedUser) {
-        // Get the mentioned user's name
-        const user = await sock.onWhatsApp(mentionedUser);
-        const username = user[0]?.name || user[0]?.pushname || "Unknown User";
-        responseText = `@${mentionedUser.split('@')[0]} ${randomRoast}`;
-      } else {
-        // If no one is mentioned, roast the sender
-        const sender = m.sender.split('@')[0];
-        responseText = `@${sender} ${randomRoast}`;
-      }
+      // Get the first mentioned user
+      const mentionedUser = m.mentionedIds[0];
+      const user = await sock.onWhatsApp(mentionedUser);
+      const username = user[0]?.name || user[0]?.pushname || "Unknown User";
+      
+      const responseText = `@${mentionedUser.split('@')[0]} ${randomRoast}`;
 
       await sock.sendMessage(
         m.from,
         {
           text: responseText,
-          mentions: mentionedUser ? [mentionedUser] : [m.sender]
+          mentions: [mentionedUser]
         },
         { quoted: m }
       );
@@ -124,7 +126,7 @@ const roast = async (m, sock) => {
       await m.React('😂'); // React with laughing icon
     } catch (error) {
       console.error('Error in roast command:', error);
-      await m.React('❌'); // React with error icon
+      await m.React('❌');
       await sock.sendMessage(
         m.from,
         { text: "⚠️ Failed to roast. Try again later!" },
