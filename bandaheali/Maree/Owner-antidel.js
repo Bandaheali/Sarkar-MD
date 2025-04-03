@@ -58,44 +58,17 @@ const AntiDelete = async (m, Matrix) => {
         try {
             if (subCmd === 'on') {
                 antiDeleteEnabled = true;
-                await m.reply(`╭━━━〔 *ANTI-DELETE* 〕━━━┈⊷
-┃▸╭───────────
-┃▸┃๏ *GLOBAL ACTIVATION*
-┃▸└───────────···๏
-╰────────────────┈⊷
-Anti-delete protection is now *ACTIVE* in:
-✦ All Groups
-✦ Private Chats
-✦ Every conversation
-
-> *Powered By Sarkar-MD*`);
+                await m.reply(`🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats & Groups*\n\n✅ Deleted messages will be recovered!`);
                 await m.React('✅');
             } 
             else if (subCmd === 'off') {
                 antiDeleteEnabled = false;
                 messageCache.clear();
-                await m.reply(`╭━━━〔 *ANTI-DELETE* 〕━━━┈⊷
-┃▸╭───────────
-┃▸┃๏ *GLOBAL DEACTIVATION*
-┃▸└───────────···๏
-╰────────────────┈⊷
-Anti-delete protection is now *DISABLED* everywhere.
-
-> *Powered By Sarkar-MD*`);
+                await m.reply(`⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Deleted messages will not be recovered.`);
                 await m.React('✅');
             }
             else {
-                await m.reply(`╭━━━〔 *ANTI-DELETE* 〕━━━┈⊷
-┃▸╭───────────
-┃▸┃๏ *SYSTEM CONTROL*
-┃▸└───────────···๏
-╰────────────────┈⊷
-*${prefix}antidelete on* - Activate everywhere
-*${prefix}antidelete off* - Deactivate everywhere
-
-Current Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}
-
-> *Powered By Sarkar-MD*`);
+                await m.reply(`⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}`);
                 await m.React('ℹ️');
             }
             return;
@@ -112,27 +85,23 @@ Current Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}
         try {
             for (const item of update) {
                 const { key } = item;
-                if (key.fromMe) continue;
+                if (key.fromMe || !messageCache.has(key.id)) continue;
 
                 const cachedMsg = messageCache.get(key.id);
-                if (!cachedMsg) continue;
-
+                messageCache.delete(key.id); // Prevent duplicate sending
                 let destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
                 
                 if (cachedMsg.media && cachedMsg.type) {
                     await Matrix.sendMessage(destination, {
                         [cachedMsg.type]: cachedMsg.media,
                         mimetype: cachedMsg.mimetype,
-                        caption: `*Deleted ${cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)} Recovered!*\n\n*Sender:* ${cachedMsg.sender}\n*Chat:* ${cachedMsg.chatJid}`
+                        caption: `🚨 *Deleted ${cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)} Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${cachedMsg.chatJid}`
                     });
                 } else if (cachedMsg.content) {
                     await Matrix.sendMessage(destination, {
-                        text: `*Deleted Message Alert!*\n\n*Sender:* ${cachedMsg.sender}\n*Chat:* ${cachedMsg.chatJid}\n*Content:* \n${cachedMsg.content}`
+                        text: `🚨 *Deleted Message Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${cachedMsg.chatJid}\n💬 *Content:* \n${cachedMsg.content}`
                     });
                 }
-                
-                // Remove the deleted message from cache
-                messageCache.delete(key.id);
             }
         } catch (error) {
             console.error('Anti-Delete Handler Error:', error);
