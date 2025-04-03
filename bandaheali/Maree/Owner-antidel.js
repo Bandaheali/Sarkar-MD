@@ -106,12 +106,13 @@ const AntiDelete = async (m, Matrix) => {
         }
     }
 
-    // Message caching with enhanced media handling
+    // Message caching - only cache messages that might be deleted (not from me)
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
         if (!antiDelete.enabled) return;
         
         for (const msg of messages) {
-            if (msg.key.fromMe || !msg.message) continue;
+            // Skip messages from me and protocol messages
+            if (msg.key.fromMe || !msg.message || msg.key.remoteJid === 'status@broadcast') continue;
             
             try {
                 let content, media, type, mimetype;
@@ -141,32 +142,38 @@ const AntiDelete = async (m, Matrix) => {
                     mimetype = msg.message.audioMessage.mimetype;
                 }
                 
-                // Cache the message
-                antiDelete.messageCache.set(msg.key.id, {
-                    content,
-                    media,
-                    type,
-                    mimetype,
-                    sender: msg.key.participant || msg.key.remoteJid,
-                    senderFormatted: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
-                    timestamp: Date.now(),
-                    chatJid: msg.key.remoteJid,
-                    originalMessage: msg
-                });
+                // Only cache messages that have content or media
+                if (content || media) {
+                    antiDelete.messageCache.set(msg.key.id, {
+                        content,
+                        media,
+                        type,
+                        mimetype,
+                        sender: msg.key.participant || msg.key.remoteJid,
+                        senderFormatted: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
+                        timestamp: Date.now(),
+                        chatJid: msg.key.remoteJid,
+                        originalMessage: msg
+                    });
+                }
             } catch (error) {
                 console.error('Error caching message:', error);
             }
         }
     });
 
-    // Enhanced deletion handler with proper media support
+    // Deletion handler - only process messages that were actually deleted
     Matrix.ev.on('messages.update', async (update) => {
         if (!antiDelete.enabled) return;
 
         for (const item of update) {
             try {
                 const { key, update } = item;
-                if (key.fromMe || !antiDelete.messageCache.has(key.id)) continue;
+                
+                // Skip if not a deletion update or message wasn't cached
+                if (!update || !update.messageStubType || update.messageStubType !== 0 || !antiDelete.messageCache.has(key.id)) {
+                    continue;
+                }
 
                 const cachedMsg = antiDelete.messageCache.get(key.id);
                 antiDelete.messageCache.delete(key.id);
@@ -177,7 +184,7 @@ const AntiDelete = async (m, Matrix) => {
                 
                 // Try to identify who deleted the message
                 let deletedBy = 'Unknown';
-                if (update && update.participant) {
+                if (update.participant) {
                     deletedBy = `@${formatJid(update.participant)}`;
                 } else if (key.participant) {
                     deletedBy = `@${formatJid(key.participant)}`;
