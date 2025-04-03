@@ -27,39 +27,30 @@ const profile = async (m, sock) => {
 
       const targetUser = mentionedIds[0];
       
-      // Fetch all user data in parallel
-      const [contact, ppUrl, status] = await Promise.all([
-        sock.fetchStatus(targetUser).catch(() => null),
-        sock.profilePictureUrl(targetUser, 'image').catch(() => null),
-        sock.fetchStatus(targetUser).catch(() => null)
-      ]);
+      // Get basic contact info first
+      const contact = await sock.onWhatsApp(targetUser);
+      if (!contact || !contact[0]?.exists) {
+        throw new Error("User not found");
+      }
 
-      // Get accurate name from contacts
-      const user = await sock.contact.getContact(targetUser);
-      const username = user?.notify || user?.vname || user?.name || "User";
+      const username = contact[0]?.name || contact[0]?.pushname || targetUser.split('@')[0];
       
-      // Get accurate bio
-      let bio = "No bio set";
-      if (status?.status && status.status.length > 0) {
-        bio = status.status;
+      // Try to get profile picture (may fail due to privacy)
+      let ppUrl;
+      try {
+        ppUrl = await sock.profilePictureUrl(targetUser, 'image');
+      } catch {
+        ppUrl = null;
       }
 
-      // Get last seen
-      let lastSeen = "Hidden";
-      if (user?.lastSeen) {
-        lastSeen = new Date(user.lastSeen * 1000).toLocaleString();
-      }
-
-      // Prepare profile picture
-      let ppImage;
-      if (ppUrl) {
-        try {
-          const response = await axios.get(ppUrl, { responseType: 'arraybuffer' });
-          ppImage = Buffer.from(response.data, 'binary');
-        } catch (e) {
-          console.log("Couldn't fetch profile picture");
+      // Try to get status (may fail due to privacy)
+      let bio = "Bio hidden by user";
+      try {
+        const status = await sock.fetchStatus(targetUser);
+        if (status?.status?.trim()) {
+          bio = status.status;
         }
-      }
+      } catch {}
 
       // Format profile info
       const profileInfo = `
@@ -67,7 +58,6 @@ const profile = async (m, sock) => {
 
 👤 *Name:* ${username}
 📝 *Bio:* ${bio}
-🕒 *Last Active:* ${lastSeen}
 🆔 *User ID:* ${targetUser.split('@')[0]}
 
 _Profile fetched by Sarkar-MD_
@@ -75,9 +65,8 @@ _Profile fetched by Sarkar-MD_
 
       await m.React('✅'); // Success reaction
 
-      // Send message
+      // Prepare message with or without profile picture
       const messageOptions = {
-        caption: profileInfo,
         mentions: [targetUser],
         contextInfo: {
           isForwarded: true,
@@ -88,33 +77,53 @@ _Profile fetched by Sarkar-MD_
           },
           externalAdReply: {
             title: "✨ Sarkar-MD Profile ✨",
-            body: "Complete User Profile",
+            body: "User Profile Information",
             thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/main/Pairing/1733805817658.webp',
             mediaType: 1,
           },
         },
       };
 
-      if (ppImage) {
-        await sock.sendMessage(
-          m.from,
-          { image: ppImage, ...messageOptions },
-          { quoted: m }
-        );
-      } else {
-        await sock.sendMessage(
-          m.from,
-          { text: profileInfo, ...messageOptions },
-          { quoted: m }
-        );
+      if (ppUrl) {
+        try {
+          const response = await axios.get(ppUrl, { responseType: 'arraybuffer' });
+          await sock.sendMessage(
+            m.from,
+            { 
+              image: Buffer.from(response.data),
+              caption: profileInfo,
+              ...messageOptions 
+            },
+            { quoted: m }
+          );
+          return;
+        } catch (e) {
+          console.log("Couldn't fetch profile picture");
+        }
       }
+
+      // Fallback to text-only if no picture
+      await sock.sendMessage(
+        m.from,
+        { 
+          text: `${username} doesn't have a visible profile picture\n\n${profileInfo}`,
+          ...messageOptions 
+        },
+        { quoted: m }
+      );
 
     } catch (error) {
       console.error('Profile command error:', error);
       await m.React('❌');
+      let errorMsg = "⚠️ Failed to fetch profile.";
+      
+      if (error.message.includes("not found") || error.message.includes("privacy")) {
+        errorMsg = "⚠️ Profile information is hidden by user's privacy settings.";
+      }
+      
       await sock.sendMessage(
         m.from,
-        { text: "⚠️ Failed to fetch profile. The user may have privacy settings enabled." },
+        { text: errorMsg },
         { quoted: m }
       );
     }
