@@ -12,7 +12,7 @@ const profile = async (m, sock) => {
     try {
       await m.React('⏳'); // Loading reaction
 
-      // Check if someone is mentioned
+      // Improved mention detection
       const mentionedIds = m.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
       
       if (mentionedIds.length === 0) {
@@ -26,21 +26,39 @@ const profile = async (m, sock) => {
       }
 
       const targetUser = mentionedIds[0];
-      const userContact = await sock.onWhatsApp(targetUser);
-      const userProfile = await sock.profilePictureUrl(targetUser, 'image').catch(() => null);
-      const status = await sock.fetchStatus(targetUser).catch(() => null);
+      
+      // Fetch all user data in parallel
+      const [contact, ppUrl, status] = await Promise.all([
+        sock.fetchStatus(targetUser).catch(() => null),
+        sock.profilePictureUrl(targetUser, 'image').catch(() => null),
+        sock.fetchStatus(targetUser).catch(() => null)
+      ]);
 
-      // Get user info
-      const username = userContact[0]?.name || userContact[0]?.pushname || "Unknown User";
-      const bio = status?.status || "No bio set";
-      const lastSeen = status?.setAt ? new Date(status.setAt).toLocaleString() : "Hidden";
-      const jid = targetUser.split('@')[0];
+      // Get accurate name from contacts
+      const user = await sock.contact.getContact(targetUser);
+      const username = user?.notify || user?.vname || user?.name || "User";
+      
+      // Get accurate bio
+      let bio = "No bio set";
+      if (status?.status && status.status.length > 0) {
+        bio = status.status;
+      }
+
+      // Get last seen
+      let lastSeen = "Hidden";
+      if (user?.lastSeen) {
+        lastSeen = new Date(user.lastSeen * 1000).toLocaleString();
+      }
 
       // Prepare profile picture
       let ppImage;
-      if (userProfile) {
-        const response = await axios.get(userProfile, { responseType: 'arraybuffer' });
-        ppImage = Buffer.from(response.data, 'binary');
+      if (ppUrl) {
+        try {
+          const response = await axios.get(ppUrl, { responseType: 'arraybuffer' });
+          ppImage = Buffer.from(response.data, 'binary');
+        } catch (e) {
+          console.log("Couldn't fetch profile picture");
+        }
       }
 
       // Format profile info
@@ -48,51 +66,45 @@ const profile = async (m, sock) => {
 📌 *USER PROFILE* 📌
 
 👤 *Name:* ${username}
-🆔 *JID:* ${jid}
 📝 *Bio:* ${bio}
-🕒 *Last Seen:* ${lastSeen}
+🕒 *Last Active:* ${lastSeen}
+🆔 *User ID:* ${targetUser.split('@')[0]}
 
 _Profile fetched by Sarkar-MD_
       `;
 
       await m.React('✅'); // Success reaction
 
-      // Send message with or without profile picture
+      // Send message
+      const messageOptions = {
+        caption: profileInfo,
+        mentions: [targetUser],
+        contextInfo: {
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363315182578784@newsletter',
+            newsletterName: "Sarkar-MD",
+            serverMessageId: -1,
+          },
+          externalAdReply: {
+            title: "✨ Sarkar-MD Profile ✨",
+            body: "Complete User Profile",
+            thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/main/Pairing/1733805817658.webp',
+            mediaType: 1,
+          },
+        },
+      };
+
       if (ppImage) {
         await sock.sendMessage(
           m.from,
-          {
-            image: ppImage,
-            caption: profileInfo,
-            mentions: [targetUser],
-            contextInfo: {
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: '120363315182578784@newsletter',
-                newsletterName: "Sarkar-MD",
-                serverMessageId: -1,
-              },
-              externalAdReply: {
-                title: "✨ Sarkar-MD Profile ✨",
-                body: "User Profile Fetcher",
-                thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/main/Pairing/1733805817658.webp',
-                mediaType: 1,
-              },
-            },
-          },
+          { image: ppImage, ...messageOptions },
           { quoted: m }
         );
       } else {
         await sock.sendMessage(
           m.from,
-          {
-            text: `*${username}* has no profile picture!\n\n${profileInfo}`,
-            mentions: [targetUser],
-            contextInfo: {
-              isForwarded: true,
-              // ... same contextInfo as above
-            },
-          },
+          { text: profileInfo, ...messageOptions },
           { quoted: m }
         );
       }
@@ -102,7 +114,7 @@ _Profile fetched by Sarkar-MD_
       await m.React('❌');
       await sock.sendMessage(
         m.from,
-        { text: "⚠️ Failed to fetch profile. Try again later!" },
+        { text: "⚠️ Failed to fetch profile. The user may have privacy settings enabled." },
         { quoted: m }
       );
     }
