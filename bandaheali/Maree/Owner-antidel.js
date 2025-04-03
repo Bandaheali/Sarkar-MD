@@ -22,13 +22,27 @@ const AntiDelete = async (m, Matrix) => {
         
         messages.forEach(msg => {
             if (msg.key.fromMe || !msg.message) return;
+            
+            let content = msg.message.conversation || msg.message.extendedTextMessage?.text || null;
+            let media = null;
+            
+            if (msg.message.imageMessage) {
+                media = msg.message.imageMessage;
+                content = '[Image]';
+            } else if (msg.message.videoMessage) {
+                media = msg.message.videoMessage;
+                content = '[Video]';
+            } else if (msg.message.audioMessage) {
+                media = msg.message.audioMessage;
+                content = '[Audio]';
+            } else if (msg.message.stickerMessage) {
+                media = msg.message.stickerMessage;
+                content = '[Sticker]';
+            }
+            
             messageCache.set(msg.key.id, {
-                content: msg.message.conversation || 
-                        msg.message.extendedTextMessage?.text ||
-                        (msg.message.imageMessage ? '[Image]' :
-                         msg.message.videoMessage ? '[Video]' :
-                         msg.message.audioMessage ? '[Audio]' :
-                         '[Media Message]'),
+                content,
+                media,
                 sender: msg.key.participant || msg.key.remoteJid,
                 timestamp: new Date().getTime(), // Save timestamp in milliseconds
                 chatJid: msg.key.remoteJid
@@ -94,29 +108,26 @@ Current Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}
 
         try {
             for (const item of update) {
-                const { key, update: { message: deletedMessage } } = item;
+                const { key } = item;
                 if (key.fromMe) continue;
 
                 const cachedMsg = messageCache.get(key.id);
                 if (!cachedMsg) continue;
 
-                // Only send the content of the deleted message
-                const deletedMsgContent = cachedMsg.content;
-
-                if (config.DELETE_PATH === "same") {
-                    await Matrix.sendMessage(key.remoteJid, { 
-                        text: `*DELETED MESSAGE*:
-                        \n\n${deletedMsgContent}`,
+                let destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
+                
+                if (cachedMsg.media) {
+                    await Matrix.sendMessage(destination, {
+                        document: cachedMsg.media,
+                        mimetype: cachedMsg.media.mimetype,
+                        caption: `*Deleted Media Recovered!*\n\n*Sender:* ${cachedMsg.sender}\n*Chat:* ${cachedMsg.chatJid}`
                     });
                 } else {
-                    await Matrix.sendMessage(ownerJid, { 
-                        text: `*Deleted Message Alert!*
-\n*Sender:* ${cachedMsg.sender}
-*Chat:* ${cachedMsg.chatJid}
-*Content:* \n${deletedMsgContent}`,
+                    await Matrix.sendMessage(destination, {
+                        text: `*Deleted Message Alert!*\n\n*Sender:* ${cachedMsg.sender}\n*Chat:* ${cachedMsg.chatJid}\n*Content:* \n${cachedMsg.content}`
                     });
                 }
-
+                
                 // Remove the deleted message from cache
                 messageCache.delete(key.id);
             }
