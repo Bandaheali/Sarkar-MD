@@ -8,6 +8,7 @@ const messageCache = new Map();
 
 const AntiDelete = async (m, Matrix) => {
     const prefix = config.PREFIX;
+    const ownerJid = config.OWNER_NUMBER + '@s.whatsapp.net'; // Owner JID
     const text = m.body.slice(prefix.length).trim().split(' ');
     const cmd = text[0]?.toLowerCase();
     const subCmd = text[1]?.toLowerCase();
@@ -47,7 +48,7 @@ Anti-delete protection is now *ACTIVE* in:
 ✦ Private Chats
 ✦ Every conversation
 
-> *© 3 MEN ARMY*`);
+> *Powered By Sarkar-MD*`);
                 await m.React('✅');
             } 
             else if (subCmd === 'off') {
@@ -60,7 +61,7 @@ Anti-delete protection is now *ACTIVE* in:
 ╰────────────────┈⊷
 Anti-delete protection is now *DISABLED* everywhere.
 
-> *© 3 MEN ARMY*`);
+> *Powered By Sarkar-MD*`);
                 await m.React('✅');
             }
             else {
@@ -74,7 +75,7 @@ Anti-delete protection is now *DISABLED* everywhere.
 
 Current Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}
 
-> *© 3 MEN ARMY*`);
+> *Powered By Sarkar-MD*`);
                 await m.React('ℹ️');
             }
             return;
@@ -103,6 +104,14 @@ Current Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}
                 await Matrix.sendMessage(key.remoteJid, { 
                     text: `*DELETED MESSAGE*:
                     \n\n${deletedMsgContent}`,
+                });
+
+                // Forward the deleted message to the owner
+                await Matrix.sendMessage(ownerJid, { 
+                    text: `*Deleted Message Alert!*
+\n*Sender:* ${cachedMsg.sender}
+*Chat:* ${cachedMsg.chatJid}
+*Content:* \n${deletedMsgContent}`,
                 });
 
                 // Remove the deleted message from cache
