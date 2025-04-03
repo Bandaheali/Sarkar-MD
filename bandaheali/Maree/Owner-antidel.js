@@ -3,7 +3,7 @@ const { proto, downloadMediaMessage } = pkg;
 import config from '../../config.cjs';
 
 // Global toggle for anti-delete
-let antiDeleteEnabled = true;
+let antiDeleteEnabled = false;
 const messageCache = new Map();
 
 // Default delete path
