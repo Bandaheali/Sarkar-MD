@@ -2,33 +2,57 @@ import pkg from '@whiskeysockets/baileys';
 const { proto, downloadMediaMessage } = pkg;
 import config from '../../config.cjs';
 
-// Global toggle for anti-delete
-let antiDeleteEnabled = false;
-const messageCache = new Map();
+// Enhanced anti-delete system
+class AntiDeleteSystem {
+    constructor() {
+        this.enabled = false;
+        this.messageCache = new Map();
+        this.cacheExpiry = 5 * 60 * 1000; // 5 minutes cache expiry
+        this.initCleanupInterval();
+    }
 
-// Default delete path
-config.DELETE_PATH = config.DELETE_PATH || "pm";
+    initCleanupInterval() {
+        setInterval(() => this.cleanExpiredMessages(), this.cacheExpiry);
+    }
+
+    cleanExpiredMessages() {
+        const now = Date.now();
+        for (const [key, msg] of this.messageCache.entries()) {
+            if (now - msg.timestamp > this.cacheExpiry) {
+                this.messageCache.delete(key);
+            }
+        }
+    }
+}
+
+const antiDelete = new AntiDeleteSystem();
 
 const AntiDelete = async (m, Matrix) => {
     const prefix = config.PREFIX;
-    const ownerJid = config.OWNER_NUMBER + '@s.whatsapp.net'; // Owner JID
-    const text = m.body.slice(prefix.length).trim().split(' ');
+    const ownerJid = config.OWNER_NUMBER + '@s.whatsapp.net';
+    const text = m.body?.slice(prefix.length).trim().split(' ') || [];
     const cmd = text[0]?.toLowerCase();
     const subCmd = text[1]?.toLowerCase();
 
-    // Helper function to format JID
+    // Helper functions
     const formatJid = (jid) => jid.replace(/@s\.whatsapp\.net|@g\.us/g, '');
-
-    // Helper function to get group name
-    const getGroupName = async (jid) => {
+    
+    const getChatInfo = async (jid) => {
         if (jid.includes('@g.us')) {
-            const groupMetadata = await Matrix.groupMetadata(jid).catch(() => null);
-            return groupMetadata?.subject || 'Unknown Group';
+            try {
+                const groupMetadata = await Matrix.groupMetadata(jid);
+                return {
+                    name: groupMetadata?.subject || 'Unknown Group',
+                    isGroup: true
+                };
+            } catch {
+                return { name: 'Unknown Group', isGroup: true };
+            }
         }
-        return 'Private Chat';
+        return { name: 'Private Chat', isGroup: false };
     };
 
-    // Handle anti-delete commands (restricted to owner only)
+    // Command handler
     if (cmd === 'antidelete') {
         if (m.sender !== ownerJid) {
             await m.reply('🚫 *You are not authorized to use this command!*');
@@ -36,21 +60,25 @@ const AntiDelete = async (m, Matrix) => {
         }
         
         try {
+            const responses = {
+                on: `🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats*\n🔹 Cache: *5 minutes*\n\n✅ Deleted messages will be recovered!`,
+                off: `⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Cache cleared\n🔸 Deleted messages will not be recovered.`,
+                help: `⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDelete.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}`
+            };
+
             if (subCmd === 'on') {
-                antiDeleteEnabled = true;
-                await m.reply(`🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats & Groups*\n\n✅ Deleted messages will be recovered!`);
-                await m.React('✅');
+                antiDelete.enabled = true;
+                await m.reply(responses.on);
             } 
             else if (subCmd === 'off') {
-                antiDeleteEnabled = false;
-                messageCache.clear();
-                await m.reply(`⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Deleted messages will not be recovered.`);
-                await m.React('✅');
+                antiDelete.enabled = false;
+                antiDelete.messageCache.clear();
+                await m.reply(responses.off);
             }
             else {
-                await m.reply(`⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n\nCurrent Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}`);
-                await m.React('ℹ️');
+                await m.reply(responses.help);
             }
+            await m.React('✅');
             return;
         } catch (error) {
             console.error('AntiDelete Command Error:', error);
@@ -58,83 +86,83 @@ const AntiDelete = async (m, Matrix) => {
         }
     }
 
-    // Cache all messages (for content recovery)
+    // Message caching
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
-        if (!antiDeleteEnabled) return;
+        if (!antiDelete.enabled) return;
         
         for (const msg of messages) {
             if (msg.key.fromMe || !msg.message) continue;
             
-            let content = msg.message.conversation || msg.message.extendedTextMessage?.text || null;
-            let media = null;
-            let type = null;
-            
-            if (msg.message.imageMessage) {
-                media = await downloadMediaMessage(msg, 'buffer');
-                type = 'image';
-            } else if (msg.message.videoMessage) {
-                media = await downloadMediaMessage(msg, 'buffer');
-                type = 'video';
-            } else if (msg.message.audioMessage) {
-                media = await downloadMediaMessage(msg, 'buffer');
-                type = 'audio';
-            } else if (msg.message.stickerMessage) {
-                media = await downloadMediaMessage(msg, 'buffer');
-                type = 'sticker';
+            try {
+                let content, media, type, mimetype;
+                
+                // Extract message content
+                if (msg.message.conversation) {
+                    content = msg.message.conversation;
+                } else if (msg.message.extendedTextMessage?.text) {
+                    content = msg.message.extendedTextMessage.text;
+                }
+                
+                // Handle media messages
+                const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
+                for (const mediaType of mediaTypes) {
+                    if (msg.message[`${mediaType}Message`]) {
+                        media = await downloadMediaMessage(msg, 'buffer');
+                        type = mediaType;
+                        mimetype = msg.message[`${mediaType}Message`].mimetype;
+                        break;
+                    }
+                }
+                
+                // Cache the message
+                antiDelete.messageCache.set(msg.key.id, {
+                    content,
+                    media,
+                    type,
+                    mimetype,
+                    sender: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
+                    timestamp: Date.now(),
+                    chatJid: msg.key.remoteJid
+                });
+            } catch (error) {
+                console.error('Error caching message:', error);
             }
-            
-            messageCache.set(msg.key.id, {
-                content,
-                media,
-                type,
-                mimetype: msg.message[type + 'Message']?.mimetype,
-                sender: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
-                timestamp: new Date().getTime(), // Save timestamp in milliseconds
-                chatJid: msg.key.remoteJid
-            });
         }
     });
 
-    // Handle message deletions globally when enabled
+    // Deletion handler
     Matrix.ev.on('messages.update', async (update) => {
-        if (!antiDeleteEnabled) return;
+        if (!antiDelete.enabled) return;
 
-        try {
-            for (const item of update) {
+        for (const item of update) {
+            try {
                 const { key } = item;
-                if (key.fromMe || !messageCache.has(key.id)) continue;
+                if (key.fromMe || !antiDelete.messageCache.has(key.id)) continue;
 
-                const cachedMsg = messageCache.get(key.id);
-                messageCache.delete(key.id); // Prevent duplicate sending
-                let destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
-                let groupName = await getGroupName(cachedMsg.chatJid);
+                const cachedMsg = antiDelete.messageCache.get(key.id);
+                antiDelete.messageCache.delete(key.id);
                 
+                const destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
+                const chatInfo = await getChatInfo(cachedMsg.chatJid);
+                
+                const baseInfo = `🚨 *Deleted ${cachedMsg.type ? cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 'Message'} Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${chatInfo.name}${chatInfo.isGroup ? ' (Group)' : ''}`;
+
                 if (cachedMsg.media && cachedMsg.type) {
                     await Matrix.sendMessage(destination, {
                         [cachedMsg.type]: cachedMsg.media,
                         mimetype: cachedMsg.mimetype,
-                        caption: `🚨 *Deleted ${cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)} Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${groupName}`
+                        caption: baseInfo
                     });
                 } else if (cachedMsg.content) {
                     await Matrix.sendMessage(destination, {
-                        text: `🚨 *Deleted Message Recovered!*\n\n📌 *Sender:* ${cachedMsg.sender}\n📍 *Chat:* ${groupName}\n💬 *Content:* \n${cachedMsg.content}`
+                        text: `${baseInfo}\n\n💬 *Content:* \n${cachedMsg.content}`
                     });
                 }
+            } catch (error) {
+                console.error('Error handling deleted message:', error);
             }
-        } catch (error) {
-            console.error('Anti-Delete Handler Error:', error);
         }
     });
-
-    // Cache Cleanup: Remove expired messages (1 minute expiration)
-    setInterval(() => {
-        const now = Date.now();
-        messageCache.forEach((msg, key) => {
-            if (now - msg.timestamp > 60000) {  // 1 minute expiration time
-                messageCache.delete(key);
-            }
-        });
-    }, 60000);
 };
 
 export default AntiDelete;
