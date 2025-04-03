@@ -162,7 +162,7 @@ const AntiDelete = async (m, Matrix) => {
         }
     });
 
-    // Deletion handler - only process messages that were actually deleted
+    // Deletion handler - properly detect deleted messages
     Matrix.ev.on('messages.update', async (update) => {
         if (!antiDelete.enabled) return;
 
@@ -170,8 +170,17 @@ const AntiDelete = async (m, Matrix) => {
             try {
                 const { key, update } = item;
                 
-                // Skip if not a deletion update or message wasn't cached
-                if (!update || !update.messageStubType || update.messageStubType !== 0 || !antiDelete.messageCache.has(key.id)) {
+                // Skip if message wasn't cached
+                if (!antiDelete.messageCache.has(key.id)) {
+                    continue;
+                }
+
+                // Check if message was deleted (either by update or by checking the message status)
+                const isDeleted = update?.messageStubType === 0 || 
+                                update?.status === 'deleted' || 
+                                (update?.message && update.message?.messageStubType === 0);
+
+                if (!isDeleted) {
                     continue;
                 }
 
@@ -184,7 +193,7 @@ const AntiDelete = async (m, Matrix) => {
                 
                 // Try to identify who deleted the message
                 let deletedBy = 'Unknown';
-                if (update.participant) {
+                if (update?.participant) {
                     deletedBy = `@${formatJid(update.participant)}`;
                 } else if (key.participant) {
                     deletedBy = `@${formatJid(key.participant)}`;
