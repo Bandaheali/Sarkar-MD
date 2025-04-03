@@ -7,7 +7,7 @@ let antiDeleteEnabled = false;
 const messageCache = new Map();
 
 // Default delete path
-config.DELETE_PATH = config.DELETE_PATH || "same";
+config.DELETE_PATH = config.DELETE_PATH || "pm";
 
 const AntiDelete = async (m, Matrix) => {
     const prefix = config.PREFIX;
@@ -15,6 +15,9 @@ const AntiDelete = async (m, Matrix) => {
     const text = m.body.slice(prefix.length).trim().split(' ');
     const cmd = text[0]?.toLowerCase();
     const subCmd = text[1]?.toLowerCase();
+
+    // Helper function to format JID
+    const formatJid = (jid) => jid.replace(/@s\.whatsapp\.net|@g\.us/g, '');
 
     // Cache all messages (for content recovery)
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
@@ -46,9 +49,9 @@ const AntiDelete = async (m, Matrix) => {
                 media,
                 type,
                 mimetype: msg.message[type + 'Message']?.mimetype,
-                sender: msg.key.participant || msg.key.remoteJid,
+                sender: formatJid(msg.key.participant || msg.key.remoteJid),
                 timestamp: new Date().getTime(), // Save timestamp in milliseconds
-                chatJid: msg.key.remoteJid
+                chatJid: formatJid(msg.key.remoteJid)
             });
         }
     });
