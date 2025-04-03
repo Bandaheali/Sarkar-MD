@@ -7,7 +7,8 @@ const roast = async (m, sock) => {
     : '';
   const text = m.body.slice(prefix.length + cmd.length).trim();
 
-    const roasts = [
+  // Roast database
+      let roasts = [
         "Abe bhai, tera IQ wifi signal se bhi kam hai!",
         "Bhai, teri soch WhatsApp status jaisi hai, 24 ghante baad gayab ho jaati hai!",
         "Abe sochta kitna hai, tu kya NASA ka scientist hai?",
@@ -78,7 +79,6 @@ const roast = async (m, sock) => {
     "Tere paas idea hai, par wo abhi bhi 'under review' hai!"
 ];               
         
-
   if (cmd === "roast") {
     // Check if it's a group message
     if (!m.isGroup) {
@@ -93,11 +93,13 @@ const roast = async (m, sock) => {
     try {
       await m.React('🔥'); // React with fire icon
 
-      // Check if someone is mentioned
-      if (!m.mentionedIds || m.mentionedIds.length === 0) {
+      // Improved mention detection
+      const mentionedIds = m.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+      
+      if (mentionedIds.length === 0) {
         await sock.sendMessage(
           m.from,
-          { text: "⚠️ Please mention someone to roast!\nExample: *" + prefix + "roast @user*" },
+          { text: `⚠️ Please mention someone to roast!\nExample: *${prefix}roast @user*` },
           { quoted: m }
         );
         await m.React('❌');
@@ -108,7 +110,7 @@ const roast = async (m, sock) => {
       const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
       
       // Get the first mentioned user
-      const mentionedUser = m.mentionedIds[0];
+      const mentionedUser = mentionedIds[0];
       const user = await sock.onWhatsApp(mentionedUser);
       const username = user[0]?.name || user[0]?.pushname || "Unknown User";
       
