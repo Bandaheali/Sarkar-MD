@@ -30,7 +30,7 @@ const AntiDelete = async (m, Matrix) => {
 
     // Handle anti-delete commands (restricted to owner only)
     if (cmd === 'antidelete') {
-        if (m.key.remoteJid !== ownerJid) {
+        if (m.sender !== ownerJid) {
             await m.reply('🚫 *You are not authorized to use this command!*');
             return;
         }
