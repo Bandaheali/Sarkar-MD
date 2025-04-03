@@ -25,24 +25,26 @@ const AntiDelete = async (m, Matrix) => {
             
             let content = msg.message.conversation || msg.message.extendedTextMessage?.text || null;
             let media = null;
+            let type = null;
             
             if (msg.message.imageMessage) {
                 media = msg.message.imageMessage;
-                content = '[Image]';
+                type = 'image';
             } else if (msg.message.videoMessage) {
                 media = msg.message.videoMessage;
-                content = '[Video]';
+                type = 'video';
             } else if (msg.message.audioMessage) {
                 media = msg.message.audioMessage;
-                content = '[Audio]';
+                type = 'audio';
             } else if (msg.message.stickerMessage) {
                 media = msg.message.stickerMessage;
-                content = '[Sticker]';
+                type = 'sticker';
             }
             
             messageCache.set(msg.key.id, {
                 content,
                 media,
+                type,
                 sender: msg.key.participant || msg.key.remoteJid,
                 timestamp: new Date().getTime(), // Save timestamp in milliseconds
                 chatJid: msg.key.remoteJid
@@ -116,13 +118,12 @@ Current Status: ${antiDeleteEnabled ? '✅ ACTIVE' : '❌ INACTIVE'}
 
                 let destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
                 
-                if (cachedMsg.media) {
+                if (cachedMsg.media && cachedMsg.type) {
                     await Matrix.sendMessage(destination, {
-                        document: cachedMsg.media,
-                        mimetype: cachedMsg.media.mimetype,
-                        caption: `*Deleted Media Recovered!*\n\n*Sender:* ${cachedMsg.sender}\n*Chat:* ${cachedMsg.chatJid}`
+                        [cachedMsg.type]: cachedMsg.media,
+                        caption: `*Deleted ${cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)} Recovered!*\n\n*Sender:* ${cachedMsg.sender}\n*Chat:* ${cachedMsg.chatJid}`
                     });
-                } else {
+                } else if (cachedMsg.content) {
                     await Matrix.sendMessage(destination, {
                         text: `*Deleted Message Alert!*\n\n*Sender:* ${cachedMsg.sender}\n*Chat:* ${cachedMsg.chatJid}\n*Content:* \n${cachedMsg.content}`
                     });
