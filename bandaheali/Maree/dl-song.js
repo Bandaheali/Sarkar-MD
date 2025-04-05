@@ -11,44 +11,45 @@ const dlSong = async (m, sock) => {
       return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m }); 
     }
 
-    await m.React('⏳'); // React with loading icon
+    await m.React('⏳'); // React with a loading icon
 
     try {
-      // Search video on YouTube
+      // Search for the video using yt-search
       const searchResults = await yts(text);
       if (!searchResults.videos.length) {
         return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
       }
 
-      const video = searchResults.videos[0];
+      const video = searchResults.videos[0]; // Get the first result
       const videoUrl = video.url;
 
-      // Call the new API
-      const apiUrl = `https://home.lazacktech.biz.id/api/ytdl?url=${encodeURIComponent(videoUrl)}&format=mp3`;
+      // Fetch audio download link from new API
+      const apiUrl = `https://apis-keith.vercel.app/download/dlmp3?url=${videoUrl}`;
       const response = await fetch(apiUrl);
       const result = await response.json();
 
-      if (result.status !== 200 || !result.download_link) {
-        return sock.sendMessage(m.from, { text: "❌ Failed to fetch audio download link!" }, { quoted: m });
+      if (!result.status || !result.result || !result.result.downloadUrl) {
+        return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
       }
 
-      const { title, download_link } = result;
+      const { title, downloadUrl, quality } = result.result;
 
-      await m.React('✅'); // React with success
+      await m.React('✅'); // React with a success icon
 
       sock.sendMessage(
         m.from,
         {
-          audio: { url: download_link },
+          audio: { url: downloadUrl },
           mimetype: "audio/mpeg",
+          ptt: false,
           fileName: `${title}.mp3`,
-          caption: `🎵 *Title:* ${title}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY BANDAHEALI`,
+          caption: `🎵 *Title:* ${title}\n🎚️ *Quality:* ${quality}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY BANDAHEALI`,
           contextInfo: {
             isForwarded: false,
             forwardingScore: 999,
             externalAdReply: {
               title: "✨ Sarkar-MD ✨",
-              body: "YouTube MP3 Downloader",
+              body: "YouTube Audio Downloader",
               thumbnailUrl: video.thumbnail,
               sourceUrl: videoUrl,
               mediaType: 1,
@@ -61,7 +62,7 @@ const dlSong = async (m, sock) => {
     } catch (error) {
       console.error("Error in dlSong command:", error);
       sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
-      await m.React('❌');
+      await m.React('❌'); // React with error icon if something fails
     }
   }
 };
