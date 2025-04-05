@@ -24,7 +24,7 @@ const dlSong = async (m, sock) => {
       const videoUrl = video.url;
 
       // Fetch audio download link from new API
-      const apiUrl = `https://apis-keith.vercel.app/download/dlmp3?url=${videoUrl}`;
+      const apiUrl = `https://apis-keith.vercel.app/download/dlmp3?url=${encodeURIComponent(videoUrl)}`;
       const response = await fetch(apiUrl);
       const result = await response.json();
 
@@ -50,7 +50,7 @@ const dlSong = async (m, sock) => {
             externalAdReply: {
               title: "✨ Sarkar-MD ✨",
               body: "YouTube Audio Downloader",
-              thumbnailUrl: video.thumbnail,
+              thumbnailUrl: video.thumbnail, // Using thumbnail from yt-search since new API doesn't provide one
               sourceUrl: videoUrl,
               mediaType: 1,
               renderLargerThumbnail: true,
