@@ -1,3 +1,6 @@
+import config from '../../config';
+import yts from 'yt-search';
+
 const dlPlay = async (m, sock) => {
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix)
@@ -5,7 +8,7 @@ const dlPlay = async (m, sock) => {
     : '';
   const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd === "dlplay") {
+  if (cmd === "play") {
     if (!text) {
       await sock.sendMessage(m.from, { 
         text: "🔎 Please provide a song name or YouTube link!\nExample: *dlplay baby shark*" 
