@@ -261,7 +261,7 @@ const AntiDelete = async (m, Matrix) => {
                             buffer = Buffer.concat([buffer, chunk]);
                         }
                         media = buffer;
-                        type = 'audio';
+                        type = 'ptt';
                         mimetype = msg.message.audioMessage.mimetype;
                     } catch (e) {
                         console.error('Error downloading voice message:', e);
