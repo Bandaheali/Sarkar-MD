@@ -1,13 +1,13 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
 
-const dlplay = async (m, sock) => {
+const dlSong = async (m, sock) => {
   const prefix = config.PREFIX;
   const body = m.body.trim();
   const cmd = body.startsWith(prefix) ? body.slice(prefix.length).split(' ')[0] : '';
   const text = body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd !== "play" && cmd !== "dlplay") return;
+  if (cmd !== "song" && cmd !== "yta") return;
 
   if (!text) {
     return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
@@ -32,7 +32,6 @@ const dlplay = async (m, sock) => {
       videoThumb = videos[0].thumbnail;
     }
 
-    // Using Sparky API endpoint
     const apiUrl = `https://api.sparky.biz.id/api/downloader/song?search=${encodeURIComponent(videoUrl)}`;
     const response = await fetch(apiUrl);
     const result = await response.json();
@@ -42,6 +41,7 @@ const dlplay = async (m, sock) => {
     }
 
     const { title, dl } = result.data;
+
     await m.React('✅');
 
     sock.sendMessage(
@@ -51,13 +51,13 @@ const dlplay = async (m, sock) => {
         mimetype: "audio/mpeg",
         ptt: false,
         fileName: `${title}.mp3`,
-        caption: `🎵 *Title:* ${title}\n📥 *Powered by SPARKY API*`,
+        caption: `🎵 *Title:* ${title}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY SPARKY API`,
         contextInfo: {
           isForwarded: false,
           forwardingScore: 999,
           externalAdReply: {
-            title: "✨ YouTube Audio Downloader ✨",
-            body: "High quality audio downloads",
+            title: "✨ Sarkar-MD ✨",
+            body: "YouTube Audio Downloader",
             thumbnailUrl: videoThumb || null,
             sourceUrl: videoUrl,
             mediaType: 1,
@@ -70,10 +70,8 @@ const dlplay = async (m, sock) => {
   } catch (error) {
     console.error("Error in dlSong command:", error);
     await m.React('❌');
-    sock.sendMessage(m.from, { 
-      text: "❌ An error occurred while processing your request!" 
-    }, { quoted: m });
+    sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
   }
 };
 
-export default dlplay;
+export default dlSong;
