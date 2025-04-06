@@ -72,7 +72,8 @@
       "gifted-dls": "^1.3.4",
       "google-tts-api": "^2.0.2",
     "sqlite3": "5.1.3",
-    "sqlite": "5.1.1"
+    "sqlite": "5.1.1",
+    "sequelize": "^6.37.5"
 
 
  },
