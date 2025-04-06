@@ -1,109 +1,75 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
-import axios from 'axios';
 
 const dlSong = async (m, sock) => {
   const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-  const text = m.body.slice(prefix.length + cmd.length).trim();
+  const body = m.body.trim();
+  const cmd = body.startsWith(prefix) ? body.slice(prefix.length).split(' ')[0] : '';
+  const text = body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd === "song" || cmd === "yta") {
-    if (!text) {
-      return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
-    }
+  if (cmd !== "song" && cmd !== "yta") return;
 
-    await m.React('⏳');
+  if (!text) {
+    return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
+  }
 
-    try {
-      // Cache for repeated requests
-      const cacheKey = `song:${text.toLowerCase()}`;
-      const cachedResult = global.cache?.get(cacheKey);
-      
-      if (cachedResult) {
-        await m.React('✅');
-        return sock.sendMessage(m.from, cachedResult, { quoted: m });
-      }
+  await m.React('⏳');
 
-      // Search with timeout
-      const searchResults = await Promise.race([
-        yts(text),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 10000))
-      ]);
+  try {
+    let videoUrl = '';
+    let videoTitle = '';
+    let videoThumb = '';
 
-      if (!searchResults.videos.length) {
+    if (text.includes("youtube.com") || text.includes("youtu.be")) {
+      videoUrl = text;
+    } else {
+      const { videos } = await yts(text);
+      if (!videos.length) {
         return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
       }
+      videoUrl = videos[0].url;
+      videoTitle = videos[0].title;
+      videoThumb = videos[0].thumbnail;
+    }
 
-      const video = searchResults.videos[0];
-      const videoUrl = video.url;
+    const apiUrl = `https://apis-keith.vercel.app/download/dlmp3?url=${encodeURIComponent(videoUrl)}`;
+    const response = await fetch(apiUrl);
+    const result = await response.json();
 
-      // Using multiple API endpoints as fallback
-      const apiEndpoints = [
-        `https://apis.giftedtech.web.id/api/download/ytmp3?apikey=gifted&url=${videoUrl}`,
-        `https://api.erdwpe.com/api/downloader/youtube?url=${videoUrl}`,
-        `https://api.lolhuman.xyz/api/ytaudio2?apikey=${config.LOLHUMAN_APIKEY}&url=${videoUrl}`
-      ];
+    if (!result.status || !result.result || !result.result.downloadUrl) {
+      return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
+    }
 
-      let result;
-      for (const endpoint of apiEndpoints) {
-        try {
-          const response = await axios.get(endpoint, { timeout: 8000 });
-          if (response.data?.result?.download_url) {
-            result = response.data;
-            break;
-          }
-        } catch (e) {
-          console.log(`Failed with endpoint ${endpoint}`);
-        }
-      }
+    const { title, downloadUrl, quality } = result.result;
+    await m.React('✅');
 
-      if (!result?.result?.download_url) {
-        return sock.sendMessage(m.from, { text: "❌ All download services failed!" }, { quoted: m });
-      }
-
-      const { title, download_url, thumbnail, quality } = result.result;
-
-      // Validate the download URL before sending
-      try {
-        await axios.head(download_url, { timeout: 5000 });
-      } catch (e) {
-        return sock.sendMessage(m.from, { text: "❌ Invalid download link!" }, { quoted: m });
-      }
-
-      await m.React('✅');
-
-      const messagePayload = {
-        audio: { url: download_url },
+    sock.sendMessage(
+      m.from,
+      {
+        audio: { url: downloadUrl },
         mimetype: "audio/mpeg",
         ptt: false,
-        fileName: `${title.substring(0, 64)}.mp3`,
-        caption: `🎵 *${title}*\n⚡ *Quality:* ${quality}\n\n_Powered by Sarkar-MD_`,
+        fileName: `${title}.mp3`,
+        caption: `🎵 *Title:* ${title}\n🎚️ *Quality:* ${quality}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY BANDAHEALI`,
         contextInfo: {
+          isForwarded: false,
+          forwardingScore: 999,
           externalAdReply: {
-            title: title.substring(0, 32),
-            body: "High Quality Audio",
-            thumbnailUrl: thumbnail,
+            title: "✨ Sarkar-MD ✨",
+            body: "YouTube Audio Downloader",
+            thumbnailUrl: videoThumb || null,
             sourceUrl: videoUrl,
-            mediaType: 1
-          }
-        }
-      };
-
-      // Cache the result for 1 hour
-      if (global.cache) {
-        global.cache.set(cacheKey, messagePayload, 3600);
-      }
-
-      sock.sendMessage(m.from, messagePayload, { quoted: m });
-
-    } catch (error) {
-      console.error("Error in dlSong:", error);
-      sock.sendMessage(m.from, 
-        { text: "❌ Failed to process. Please try a different song or try again later." }, 
-        { quoted: m }
-      );
-      await m.React('❌');
-    }
+            mediaType: 1,
+            renderLargerThumbnail: true,
+          },
+        },
+      },
+      { quoted: m }
+    );
+  } catch (error) {
+    console.error("Error in dlSong command:", error);
+    await m.React('❌');
+    sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
   }
 };
 
