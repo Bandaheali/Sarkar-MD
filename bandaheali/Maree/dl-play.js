@@ -1,4 +1,4 @@
-import config from '../../config';
+import config from '../../config.cjs';
 import yts from 'yt-search';
 
 const dlPlay = async (m, sock) => {
