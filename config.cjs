@@ -1,26 +1,23 @@
-// config.js
 const fs = require("fs");
 require("dotenv").config();
 
 const config = {
   SESSION_ID: process.env.SESSION_ID || "",
   PREFIX: process.env.PREFIX || '.',
-  AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN || "true",
-  OWNER_REACT: process.env.OWNER_REACT || "false",
-  AUTO_READ: process.env.AUTO_READ || "false",
-  AUTO_TYPING: process.env.AUTO_TYPING || "false",
-  AUTO_RECORDING: process.env.AUTO_RECORDING || "false",
-  ALWAYS_ONLINE: process.env.ALWAYS_ONLINE || "false",
-  AUTO_REACT: process.env.AUTO_REACT || "false",
-  AUTO_BIO: process.env.AUTO_BIO || "true",
-  HEART_REACT: process.env.HEART_REACT || "false",
-  REJECT_CALL: process.env.REJECT_CALL || "true",
+  AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN !== undefined ? process.env.AUTO_STATUS_SEEN === 'true' : true, 
+  OWNER_REACT: process.env.OWNER_REACT !== undefined ? process.env.OWNER_REACT === 'true' : false,
+  AUTO_REACT: process.env.AUTO_REACT !== undefined ? process.env.AUTO_REACT === 'true' : false,
+  AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
+  CHAT_BOT: process.env.CHAT_BOT !== undefined ? process.env.CHAT_BOT === 'true' : false,
+  HEART_REACT: process.env.HEART_REACT !== undefined ? process.env.HEART_REACT === 'false' : false,
+  REJECT_CALL: process.env.REJECT_CALL !== undefined ? process.env.REJECT_CALL === 'true' : false, 
+  ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : true,
+  DELETE_PATH: process.env.DELETE_PATH || "pm",
   MODE: process.env.MODE || "public",
   OWNER_NAME: process.env.OWNER_NAME || "©Bandaheali",
   OWNER_NUMBER: process.env.OWNER_NUMBER || "923253617422",
-  ANTI_DELETE: process.env.ANTI_DELETE || "true",
-  DELETE_PATH: process.env.DELETE_PATH || "pm",
-  WELCOME: process.env.WELCOME || "false"
+  WELCOME: process.env.WELCOME !== undefined ? process.env.WELCOME === 'true' : false, 
 };
+
 
 module.exports = config;
