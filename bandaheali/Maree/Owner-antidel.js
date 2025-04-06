@@ -9,7 +9,7 @@ const DB_FILE = path.join(process.cwd(), 'antidelete.json');
 
 class AntiDeleteSystem {
     constructor() {
-        this.enabled = config.ANTI_DELETE || false;
+        this.enabled = config.ANTI_DELETE;
         this.cacheExpiry = 30 * 60 * 1000; // 30 minutes (increased from 5)
         this.messageCache = new Map();
         this.cleanupTimer = null;
@@ -232,27 +232,7 @@ const AntiDelete = async (m, Matrix) => {
 
                 let media, type, mimetype;
                 
-                const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
-                for (const mediaType of mediaTypes) {
-                    if (msg.message[`${mediaType}Message`]) {
-                        const mediaMsg = msg.message[`${mediaType}Message`];
-                        try {
-                            const stream = await downloadContentFromMessage(mediaMsg, mediaType);
-                            let buffer = Buffer.from([]);
-                            for await (const chunk of stream) {
-                                buffer = Buffer.concat([buffer, chunk]);
-                            }
-                            media = buffer;
-                            type = mediaType;
-                            mimetype = mediaMsg.mimetype;
-                            break;
-                        } catch (e) {
-                            console.error(`Error downloading ${mediaType} media:`, e);
-                        }
-                    }
-                }
-                
-                // Voice note handling
+                // Handle voice messages (PTT) first
                 if (msg.message.audioMessage?.ptt) {
                     try {
                         const stream = await downloadContentFromMessage(msg.message.audioMessage, 'audio');
@@ -262,9 +242,31 @@ const AntiDelete = async (m, Matrix) => {
                         }
                         media = buffer;
                         type = 'ptt';
-                        mimetype = msg.message.audioMessage.mimetype;
+                        mimetype = msg.message.audioMessage.mimetype || 'audio/ogg; codecs=opus';
                     } catch (e) {
                         console.error('Error downloading voice message:', e);
+                    }
+                } 
+                // Handle other media types
+                else {
+                    const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
+                    for (const mediaType of mediaTypes) {
+                        if (msg.message[`${mediaType}Message`]) {
+                            const mediaMsg = msg.message[`${mediaType}Message`];
+                            try {
+                                const stream = await downloadContentFromMessage(mediaMsg, mediaType);
+                                let buffer = Buffer.from([]);
+                                for await (const chunk of stream) {
+                                    buffer = Buffer.concat([buffer, chunk]);
+                                }
+                                media = buffer;
+                                type = mediaType;
+                                mimetype = mediaMsg.mimetype;
+                                break;
+                            } catch (e) {
+                                console.error(`Error downloading ${mediaType} media:`, e);
+                            }
+                        }
                     }
                 }
                 
@@ -313,7 +315,8 @@ const AntiDelete = async (m, Matrix) => {
                     (key.participant ? `@${formatJid(key.participant)}` : 'Unknown');
 
                 const messageType = cachedMsg.type ? 
-                    cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 
+                    (cachedMsg.type === 'ptt' ? 'Voice Message' : 
+                     cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)) : 
                     'Text';
                 
                 const baseInfo = `🚨 *Deleted ${messageType} Recovered!*\n\n` +
@@ -325,14 +328,33 @@ const AntiDelete = async (m, Matrix) => {
 
                 try {
                     if (cachedMsg.media) {
-                        const messageOptions = {
-                            [cachedMsg.type]: cachedMsg.media,
-                            mimetype: cachedMsg.mimetype,
-                            caption: baseInfo
-                        };
-
-                        if (cachedMsg.type === 'voice') {
-                            messageOptions.ptt = true;
+                        let messageOptions;
+                        
+                        if (cachedMsg.type === 'ptt') {
+                            // Special handling for voice messages
+                            messageOptions = {
+                                audio: cachedMsg.media,
+                                mimetype: cachedMsg.mimetype || 'audio/ogg; codecs=opus',
+                                ptt: true,
+                                contextInfo: {
+                                    externalAdReply: {
+                                        title: "Recovered Voice Message",
+                                        body: baseInfo,
+                                        thumbnail: null,
+                                        mediaType: 1,
+                                        mediaUrl: '',
+                                        sourceUrl: '',
+                                        showAdAttribution: false
+                                    }
+                                }
+                            };
+                        } else {
+                            // Regular media handling
+                            messageOptions = {
+                                [cachedMsg.type]: cachedMsg.media,
+                                mimetype: cachedMsg.mimetype,
+                                caption: baseInfo
+                            };
                         }
 
                         await Matrix.sendMessage(destination, messageOptions);
