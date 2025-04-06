@@ -37,16 +37,15 @@ const dlPlay = async (m, sock) => {
       await m.React('✅'); // Success reaction
 
       await sock.sendMessage(
-        m.from,
-        {
-          audio: { url: dl },
-          mimetype: "audio/mpeg",
-          ptt: false,
-          fileName: `${title}.mp3`,
-          caption: `🎵 *Title:* ${title}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY SPARKY API`,
-        },
-        { quoted: m }
-      );
+  m.from,
+  {
+    document: { url: dl },
+    mimetype: "audio/mpeg",
+    fileName: `${title}.mp3`,
+    caption: `🎵 *Title:* ${title}\n\nMay not autoplay due to format. Long press to play.`,
+  },
+  { quoted: m }
+);
     } catch (error) {
       console.error("Error in dlPlay command:", error);
       sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
