@@ -1,7 +1,7 @@
 import pkg from '@whiskeysockets/baileys';
 const { proto, downloadContentFromMessage } = pkg;
 import config from '../config.cjs';
-import { DeletedMessage, Settings } from '../data/database.js';
+import { DeletedMessage, Settings } from '../Sarkar/database.js';
 
 class AntiDeleteSystem {
   constructor() {
