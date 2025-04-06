@@ -1,367 +1,266 @@
 import pkg from '@whiskeysockets/baileys';
 const { proto, downloadContentFromMessage } = pkg;
-import config from '../../config.cjs';
-import fs from 'fs';
-import path from 'path';
-
-// Database file path with better handling
-const DB_FILE = path.join(process.cwd(), 'antidelete.json');
+import config from '../config.cjs';
+import { DeletedMessage, Settings } from '../data/database.js';
 
 class AntiDeleteSystem {
-    constructor() {
-        this.enabled = config.ANTI_DELETE || false;
-        this.cacheExpiry = 30 * 60 * 1000; // 30 minutes (increased from 5)
-        this.messageCache = new Map();
-        this.cleanupTimer = null;
-        this.isSaving = false;
-        this.saveQueue = [];
-        this.loadDatabase();
-        this.startCleanup();
-    }
+  constructor() {
+    this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
+    this.cleanupInterval = setInterval(() => this.cleanExpiredMessages(), this.cacheExpiry);
+  }
 
-    // Improved database loading with error handling
-    async loadDatabase() {
-        try {
-            if (fs.existsSync(DB_FILE)) {
-                const data = await fs.promises.readFile(DB_FILE, 'utf8');
-                const parsed = JSON.parse(data);
-                // Filter out expired messages immediately
-                const now = Date.now();
-                const validEntries = parsed.filter(([_, msg]) => 
-                    now - msg.timestamp <= this.cacheExpiry
-                );
-                this.messageCache = new Map(validEntries);
-                if (parsed.length !== validEntries.length) {
-                    await this.saveDatabase();
-                }
-            }
-        } catch (error) {
-            console.error('Database load error:', error);
-            this.messageCache = new Map();
-        }
-    }
+  async isEnabled() {
+    const settings = await Settings.findByPk(1);
+    return settings?.enabled ?? config.ANTI_DELETE;
+  }
 
-    // Debounced database saving
-    async saveDatabase() {
-        if (this.isSaving) {
-            return new Promise(resolve => {
-                this.saveQueue.push(resolve);
-            });
-        }
+  async getPath() {
+    const settings = await Settings.findByPk(1);
+    return settings?.path || config.ANTI_DELETE_PATH || 'inbox';
+  }
 
-        this.isSaving = true;
-        try {
-            const data = JSON.stringify(Array.from(this.messageCache.entries()));
-            await fs.promises.writeFile(DB_FILE, data);
-            
-            // Process any queued saves
-            while (this.saveQueue.length) {
-                const resolve = this.saveQueue.shift();
-                resolve();
-            }
-        } catch (error) {
-            console.error('Database save error:', error);
-        } finally {
-            this.isSaving = false;
-        }
+  async addMessage(key, message) {
+    try {
+      // First try to update existing message
+      const [affectedRows] = await DeletedMessage.update(message, {
+        where: { id: key }
+      });
+      
+      // If no rows were updated, insert new message
+      if (affectedRows === 0) {
+        await DeletedMessage.create({
+          id: key,
+          ...message,
+          media: message.media ? Buffer.from(message.media) : null
+        });
+      }
+    } catch (error) {
+      console.error('Message save error:', error.message);
     }
+  }
 
-    // Optimized message addition
-    async addMessage(key, message) {
-        if (this.messageCache.size > 1000) { // Prevent memory overload
-            this.cleanExpiredMessages(true); // Force cleanup
-        }
-        this.messageCache.set(key, message);
-        await this.saveDatabase();
-    }
+  async getMessage(key) {
+    return await DeletedMessage.findByPk(key);
+  }
 
-    async deleteMessage(key) {
-        if (this.messageCache.has(key)) {
-            this.messageCache.delete(key);
-            await this.saveDatabase();
-        }
-    }
+  async deleteMessage(key) {
+    await DeletedMessage.destroy({ where: { id: key } });
+  }
 
-    // More efficient cleanup
-    cleanExpiredMessages(force = false) {
-        const now = Date.now();
-        let changed = false;
-        const threshold = this.cacheExpiry;
-        
-        // Only check a portion of messages unless forced
-        const checkCount = force ? this.messageCache.size : Math.min(100, this.messageCache.size);
-        
-        let checked = 0;
-        for (const [key, msg] of this.messageCache.entries()) {
-            if (now - msg.timestamp > threshold) {
-                this.messageCache.delete(key);
-                changed = true;
-            }
-            checked++;
-            if (!force && checked >= checkCount) break;
-        }
-        
-        if (changed) {
-            this.saveDatabase();
-        }
-    }
+  async cleanExpiredMessages() {
+    const expiryTime = Date.now() - this.cacheExpiry;
+    await DeletedMessage.destroy({ 
+      where: { timestamp: { [Sequelize.Op.lt]: expiryTime } }
+    });
+  }
 
-    // Start/restart cleanup interval
-    startCleanup() {
-        if (this.cleanupTimer) clearInterval(this.cleanupTimer);
-        this.cleanupTimer = setInterval(
-            () => this.cleanExpiredMessages(), 
-            Math.min(this.cacheExpiry, 5 * 60 * 1000) // Cleanup every 5 min max
-        );
-    }
+  formatTime(timestamp) {
+    return new Date(timestamp).toLocaleString('en-PK', {
+      timeZone: 'Asia/Karachi',
+      hour12: true,
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) + ' PKT';
+  }
 
-    formatTime(timestamp) {
-        const options = {
-            timeZone: 'Asia/Karachi',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-        };
-        return new Date(timestamp).toLocaleString('en-PK', options) + ' (PKT)';
-    }
-
-    async destroy() {
-        if (this.cleanupTimer) clearInterval(this.cleanupTimer);
-        await this.saveDatabase();
-    }
+  destroy() {
+    clearInterval(this.cleanupInterval);
+  }
 }
 
-const antiDelete = new AntiDeleteSystem();
-
 const AntiDelete = async (m, Matrix) => {
-    const prefix = config.PREFIX;
-    const ownerJid = config.OWNER_NUMBER + '@s.whatsapp.net';
-    const text = m.body?.slice(prefix.length).trim().split(' ') || [];
-    const cmd = text[0]?.toLowerCase();
-    const subCmd = text[1]?.toLowerCase();
+  const prefix = config.PREFIX;
+  const botNumber = await Matrix.decodeJid(Matrix.user.id);
+  const isCreator = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net'].includes(m.sender);
+  const text = m.body?.slice(prefix.length).trim().split(' ') || [];
+  const cmd = text[0]?.toLowerCase();
+  const subCmd = text[1]?.toLowerCase();
 
-    const formatJid = (jid) => jid ? jid.replace(/@s\.whatsapp\.net|@g\.us/g, '') : 'Unknown';
+  const formatJid = (jid) => jid ? jid.replace(/@s\.whatsapp\.net|@g\.us/g, '') : 'Unknown';
+
+  const getChatInfo = async (jid) => {
+    if (!jid) return { name: 'Unknown Chat', isGroup: false };
     
-    const getChatInfo = async (jid) => {
-        if (!jid) return { name: 'Unknown Chat', isGroup: false };
-        
-        if (jid.includes('@g.us')) {
-            try {
-                const groupMetadata = await Matrix.groupMetadata(jid);
-                return {
-                    name: groupMetadata?.subject || 'Unknown Group',
-                    isGroup: true
-                };
-            } catch {
-                return { name: 'Unknown Group', isGroup: true };
-            }
-        }
-        return { name: 'Private Chat', isGroup: false };
-    };
+    if (jid.includes('@g.us')) {
+      try {
+        const groupMetadata = await Matrix.groupMetadata(jid);
+        return {
+          name: groupMetadata?.subject || 'Unknown Group',
+          isGroup: true
+        };
+      } catch {
+        return { name: 'Unknown Group', isGroup: true };
+      }
+    }
+    return { name: 'Private Chat', isGroup: false };
+  };
 
-    // Command handler
-    if (cmd === 'antidelete') {
-        if (m.sender !== ownerJid) {
-            await m.reply('🚫 *You are not authorized to use this command!*');
-            return;
-        }
-        
-        try {
-            const mode = config.DELETE_PATH === "same" ? "Same Chat" : "Owner PM";
-            const stats = `📊 Cache Stats: ${antiDelete.messageCache.size} messages stored`;
-            const responses = {
-                on: `🛡️ *ANTI-DELETE ENABLED* 🛡️\n\n🔹 Protection: *ACTIVE*\n🔹 Scope: *All Chats*\n🔹 Cache: *30 minutes*\n🔹 Mode: *${mode}*\n${stats}\n\n✅ Deleted messages will be recovered!`,
-                off: `⚠️ *ANTI-DELETE DISABLED* ⚠️\n\n🔸 Protection: *OFF*\n🔸 Cache cleared\n🔸 Deleted messages will not be recovered.`,
-                help: `⚙️ *ANTI-DELETE SETTINGS* ⚙️\n\n🔹 *${prefix}antidelete on* - Enable\n🔸 *${prefix}antidelete off* - Disable\n🔹 *${prefix}antidelete stats* - Show cache stats\n\nCurrent Status: ${antiDelete.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\nCurrent Mode: ${mode}\n${stats}`
-            };
+  const antiDelete = new AntiDeleteSystem();
 
-            if (subCmd === 'on') {
-                antiDelete.enabled = true;
-                antiDelete.startCleanup();
-                await m.reply(responses.on);
-            } 
-            else if (subCmd === 'off') {
-                antiDelete.enabled = false;
-                antiDelete.messageCache.clear();
-                await antiDelete.saveDatabase();
-                await m.reply(responses.off);
-            }
-            else if (subCmd === 'stats') {
-                await m.reply(`📊 *Anti-Delete Cache Stats*\n\n• Stored Messages: ${antiDelete.messageCache.size}\n• Status: ${antiDelete.enabled ? '🟢 Active' : '🔴 Inactive'}\n• Cache Duration: 30 minutes`);
-            }
-            else {
-                await m.reply(responses.help);
-            }
-            await m.React('✅');
-            return;
-        } catch (error) {
-            console.error('AntiDelete Command Error:', error);
-            await m.React('❌');
-        }
+  if (cmd === 'antidelete') {
+    if (!isCreator) {
+      await m.reply('╭━━〔 *PERMISSION DENIED* 〕━━┈⊷\n┃◈╭─────────────·๏\n┃◈┃• You are not authorized!\n┃◈╰─────────────·๏\n╰━━━━━━━━━━━━━━━━┈⊷');
+      return;
     }
 
-    // Message caching with rate limiting
-    let lastCacheTime = 0;
-    Matrix.ev.on('messages.upsert', async ({ messages }) => {
-        if (!antiDelete.enabled || !messages?.length) return;
+    try {
+      const mode = await antiDelete.getPath();
+      const modeName = mode === "same" ? "Same Chat" : 
+                     mode === "inbox" ? "Bot Inbox" : "Owner PM";
+      const isEnabled = await antiDelete.isEnabled();
+
+      if (subCmd === 'on') {
+        await Settings.update({ enabled: true }, { where: { id: 1 } });
+        await m.reply(`╭━━〔 *ANTI-DELETE* 〕━━┈⊷\n┃◈╭─────────────·๏\n┃◈┃• Status: ✅ Enabled\n┃◈┃• Mode: ${modeName}\n┃◈╰─────────────·๏\n╰━━━━━━━━━━━━━━━━┈⊷`);
+      } 
+      else if (subCmd === 'off') {
+        await Settings.update({ enabled: false }, { where: { id: 1 } });
+        await antiDelete.cleanExpiredMessages();
+        await m.reply(`╭━━〔 *ANTI-DELETE* 〕━━┈⊷\n┃◈╭─────────────·๏\n┃◈┃• Status: ❌ Disabled\n┃◈╰─────────────·๏\n╰━━━━━━━━━━━━━━━━┈⊷`);
+      }
+      else {
+        await m.reply(`╭━━〔 *ANTI-DELETE* 〕━━┈⊷\n┃◈╭─────────────·๏\n┃◈┃• ${prefix}antidelete on/off\n┃◈┃• Status: ${isEnabled ? '✅' : '❌'}\n┃◈┃• Mode: ${modeName}\n┃◈╰─────────────·๏\n╰━━━━━━━━━━━━━━━━┈⊷`);
+      }
+      await m.React('✅');
+    } catch (error) {
+      console.error('Command error:', error);
+      await m.React('❌');
+    }
+    return;
+  }
+
+  // Message handling
+  Matrix.ev.on('messages.upsert', async ({ messages }) => {
+    if (!await antiDelete.isEnabled() || !messages?.length) return;
+    
+    for (const msg of messages) {
+      if (msg.key.fromMe || !msg.message || msg.key.remoteJid === 'status@broadcast') continue;
+      
+      try {
+        const content = msg.message.conversation || 
+                       msg.message.extendedTextMessage?.text ||
+                       msg.message.imageMessage?.caption ||
+                       msg.message.videoMessage?.caption ||
+                       msg.message.documentMessage?.caption;
+
+        let media, type, mimetype;
         
-        // Simple rate limiting
-        const now = Date.now();
-        if (now - lastCacheTime < 100) return; // 10 messages/second max
-        lastCacheTime = now;
-
-        for (const msg of messages) {
-            if (msg.key.fromMe || !msg.message || msg.key.remoteJid === 'status@broadcast') continue;
-            
+        const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
+        for (const mediaType of mediaTypes) {
+          if (msg.message[`${mediaType}Message`]) {
+            const mediaMsg = msg.message[`${mediaType}Message`];
             try {
-                const content = msg.message.conversation || 
-                              msg.message.extendedTextMessage?.text ||
-                              msg.message.imageMessage?.caption ||
-                              msg.message.videoMessage?.caption ||
-                              msg.message.documentMessage?.caption;
-
-                // Skip if no content and not media
-                if (!content && !msg.message.imageMessage && !msg.message.videoMessage && 
-                    !msg.message.audioMessage && !msg.message.stickerMessage && !msg.message.documentMessage) {
-                    continue;
-                }
-
-                let media, type, mimetype;
-                
-                // Handle voice notes first (ptt audio)
-                if (msg.message.audioMessage?.ptt) {
-                    try {
-                        const stream = await downloadContentFromMessage(msg.message.audioMessage, 'audio');
-                        let buffer = Buffer.from([]);
-                        for await (const chunk of stream) {
-                            buffer = Buffer.concat([buffer, chunk]);
-                        }
-                        media = buffer;
-                        type = 'ptt'; // Special type for voice notes
-                        mimetype = msg.message.audioMessage.mimetype || 'audio/ogg; codecs=opus';
-                    } catch (e) {
-                        console.error('Error downloading voice message:', e);
-                    }
-                }
-                // Handle other media types
-                else {
-                    const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
-                    for (const mediaType of mediaTypes) {
-                        if (msg.message[`${mediaType}Message`]) {
-                            const mediaMsg = msg.message[`${mediaType}Message`];
-                            try {
-                                const stream = await downloadContentFromMessage(mediaMsg, mediaType);
-                                let buffer = Buffer.from([]);
-                                for await (const chunk of stream) {
-                                    buffer = Buffer.concat([buffer, chunk]);
-                                }
-                                media = buffer;
-                                type = mediaType;
-                                mimetype = mediaMsg.mimetype;
-                                break;
-                            } catch (e) {
-                                console.error(`Error downloading ${mediaType} media:`, e);
-                            }
-                        }
-                    }
-                }
-                
-                if (content || media) {
-                    await antiDelete.addMessage(msg.key.id, {
-                        content,
-                        media,
-                        type,
-                        mimetype,
-                        sender: msg.key.participant || msg.key.remoteJid,
-                        senderFormatted: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
-                        timestamp: Date.now(),
-                        chatJid: msg.key.remoteJid
-                    });
-                }
-            } catch (error) {
-                console.error('Error caching message:', error);
+              const stream = await downloadContentFromMessage(mediaMsg, mediaType);
+              let buffer = Buffer.from([]);
+              for await (const chunk of stream) {
+                buffer = Buffer.concat([buffer, chunk]);
+              }
+              media = buffer;
+              type = mediaType;
+              mimetype = mediaMsg.mimetype;
+              break;
+            } catch (e) {
+              console.error(`Media download error:`, e);
             }
+          }
         }
-    });
-
-    // Deletion handler with better error handling
-    Matrix.ev.on('messages.update', async (updates) => {
-        if (!antiDelete.enabled || !updates?.length) return;
-
-        for (const update of updates) {
-            try {
-                const { key, update: updateData } = update;
-                
-                // Check if message was actually deleted
-                const isDeleted = updateData?.messageStubType === proto.WebMessageInfo.StubType.REVOKE || 
-                                 updateData?.status === proto.WebMessageInfo.Status.DELETED;
-                
-                if (!isDeleted || key.fromMe || !antiDelete.messageCache.has(key.id)) {
-                    continue;
-                }
-
-                const cachedMsg = antiDelete.messageCache.get(key.id);
-                await antiDelete.deleteMessage(key.id);
-                
-                const destination = config.DELETE_PATH === "same" ? key.remoteJid : ownerJid;
-                const chatInfo = await getChatInfo(cachedMsg.chatJid);
-                
-                const deletedBy = updateData?.participant ? 
-                    `@${formatJid(updateData.participant)}` : 
-                    (key.participant ? `@${formatJid(key.participant)}` : 'Unknown');
-
-                let messageType = cachedMsg.type ? 
-                    cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 
-                    'Text';
-                
-                if (messageType === 'Ptt') messageType = 'Voice Note';
-                
-                const baseInfo = `🚨 *Deleted ${messageType} Recovered!*\n\n` +
-                               `📌 *Sender:* ${cachedMsg.senderFormatted}\n` +
-                               `✂️ *Deleted By:* ${deletedBy}\n` +
-                               `📍 *Chat:* ${chatInfo.name}${chatInfo.isGroup ? ' (Group)' : ''}\n` +
-                               `🕒 *Sent At:* ${antiDelete.formatTime(cachedMsg.timestamp)}\n` +
-                               `⏱️ *Deleted At:* ${antiDelete.formatTime(Date.now())}`;
-
-                try {
-                    if (cachedMsg.media) {
-                        let messageOptions = {};
-                        
-                        if (cachedMsg.type === 'ptt') {
-                            // Special handling for voice notes
-                            messageOptions = {
-                                audio: cachedMsg.media,
-                                mimetype: cachedMsg.mimetype || 'audio/ogg; codecs=opus',
-                                ptt: true,
-                                caption: baseInfo
-                            };
-                        } else {
-                            messageOptions = {
-                                [cachedMsg.type]: cachedMsg.media,
-                                mimetype: cachedMsg.mimetype,
-                                caption: baseInfo
-                            };
-                        }
-
-                        await Matrix.sendMessage(destination, messageOptions);
-                    } 
-                    else if (cachedMsg.content) {
-                        await Matrix.sendMessage(destination, {
-                            text: `${baseInfo}\n\n💬 *Content:* \n${cachedMsg.content}`
-                        });
-                    }
-                } catch (sendError) {
-                    console.error('Error sending recovered message:', sendError);
-                }
-            } catch (error) {
-                console.error('Error handling deleted message:', error);
+        
+        if (msg.message.audioMessage?.ptt) {
+          try {
+            const stream = await downloadContentFromMessage(msg.message.audioMessage, 'audio');
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) {
+              buffer = Buffer.concat([buffer, chunk]);
             }
+            media = buffer;
+            type = 'audio';
+            mimetype = 'audio/ogg; codecs=opus';
+          } catch (e) {
+            console.error('Voice download error:', e);
+          }
         }
-    });
+        
+        if (content || media) {
+          await antiDelete.addMessage(msg.key.id, {
+            content,
+            media,
+            type,
+            mimetype,
+            sender: msg.key.participant || msg.key.remoteJid,
+            senderFormatted: `@${formatJid(msg.key.participant || msg.key.remoteJid)}`,
+            timestamp: Date.now(),
+            chatJid: msg.key.remoteJid
+          });
+        }
+      } catch (error) {
+        console.error('Message processing error:', error);
+      }
+    }
+  });
+
+  // Deletion handling
+  Matrix.ev.on('messages.update', async (updates) => {
+    if (!await antiDelete.isEnabled() || !updates?.length) return;
+
+    for (const update of updates) {
+      try {
+        const { key, update: updateData } = update;
+        const isDeleted = updateData?.messageStubType === proto.WebMessageInfo.StubType.REVOKE;
+        
+        if (!isDeleted || key.fromMe) continue;
+
+        const cachedMsg = await antiDelete.getMessage(key.id);
+        if (!cachedMsg) continue;
+
+        await antiDelete.deleteMessage(key.id);
+        
+        const path = await antiDelete.getPath();
+        let destination;
+        if (path === "same") {
+          destination = key.remoteJid;
+        } else if (path === "inbox") {
+          destination = Matrix.user.id;
+        } else {
+          destination = config.OWNER_NUMBER + '@s.whatsapp.net';
+        }
+
+        const chatInfo = await getChatInfo(cachedMsg.chatJid);
+        const deletedBy = updateData?.participant ? 
+          `@${formatJid(updateData.participant)}` : 
+          (key.participant ? `@${formatJid(key.participant)}` : 'Unknown');
+
+        const messageType = cachedMsg.type ? 
+          cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 
+          'Text';
+        
+        // Send alert first
+        await Matrix.sendMessage(destination, {
+          text: `╭━━〔 *DELETED ${messageType}* 〕━━┈⊷\n┃◈╭─────────────·๏\n┃◈┃• Sender: ${cachedMsg.senderFormatted}\n┃◈┃• Deleted By: ${deletedBy}\n┃◈┃• Chat: ${chatInfo.name}${chatInfo.isGroup ? ' (Group)' : ''}\n┃◈┃• Sent At: ${antiDelete.formatTime(cachedMsg.timestamp)}\n┃◈┃• Deleted At: ${antiDelete.formatTime(Date.now())}\n┃◈╰─────────────·๏\n╰━━━━━━━━━━━━━━━━┈⊷`
+        });
+
+        // Send media if exists
+        if (cachedMsg.media) {
+          await Matrix.sendMessage(destination, {
+            [cachedMsg.type]: cachedMsg.media,
+            mimetype: cachedMsg.mimetype,
+            ...(cachedMsg.type === 'audio' && { ptt: true })
+          });
+        }
+        
+        // Send text content
+        if (cachedMsg.content) {
+          await Matrix.sendMessage(destination, {
+            text: `💬 *Content:*\n${cachedMsg.content}`
+          });
+        }
+      } catch (error) {
+        console.error('Recovery error:', error);
+      }
+    }
+  });
 };
 
 export default AntiDelete;
