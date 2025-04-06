@@ -1,6 +1,19 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
 
+const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+};
+
 const dlSong = async (m, sock) => {
   const prefix = config.PREFIX;
   const body = m.body.trim();
@@ -24,23 +37,25 @@ const dlSong = async (m, sock) => {
       videoUrl = text;
     } else {
       const { videos } = await yts(text);
-      if (!videos.length) {
-        return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
+      const validVideo = videos.find(v => !v.live && !v.upcoming && v.seconds < 600); // Max 10 min, not live
+      if (!validVideo) {
+        return sock.sendMessage(m.from, { text: "❌ No valid videos found!" }, { quoted: m });
       }
-      videoUrl = videos[0].url;
-      videoTitle = videos[0].title;
-      videoThumb = videos[0].thumbnail;
+      videoUrl = validVideo.url;
+      videoTitle = validVideo.title;
+      videoThumb = validVideo.thumbnail;
     }
 
     const apiUrl = `https://apis-keith.vercel.app/download/dlmp3?url=${encodeURIComponent(videoUrl)}`;
-    const response = await fetch(apiUrl);
+    const response = await fetchWithTimeout(apiUrl);
     const result = await response.json();
 
-    if (!result.status || !result.result || !result.result.downloadUrl) {
+    if (!result.status || !result.result?.downloadUrl) {
       return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
     }
 
     const { title, downloadUrl, quality } = result.result;
+
     await m.React('✅');
 
     sock.sendMessage(
@@ -67,9 +82,9 @@ const dlSong = async (m, sock) => {
       { quoted: m }
     );
   } catch (error) {
-    console.error("Error in dlSong command:", error);
+    console.error("Error in dlSong:", error);
     await m.React('❌');
-    sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
+    sock.sendMessage(m.from, { text: "❌ Something went wrong! Try another song or link." }, { quoted: m });
   }
 };
 
