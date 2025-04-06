@@ -77,7 +77,7 @@ const viewOnce = async (m, sock) => {
           mentionedJid: [m.sender],
           isForwarded: true,
           forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363354023106228@newsletter',
+            newsletterJid: '120363315182578784@newsletter',
             newsletterName: 'Sarkar-MD',
             serverMessageId: -1,
           },
