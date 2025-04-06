@@ -1,83 +1,79 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
 
-const dlPlay = async (m, sock) => {
+const dlplay = async (m, sock) => {
   const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix)
-    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
-    : '';
-  const text = m.body.slice(prefix.length + cmd.length).trim();
+  const body = m.body.trim();
+  const cmd = body.startsWith(prefix) ? body.slice(prefix.length).split(' ')[0] : '';
+  const text = body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd === "play") {
-    if (!text) {
-      return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
-    }
+  if (cmd !== "play" || cmd !== "dlplay") return;
 
-    await m.React('⏳'); // Loading...
+  if (!text) {
+    return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
+  }
 
-    try {
-      // Improved search with audio filter
-      const searchResults = await yts(`${text} audio`);
-      if (!searchResults.videos.length) {
-        await m.React('❌');
+  await m.React('⏳');
+
+  try {
+    let videoUrl = '';
+    let videoTitle = '';
+    let videoThumb = '';
+
+    if (text.includes("youtube.com") || text.includes("youtu.be")) {
+      videoUrl = text;
+    } else {
+      const { videos } = await yts(text);
+      if (!videos.length) {
         return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
       }
-
-      const video = searchResults.videos[0];
-      const videoUrl = encodeURIComponent(video.url);
-
-      // Use a more reliable API endpoint
-      const apiUrl = `https://api.sparky.biz.id/api/downloader/song?search=${videoUrl}&apikey=YOUR_API_KEY`;
-      
-      const response = await fetch(apiUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0'
-        }
-      });
-      
-      if (!response.ok) {
-        await m.React('❌');
-        return sock.sendMessage(m.from, { text: "❌ Audio service unavailable. Try again later." }, { quoted: m });
-      }
-
-      const result = await response.json();
-
-      if (!result.status || !result.data?.dl) {
-        await m.React('❌');
-        return sock.sendMessage(m.from, { text: "❌ Failed to process audio!" }, { quoted: m });
-      }
-
-      const { title, dl } = result.data;
-
-      // Verify the audio URL before sending
-      const audioCheck = await fetch(dl, { method: 'HEAD' });
-      if (!audioCheck.ok) {
-        await m.React('❌');
-        return sock.sendMessage(m.from, { text: "❌ Invalid audio file!" }, { quoted: m });
-      }
-
-      await m.React('✅'); // Success
-
-      // Send with additional options for better compatibility
-      await sock.sendMessage(
-        m.from,
-        {
-          audio: { url: dl },
-          mimetype: 'audio/mp4', // Try mp4 if mpeg doesn't work
-          ptt: false,
-          fileName: `${title}.mp3`.replace(/[^\w.-]/g, '_'),
-          caption: `🎵 *Title:* ${title}\n⏱ *Duration:* ${video.timestamp || 'N/A'}\n📥 *Powered by SPARKY API*`,
-        },
-        { quoted: m }
-      );
-    } catch (error) {
-      console.error("Error in dlPlay command:", error);
-      await m.React('❌');
-      sock.sendMessage(m.from, { 
-        text: "❌ Failed to process your request. Please try a different song or try again later." 
-      }, { quoted: m });
+      videoUrl = videos[0].url;
+      videoTitle = videos[0].title;
+      videoThumb = videos[0].thumbnail;
     }
+
+    // Using Sparky API endpoint
+    const apiUrl = `https://api.sparky.biz.id/api/downloader/song?search=${encodeURIComponent(videoUrl)}`;
+    const response = await fetch(apiUrl);
+    const result = await response.json();
+
+    if (!result.status || !result.data || !result.data.dl) {
+      return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
+    }
+
+    const { title, dl } = result.data;
+    await m.React('✅');
+
+    sock.sendMessage(
+      m.from,
+      {
+        audio: { url: dl },
+        mimetype: "audio/mpeg",
+        ptt: false,
+        fileName: `${title}.mp3`,
+        caption: `🎵 *Title:* ${title}\n📥 *Powered by SPARKY API*`,
+        contextInfo: {
+          isForwarded: false,
+          forwardingScore: 999,
+          externalAdReply: {
+            title: "✨ YouTube Audio Downloader ✨",
+            body: "High quality audio downloads",
+            thumbnailUrl: videoThumb || null,
+            sourceUrl: videoUrl,
+            mediaType: 1,
+            renderLargerThumbnail: true,
+          },
+        },
+      },
+      { quoted: m }
+    );
+  } catch (error) {
+    console.error("Error in dlSong command:", error);
+    await m.React('❌');
+    sock.sendMessage(m.from, { 
+      text: "❌ An error occurred while processing your request!" 
+    }, { quoted: m });
   }
 };
 
-export default dlPlay;
+export default dlplay;
