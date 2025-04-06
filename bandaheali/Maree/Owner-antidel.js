@@ -9,7 +9,7 @@ const DB_FILE = path.join(process.cwd(), 'antidelete.json');
 
 class AntiDeleteSystem {
     constructor() {
-        this.enabled = false;
+        this.enabled = config.ANTI_DELETE || false;
         this.cacheExpiry = 30 * 60 * 1000; // 30 minutes (increased from 5)
         this.messageCache = new Map();
         this.cleanupTimer = null;
@@ -261,7 +261,7 @@ const AntiDelete = async (m, Matrix) => {
                             buffer = Buffer.concat([buffer, chunk]);
                         }
                         media = buffer;
-                        type = 'voice';
+                        type = 'audio';
                         mimetype = msg.message.audioMessage.mimetype;
                     } catch (e) {
                         console.error('Error downloading voice message:', e);
