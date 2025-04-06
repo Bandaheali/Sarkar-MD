@@ -20,9 +20,10 @@ const config = {
   MODE: process.env.MODE || "public",
   OWNER_NAME: process.env.OWNER_NAME || "©Bandaheali",
   OWNER_NUMBER: process.env.OWNER_NUMBER || "923253617422",
-  GEMINI_KEY: process.env.GEMINI_KEY || "AIzaSyCUPaxfIdZawsKZKqCqJcC-GWiQPCXKTDc",
+  ANTI_DELETE: process.env.ANTI_DELETE,
+  DELETE_PATH: process.env.DELETE_PATH,
+    
   WELCOME: process.env.WELCOME !== undefined ? process.env.WELCOME === 'true' : false, 
 };
-
 
 module.exports = config;
