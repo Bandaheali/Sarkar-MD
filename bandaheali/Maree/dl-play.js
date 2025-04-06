@@ -1,77 +1,61 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
 
-const dlSong = async (m, sock) => {
+const dlPlay = async (m, sock) => {
   const prefix = config.PREFIX;
-  const body = m.body.trim();
-  const cmd = body.startsWith(prefix) ? body.slice(prefix.length).split(' ')[0] : '';
-  const text = body.slice(prefix.length + cmd.length).trim();
+  const cmd = m.body.startsWith(prefix)
+    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
+    : '';
+  const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd !== "song4" && cmd !== "yta4") return;
+  if (cmd === "play") {
+    if (!text) {
+      return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
+    }
 
-  if (!text) {
-    return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
-  }
+    await m.React('⏳');
 
-  await m.React('⏳');
-
-  try {
-    let videoUrl = '';
-    let videoTitle = '';
-    let videoThumb = '';
-
-    if (text.includes("youtube.com") || text.includes("youtu.be")) {
-      videoUrl = text;
-    } else {
-      const { videos } = await yts(text);
-      if (!videos.length) {
-        return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
+    try {
+      let videoUrl = '';
+      if (text.includes("youtube.com") || text.includes("youtu.be")) {
+        videoUrl = text;
+      } else {
+        const searchResults = await yts(text);
+        if (!searchResults.videos.length) {
+          return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
+        }
+        videoUrl = searchResults.videos[0].url;
       }
-      videoUrl = videos[0].url;
-      videoTitle = videos[0].title;
-      videoThumb = videos[0].thumbnail;
-    }
 
-    const apiUrl = `https://api.sparky.biz.id/api/downloader/song?search=${encodeURIComponent(videoUrl)}`;
-    const response = await fetch(apiUrl);
-    const result = await response.json();
+      const apiUrl = `https://apis-keith.vercel.app/download/dlmp3?url=${encodeURIComponent(videoUrl)}`;
+      const response = await fetch(apiUrl);
+      const result = await response.json();
 
-    if (!result.status || !result.data || !result.data.dl) {
-      return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
-    }
+      if (!result.status || !result.result || !result.result.downloadUrl) {
+        return sock.sendMessage(m.from, { text: "❌ Failed to fetch audio!" }, { quoted: m });
+      }
 
-    const { title, dl } = result.data;
+      const { title, downloadUrl, quality } = result.result;
 
-    await m.React('✅');
+      await m.React('✅');
 
-    sock.sendMessage(
-      m.from,
-      {
-        audio: { url: dl },
-        mimetype: "audio/mpeg",
-        ptt: false,
-        fileName: `${title}.mp3`,
-        caption: `🎵 *Title:* ${title}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY SPARKY API`,
-        contextInfo: {
-          isForwarded: false,
-          forwardingScore: 999,
-          externalAdReply: {
-            title: "✨ Sarkar-MD ✨",
-            body: "YouTube Audio Downloader",
-            thumbnailUrl: videoThumb || null,
-            sourceUrl: videoUrl,
-            mediaType: 1,
-            renderLargerThumbnail: true,
-          },
+      await sock.sendMessage(
+        m.from,
+        {
+          audio: { url: downloadUrl },
+          mimetype: 'audio/mpeg',
+          ptt: false,
+          fileName: `${title}.mp3`,
+          caption: `🎵 *Title:* ${title}\n🎚️ *Quality:* ${quality}\n⚡️ *Powered by Keith API*`,
         },
-      },
-      { quoted: m }
-    );
-  } catch (error) {
-    console.error("Error in dlSong command:", error);
-    await m.React('❌');
-    sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
+        { quoted: m }
+      );
+    } catch (error) {
+      console.error("Error in dlPlay command:", error);
+      await m.React('❌');
+      sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
+    }
   }
 };
 
-export default dlSong;
+export default dlPlay;
