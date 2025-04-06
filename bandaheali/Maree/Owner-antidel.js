@@ -9,7 +9,7 @@ const DB_FILE = path.join(process.cwd(), 'antidelete.json');
 
 class AntiDeleteSystem {
     constructor() {
-        this.enabled = config.ANTI_DELETE;
+        this.enabled = config.ANTI_DELETE || false;
         this.cacheExpiry = 30 * 60 * 1000; // 30 minutes (increased from 5)
         this.messageCache = new Map();
         this.cleanupTimer = null;
@@ -232,7 +232,7 @@ const AntiDelete = async (m, Matrix) => {
 
                 let media, type, mimetype;
                 
-                // Handle voice messages (PTT) first
+                // Handle voice notes first (ptt audio)
                 if (msg.message.audioMessage?.ptt) {
                     try {
                         const stream = await downloadContentFromMessage(msg.message.audioMessage, 'audio');
@@ -241,12 +241,12 @@ const AntiDelete = async (m, Matrix) => {
                             buffer = Buffer.concat([buffer, chunk]);
                         }
                         media = buffer;
-                        type = 'ptt';
+                        type = 'ptt'; // Special type for voice notes
                         mimetype = msg.message.audioMessage.mimetype || 'audio/ogg; codecs=opus';
                     } catch (e) {
                         console.error('Error downloading voice message:', e);
                     }
-                } 
+                }
                 // Handle other media types
                 else {
                     const mediaTypes = ['image', 'video', 'audio', 'sticker', 'document'];
@@ -314,10 +314,11 @@ const AntiDelete = async (m, Matrix) => {
                     `@${formatJid(updateData.participant)}` : 
                     (key.participant ? `@${formatJid(key.participant)}` : 'Unknown');
 
-                const messageType = cachedMsg.type ? 
-                    (cachedMsg.type === 'ptt' ? 'Voice Message' : 
-                     cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1)) : 
+                let messageType = cachedMsg.type ? 
+                    cachedMsg.type.charAt(0).toUpperCase() + cachedMsg.type.slice(1) : 
                     'Text';
+                
+                if (messageType === 'Ptt') messageType = 'Voice Note';
                 
                 const baseInfo = `🚨 *Deleted ${messageType} Recovered!*\n\n` +
                                `📌 *Sender:* ${cachedMsg.senderFormatted}\n` +
@@ -328,28 +329,17 @@ const AntiDelete = async (m, Matrix) => {
 
                 try {
                     if (cachedMsg.media) {
-                        let messageOptions;
+                        let messageOptions = {};
                         
                         if (cachedMsg.type === 'ptt') {
-                            // Special handling for voice messages
+                            // Special handling for voice notes
                             messageOptions = {
                                 audio: cachedMsg.media,
                                 mimetype: cachedMsg.mimetype || 'audio/ogg; codecs=opus',
                                 ptt: true,
-                                contextInfo: {
-                                    externalAdReply: {
-                                        title: "Recovered Voice Message",
-                                        body: baseInfo,
-                                        thumbnail: null,
-                                        mediaType: 1,
-                                        mediaUrl: '',
-                                        sourceUrl: '',
-                                        showAdAttribution: false
-                                    }
-                                }
+                                caption: baseInfo
                             };
                         } else {
-                            // Regular media handling
                             messageOptions = {
                                 [cachedMsg.type]: cachedMsg.media,
                                 mimetype: cachedMsg.mimetype,
