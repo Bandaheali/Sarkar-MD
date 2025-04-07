@@ -11,7 +11,7 @@ const tiktokHandler = async (m, sock) => {
     const cmd = body.slice(prefix.length).split(' ')[0].toLowerCase();
     const text = body.slice(prefix.length + cmd.length).trim();
 
-    if (cmd === 'tiktok') {
+    if (cmd === 'mix') {
       if (!text || !text.includes('tiktok.com')) {
         await sock.sendMessage(m.from, { text: '❌ Please provide a valid TikTok URL.' }, { quoted: m });
         await m.React('❌');
