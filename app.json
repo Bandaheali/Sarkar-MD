@@ -1,0 +1,89 @@
+{
+  "name": "Sarkar-MD",
+  "description": "I am SARKAR-MD — A Premium WhatsApp MultiDevice Bot built in NodeJs with enhanced features and VIP experience.",
+  "logo": "https://files.catbox.moe/c2u0py.jpg",
+  "keywords": ["SARKAR-MD", "VIP", "WhatsApp Bot", "MultiDevice", "NodeJs"],
+  "repository": "https://github.com/Sarkar-Bandaheali/Sarkar-MD",
+  "stack": "container",
+  "env": {
+    "SESSION_ID": {
+      "description": "Your session ID",
+      "required": true,
+      "value": ""
+    },
+    "MODE": {
+      "description": "Mode: public or private",
+      "required": true,
+      "value": "public"
+    },
+    "ANTI_DELETE": {
+      "description": "Enable anti-delete message system",
+      "required": true,
+      "value": "true"
+    },
+    "AUTO_STATUS_SEEN": {
+      "description": "Bot will auto-view statuses if true",
+      "required": false,
+      "value": "true"
+    },
+    "OWNER_NAME": {
+      "description": "Name shown in replies",
+      "required": true,
+      "value": "SARKAR"
+    },
+    "OWNER_NUMBER": {
+      "description": "Owner number with country code",
+      "required": true,
+      "value": "923253617422"
+    },
+    "REJECT_CALL": {
+      "description": "Bot will auto-reject calls if true",
+      "required": false,
+      "value": "false"
+    },
+    "PREFIX": {
+      "description": "Command prefix for the bot",
+      "required": false,
+      "value": "."
+    },
+    "DELETE_PATH": {
+      "description": "deleted msgs will be sent there your choice pm or same",
+      "required": false,
+      "value": "pm"
+    },
+    "AUTO_BIO": {
+      "description": "Enable auto bio updates to update your bio with every minute",
+      "required": false,
+      "value": "true"
+    },
+    "AUTO_REACT": {
+      "description": "Enable auto emoji reactions",
+      "required": false,
+      "value": "false"
+    },
+    "HEART_REACT": {
+      "description": "Enable heart reaction on romantic keywords",
+      "required": false,
+      "value": "false"
+    },
+    "OWNER_REACT": {
+      "description": "Enable reactions to owner's messages",
+      "required": false,
+      "value": "false"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "https://github.com/DuckyTeam/heroku-buildpack-imagemagick.git"
+    },
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest"
+    },
+    {
+      "url": "https://github.com/clhuang/heroku-buildpack-webp-binaries.git"
+    }
+  ]
+}
