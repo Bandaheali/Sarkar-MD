@@ -1,6 +1,9 @@
 import axios from 'axios';
 import config from '../../config.cjs';
 
+// Store active choices to handle responses
+const activeChoices = new Map();
+
 const playHandler = async (m, sock) => {
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix)
@@ -16,7 +19,6 @@ const playHandler = async (m, sock) => {
     await m.React('⏳'); // Loading reaction
 
     try {
-      // Fetch from API
       const apiUrl = `https://apis.davidcyriltech.my.id/play?query=${encodeURIComponent(text)}`;
       const response = await axios.get(apiUrl);
       const data = response.data;
@@ -26,55 +28,30 @@ const playHandler = async (m, sock) => {
       }
 
       const { title, video_url, thumbnail, duration, download_url } = data.result;
+      const messageId = m.key.id; // Store original message ID
+
+      // Store the download info with the message ID
+      activeChoices.set(messageId, {
+        title,
+        download_url,
+        thumbnail,
+        duration
+      });
 
       // Ask user for format choice
       await sock.sendMessage(
         m.from,
         {
           text: `🎵 *${title}* (${duration})\n\nChoose format:\n1. Video\n2. Audio`,
-          templateButtons: [
-            { quickReplyButton: { displayText: "1. Video", id: "video_choice" } },
-            { quickReplyButton: { displayText: "2. Audio", id: "audio_choice" } }
+          buttons: [
+            { buttonId: 'video_choice', buttonText: { displayText: '1. Video' }, type: 1 },
+            { buttonId: 'audio_choice', buttonText: { displayText: '2. Audio' }, type: 1 }
           ],
-          thumbnail: thumbnail
+          footer: 'Select your preferred format',
+          headerType: 1
         },
         { quoted: m }
       );
-
-      // Handle user choice
-      sock.ev.on('messages.upsert', async ({ messages }) => {
-        const msg = messages[0];
-        if (msg.key.remoteJid === m.from && msg.key.fromMe === false) {
-          const choice = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
-
-          if (choice === '1' || choice.toLowerCase().includes('video')) {
-            await m.React('🎬');
-            sock.sendMessage(
-              m.from,
-              {
-                video: { url: download_url },
-                mimetype: "video/mp4",
-                caption: `🎬 *${title}*\n⏱ ${duration}\n📥 Powered by David Cyril API`,
-                thumbnail: thumbnail
-              },
-              { quoted: m }
-            );
-          } else if (choice === '2' || choice.toLowerCase().includes('audio')) {
-            await m.React('🎵');
-            sock.sendMessage(
-              m.from,
-              {
-                audio: { url: download_url },
-                mimetype: "audio/mpeg",
-                fileName: `${title}.mp3`,
-                caption: `🎵 *${title}*\n⏱ ${duration}\n📥 Powered by David Cyril API`,
-                thumbnail: thumbnail
-              },
-              { quoted: m }
-            );
-          }
-        }
-      });
 
     } catch (error) {
       console.error("Error in play command:", error);
@@ -83,5 +60,52 @@ const playHandler = async (m, sock) => {
     }
   }
 };
+
+// Handle button responses separately
+const handleResponse = async (m, sock) => {
+  if (!m.message?.buttonsResponseMessage) return;
+  
+  const messageId = m.message.buttonsResponseMessage.contextInfo?.stanzaId;
+  const buttonId = m.message.buttonsResponseMessage.selectedButtonId;
+  
+  if (!activeChoices.has(messageId)) return;
+  
+  const { title, download_url, thumbnail, duration } = activeChoices.get(messageId);
+  
+  try {
+    if (buttonId === 'video_choice') {
+      await sock.sendMessage(
+        m.from,
+        {
+          video: { url: download_url },
+          mimetype: "video/mp4",
+          caption: `🎬 *${title}*\n⏱ ${duration}\n📥 Powered by David Cyril API`,
+          thumbnail: thumbnail
+        },
+        { quoted: m }
+      );
+    } else if (buttonId === 'audio_choice') {
+      await sock.sendMessage(
+        m.from,
+        {
+          audio: { url: download_url },
+          mimetype: "audio/mpeg",
+          fileName: `${title}.mp3`,
+          caption: `🎵 *${title}*\n⏱ ${duration}\n📥 Powered by David Cyril API`,
+          thumbnail: thumbnail
+        },
+        { quoted: m }
+      );
+    }
+    
+    // Clean up
+    activeChoices.delete(messageId);
+  } catch (error) {
+    console.error("Error handling response:", error);
+  }
+};
+
+// Add this listener once when initializing your bot
+// sock.ev.on('messages.upsert', ({ messages }) => handleResponse(messages[0], sock));
 
 export default playHandler;
