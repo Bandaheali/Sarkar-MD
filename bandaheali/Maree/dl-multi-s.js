@@ -1,16 +1,18 @@
 import axios from 'axios';
 import config from '../../config.cjs';
 
-// Store pending requests with automatic cleanup
-const pendingRequests = new Map();
+// Store active sessions
+const activeSessions = new Map();
+
+// Cleanup old sessions every 5 minutes
 setInterval(() => {
   const now = Date.now();
-  for (const [key, value] of pendingRequests.entries()) {
-    if (now - value.timestamp > 300000) { // Cleanup after 5 minutes
-      pendingRequests.delete(key);
+  for (const [key, session] of activeSessions.entries()) {
+    if (now - session.timestamp > 300000) { // 5 minutes
+      activeSessions.delete(key);
     }
   }
-}, 60000); // Run cleanup every minute
+}, 300000);
 
 const playHandler = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -36,74 +38,19 @@ const playHandler = async (m, sock) => {
       }
 
       const { title, download_url, thumbnail, duration } = data.result;
-      const requestKey = `${Date.now()}_${m.from}`;
+      const sessionId = `${m.from}_${Date.now()}`;
 
-      // Store the request data
-      pendingRequests.set(requestKey, {
+      // Store the session data
+      activeSessions.set(sessionId, {
         title,
         download_url,
         thumbnail,
         duration,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        originalMessage: m
       });
 
-      // Create a temporary message listener just for this interaction
-      const listener = async (msg) => {
-        if (msg.key.remoteJid === m.from && 
-            msg.key.fromMe === false && 
-            (msg.message?.conversation || msg.message?.extendedTextMessage?.text)) {
-          
-          const choice = msg.message.conversation || msg.message.extendedTextMessage.text;
-          const requestData = pendingRequests.get(requestKey);
-
-          if (requestData && (choice === '1' || choice === '2' || 
-              choice.toLowerCase().includes('video') || 
-              choice.toLowerCase().includes('audio'))) {
-            
-            // Remove the listener after handling
-            sock.ev.off('messages.upsert', listener);
-            pendingRequests.delete(requestKey);
-
-            try {
-              if (choice === '1' || choice.toLowerCase().includes('video')) {
-                await m.React('🎬');
-                await sock.sendMessage(
-                  m.from,
-                  {
-                    video: { url: requestData.download_url },
-                    mimetype: "video/mp4",
-                    caption: `🎬 *${requestData.title}*\n⏱ ${requestData.duration}`,
-                    thumbnail: requestData.thumbnail
-                  },
-                  { quoted: m }
-                );
-              } 
-              else if (choice === '2' || choice.toLowerCase().includes('audio')) {
-                await m.React('🎵');
-                await sock.sendMessage(
-                  m.from,
-                  {
-                    audio: { url: requestData.download_url },
-                    mimetype: "audio/mpeg",
-                    caption: `🎵 *${requestData.title}*\n⏱ ${requestData.duration}`,
-                    thumbnail: requestData.thumbnail
-                  },
-                  { quoted: m }
-                );
-              }
-            } catch (error) {
-              console.error("Error sending media:", error);
-              await sock.sendMessage(m.from, { text: "❌ Failed to send media!" }, { quoted: m });
-              await m.React('❌');
-            }
-          }
-        }
-      };
-
-      // Add the temporary listener
-      sock.ev.on('messages.upsert', listener);
-
-      // Ask for format choice
+      // Send format choice request
       await sock.sendMessage(
         m.from,
         { 
@@ -112,11 +59,68 @@ const playHandler = async (m, sock) => {
         { quoted: m }
       );
 
-      // Set timeout to clean up listener if no response
+      // Create reply handler
+      const replyHandler = async (msg) => {
+        if (msg.key.remoteJid === m.from && 
+            !msg.key.fromMe && 
+            (msg.message?.conversation || msg.message?.extendedTextMessage?.text)) {
+          
+          const userReply = (msg.message.conversation || msg.message.extendedTextMessage.text).toLowerCase().trim();
+          const session = activeSessions.get(sessionId);
+
+          if (session && (userReply === '1' || userReply === '2' || 
+              userReply === 'video' || userReply === 'audio')) {
+            
+            // Remove the session
+            activeSessions.delete(sessionId);
+            
+            try {
+              if (userReply === '1' || userReply === 'video') {
+                await sock.sendMessage(
+                  m.from,
+                  {
+                    video: { url: session.download_url },
+                    mimetype: "video/mp4",
+                    caption: `🎬 *${session.title}*\n⏱ ${session.duration}`,
+                    thumbnail: session.thumbnail
+                  },
+                  { quoted: session.originalMessage }
+                );
+                await m.React('🎬');
+              } 
+              else if (userReply === '2' || userReply === 'audio') {
+                await sock.sendMessage(
+                  m.from,
+                  {
+                    audio: { url: session.download_url },
+                    mimetype: "audio/mpeg",
+                    caption: `🎵 *${session.title}*\n⏱ ${session.duration}`,
+                    thumbnail: session.thumbnail
+                  },
+                  { quoted: session.originalMessage }
+                );
+                await m.React('🎵');
+              }
+            } catch (error) {
+              console.error("Error sending media:", error);
+              await sock.sendMessage(m.from, { text: "❌ Failed to send media!" }, { quoted: session.originalMessage });
+              await m.React('❌');
+            }
+            
+            // Remove this listener after handling
+            sock.ev.off('messages.upsert', replyHandler);
+          }
+        }
+      };
+
+      // Add the reply handler
+      sock.ev.on('messages.upsert', replyHandler);
+
+      // Set timeout to remove listener if no response
       setTimeout(() => {
-        if (pendingRequests.has(requestKey)) {
-          sock.ev.off('messages.upsert', listener);
-          pendingRequests.delete(requestKey);
+        if (activeSessions.has(sessionId)) {
+          sock.ev.off('messages.upsert', replyHandler);
+          activeSessions.delete(sessionId);
         }
       }, 180000); // 3 minute timeout
 
