@@ -3,16 +3,10 @@ import config from '../../config.cjs';
 
 const playHandler = async (m, sock) => {
   try {
-    // Basic validation
-    if (!m?.from || !m?.body || !sock) {
-      console.error('Invalid message or socket object');
-      return;
-    }
+    if (!m?.from || !m?.body || !sock) return;
 
     const prefix = config.PREFIX || '!';
     const body = m.body || '';
-    
-    // Check if message starts with prefix
     if (!body.startsWith(prefix)) return;
 
     const cmd = body.slice(prefix.length).split(' ')[0].toLowerCase();
@@ -39,45 +33,50 @@ const playHandler = async (m, sock) => {
         }
 
         const { title = 'Unknown', download_url, thumbnail, duration = '0:00' } = data.result;
+        const caption = `🎵 *${title}*\n⏱ Duration: ${duration}\n🔗 ${download_url}\n\n*Reply with:*\n1️⃣ for *Video*\n2️⃣ for *Audio*`;
 
-        // First send audio
-        try {
-          await sock.sendMessage(
-            m.from,
-            {
-              audio: { url: download_url },
-              mimetype: "audio/mpeg",
-              caption: `🎵 *${title}*\n⏱ ${duration}`,
-              thumbnail: thumbnail
-            },
-            { quoted: m }
-          );
-          await m.React('🎵');
-        } catch (audioError) {
-          console.error("Error sending audio:", audioError);
-          await sock.sendMessage(m.from, { text: "❌ Failed to send audio!" }, { quoted: m });
+        // Send thumbnail and options
+        await sock.sendMessage(m.from, {
+          image: { url: thumbnail },
+          caption
+        }, { quoted: m });
+
+        // Wait for reply
+        const reply = await sock.awaitMessage(m.from, m.sender, 30000); // 30 seconds
+        if (!reply || !reply.body) {
+          await sock.sendMessage(m.from, { text: "⌛ Timeout! Please try again." }, { quoted: m });
+          return;
         }
 
-        // Then send video
-        try {
+        const choice = reply.body.trim();
+        if (choice === '1') {
+          await m.React('📹');
           await sock.sendMessage(
             m.from,
             {
               video: { url: download_url },
               mimetype: "video/mp4",
-              caption: `🎬 *${title}*\n⏱ ${duration}`,
-              thumbnail: thumbnail
+              caption: `🎬 *${title}*\n⏱ ${duration}`
             },
             { quoted: m }
           );
-          await m.React('🎬');
-        } catch (videoError) {
-          console.error("Error sending video:", videoError);
-          await sock.sendMessage(m.from, { text: "❌ Failed to send video!" }, { quoted: m });
+        } else if (choice === '2') {
+          await m.React('🎧');
+          await sock.sendMessage(
+            m.from,
+            {
+              audio: { url: download_url },
+              mimetype: "audio/mpeg",
+              caption: `🎵 *${title}*\n⏱ ${duration}`
+            },
+            { quoted: m }
+          );
+        } else {
+          await sock.sendMessage(m.from, { text: "❌ Invalid choice! Reply with 1 or 2." }, { quoted: m });
         }
 
       } catch (error) {
-        console.error("Error in play command:", error);
+        console.error("Error in mix command:", error);
         await sock.sendMessage(m.from, { text: "❌ Failed to process your request!" }, { quoted: m });
         await m.React('❌');
       }
