@@ -1,65 +1,74 @@
-import axios from 'axios';
 import config from '../../config.cjs';
+import axios from 'axios';
 
-const apiKey = '22c1d064-1a8e-4b5b-94dd-23df8221b2a0';
-
-const liveScore = async (m, sock) => {
+const cricketScore = async (m, Matrix) => {
   const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix)
-    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
-    : '';
+const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  if (["livescore", "score", "match"].includes(cmd)) {
-    await m.React('⏳');
+  const validCommands = ['score', 'crick', 'crickterscore', 'cricket'];
+
+  if (validCommands.includes(cmd)) {
+    if (!text) {
+      await m.React("❌");
+      return m.reply(`*Provide a match ID for cricket score.*\nExample: ${prefix}cricketscore 12345`);
+    }
+
+    const matchId = encodeURIComponent(text);
 
     try {
-      const response = await axios.get('https://api.cricapi.com/v1/currentMatches', {
-        params: {
-          apikey: apiKey,
-          offset: 0
-        }
-      });
+      const apiUrl = `https://iol.apinepdev.workers.dev/${matchId}`;
+      const response = await axios.get(apiUrl);
 
-      const matches = response.data.data;
-      if (!matches || matches.length === 0) {
-        await sock.sendMessage(m.from, { text: "*Koi live match nahi chal raha.*" }, { quoted: m });
+      if (!response.status === 200) {
+        await m.React("❌");
+        return m.reply(`Invalid response from the cricket score API. Status code: ${response.status}`);
+      }
+
+      const result = response.data;
+
+      let formattedResult = `╭══════════════•∞•══╮\n`;
+      formattedResult += `│⿻   *Sarkar-MD*\n`;
+      formattedResult += `│⿻   *LIVE MATCH INFO* ✨\n`;
+      formattedResult += `│⿻\n`;
+
+      if (result.code === 200) {
+        formattedResult += `│⿻   *${result.data.title}*\n`;
+        formattedResult += `│⿻   *${result.data.update}*\n`;
+        formattedResult += `│⿻ \n`;
+      } else {
+        await m.reply(`*Update:* Data not found for the specified match ID.`);
+        await m.React("❌");
         return;
       }
 
-      const live = matches.slice(0, 3).map((match, i) => {
-        const scores = match.score?.map(s => `${s.inning}: ${s.runs}/${s.wickets} in ${s.overs} ov`).join(' | ') || 'Score unavailable';
-        return `*${i + 1}. ${match.name}*\n_Status:_ ${match.status}\n_Score:_ ${scores}`;
-      }).join('\n\n');
+      if (result.data.liveScore && result.data.liveScore.toLowerCase() !== "data not found") {
+        formattedResult += `│⿻   *Live Score:* ${result.data.liveScore}\n`;
+        formattedResult += `│⿻   *Run Rate:* ${result.data.runRate}\n`;
+        formattedResult += `│⿻\n`;
+        formattedResult += `│⿻   *Batter 1:* ${result.data.batsmanOne}\n`;
+        formattedResult += `│⿻   *${result.data.batsmanOneRun} (${result.data.batsmanOneBall})* SR: ${result.data.batsmanOneSR}\n`;
+        formattedResult += `│⿻\n`;
+        formattedResult += `│⿻   *Batter 2:* ${result.data.batsmanTwo}\n`;
+        formattedResult += `│⿻   *${result.data.batsmanTwoRun} (${result.data.batsmanTwoBall})* SR: ${result.data.batsmanTwoSR}\n`;
+        formattedResult += `│⿻\n`;
+        formattedResult += `│⿻   *Bowler 1:* ${result.data.bowlerOne}\n`;
+        formattedResult += `│⿻   *${result.data.bowlerOneOver} overs, ${result.data.bowlerOneRun}/${result.data.bowlerOneWickets}, Econ:* ${result.data.bowlerOneEconomy}\n`;
+        formattedResult += `│⿻\n`;
+        formattedResult += `│⿻   *Bowler 2:* ${result.data.bowlerTwo}\n`;
+        formattedResult += `│⿻   *${result.data.bowlerTwoOver} overs, ${result.data.bowlerTwoRun}/${result.data.bowlerTwoWicket}, Econ:* ${result.data.bowlerTwoEconomy}\n`;
+      }
 
-      await sock.sendMessage(
-        m.from,
-        {
-          text: `🏏 *LIVE CRICKET SCORES*\n\n${live}`,
-          contextInfo: {
-            mentionedJid: [m.sender],
-            isForwarded: true,
-            forwardingScore: 999,
-            externalAdReply: {
-              title: "Live Cricket Scores",
-              body: "Powered by cricketdata.org",
-              thumbnailUrl: 'https://i.imgur.com/YOUR_IMAGE.webp', // Replace with your image if you want
-              sourceUrl: 'https://cricketdata.org/',
-              mediaType: 1,
-              renderLargerThumbnail: true,
-            },
-          },
-        },
-        { quoted: m }
-      );
+      formattedResult += `╰══•∞•═══════════════╯ `;
 
-      await m.React('✅');
-
-    } catch (err) {
-      console.error("Score fetch error:", err.message);
-      await sock.sendMessage(m.from, { text: "*Score fetch karte waqt error aaya.*" }, { quoted: m });
-      await m.React('❌');
+      await m.reply(formattedResult);
+      await m.React("✅");
+    } catch (error) {
+      console.error(error);
+      await m.React("❌");
+      return m.reply(`An error occurred while processing the cricket score request. ${error.message}`);
     }
   }
 };
 
-export default liveScore;
+export default cricketScore;
