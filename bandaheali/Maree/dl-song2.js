@@ -1,14 +1,14 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
 
-const dlSong = async (m, sock) => {
+const dlSong2 = async (m, sock) => {
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
   const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd === "song" || cmd === "yta") {
+  if (cmd === "song2" || cmd === "yta2") {
     if (!text) {
       return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
     }
@@ -61,4 +61,4 @@ const dlSong = async (m, sock) => {
   }
 };
 
-export default dlSong;
+export default dlSong2;
