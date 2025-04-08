@@ -1,0 +1,71 @@
+{
+    "bot-name": "Sarkar-MD",
+    "description": "Whiskey Sockets Baileys Whatsapp bot By Sarkar-MD",
+    "logo": "https://camo.githubusercontent.com/65d08f57d7a263fb5aa73d04601b41fae5defd2ee7dd217e418258c350a18bcd/68747470733a2f2f66696c65732e636174626f782e6d6f652f6e74796770312e6a7067",
+    "keywords": ["bot"],
+    "documentation-link": "https://sarkar-md-session-generator.koyeb.app/",
+    "owner-verification": "bandahealisarkarmd@gmail.com",
+  
+    "env": {
+      "SESSION_ID": {
+        "description": "Put your SESSION_ID here.get session id from here, https://sarkar-md-session-generator.koyeb.app ",
+        "required": true,
+        "value":"add your sezsion"
+      },
+      "PREFIX": {
+        "description": "Bot command prefix, (e.g, . , ! @ etc",
+        "required": true,
+        "value":"."
+      },
+    
+    "MODE": {
+      "description": "select your bot work type public-private-inbox-group.",
+      "required": false,
+      "value": "public"
+      
+    },
+    
+    "OWNER_NAME": {
+      "description": "Type Bot Owner Name.",
+      "required": false,
+      "value": "SARKAR-MD"
+}, 
+
+    "OWNER_NUMBER": {
+      "description": "put the owner number for bot.",
+      "required": false,
+      "value": "923253617422"
+
+    }, 
+
+    "AUTO_REACT": {
+      "description": "Make it true if you want react on every message.",
+      "required": true,
+      "value": "false"
+    },
+    
+    "HEART_REACT": {
+      "description": "Make it true if you want heart reactions on users msg.",
+      "required": true,
+      "value": "false"
+      
+    }, 
+    "OWNER_REACT": {
+    "description": "Make it true if you want reactions on your number",
+    "required": true,
+    "value": "false"
+    },
+    
+    "ANTI_DELETE": {
+      "description": "MAKE IT TRUE IF YOU WANT TO RECOVER DELETED MSGS",
+      "required": false,
+      "value": "true"
+    }, 
+
+    "DELETE_PATH": {
+      "description": "YOUR ACCORDING IF YOU WANT TO SEND DELETED MSG WHERE SAME OR PM.",
+      "required": true,
+      "value": "pm"
+    }
+  }
+}
