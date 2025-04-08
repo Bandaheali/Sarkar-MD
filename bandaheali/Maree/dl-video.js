@@ -45,7 +45,7 @@ const dlVideo = async (m, sock) => {
           video: { url: download },
           mimetype: "video/mp4", // Correct mimetype for video files
           fileName: `${title}.mp4`, // Proper filename
-          caption: `🎥 *Title:* ${title}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY AB-YTDL`,
+          caption: `🎥 *Title:* ${title}\n📥 *Downloaded from:* YouTube\n\n*_POWERED BY SARKAR-MD_*`,
           contextInfo: {
             isForwarded: false,
             forwardingScore: 999,
