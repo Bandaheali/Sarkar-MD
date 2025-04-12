@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: Sarkar-MD
+    env: node
+    repo: https://github.com/Bandaheali/Sarkar-MD
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: SESSION_ID
+        value: ""  # Add your session ID here
+      - key: OWNER_NUMBER
+        value: "923253617422"
