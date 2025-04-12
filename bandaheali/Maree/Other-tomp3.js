@@ -14,91 +14,61 @@ const videoToMp3 = async (m, gss) => {
   if (!validCommands.includes(cmd)) return;
 
   try {
-    let mediaMessage = m;
-    let isQuoted = false;
+    let videoMessage = null;
 
-    // Debugging: Log message structure
-    console.log('Original message:', {
-      body: m.body,
-      hasMedia: m.hasMedia,
-      hasQuotedMsg: m.hasQuotedMsg,
-      type: m.type
-    });
-
-    // Check if the message is a reply to another message
-    if (m.hasQuotedMsg) {
-      const quotedMsg = await m.getQuotedMessage();
-      console.log('Quoted message:', {
-        body: quotedMsg.body,
-        hasMedia: quotedMsg.hasMedia,
-        type: quotedMsg.type
-      });
-
-      if (quotedMsg.hasMedia) {
-        mediaMessage = quotedMsg;
-        isQuoted = true;
-        console.log('Using quoted media');
+    // Case 1: Direct video message
+    if (m.mtype === 'videoMessage') {
+      videoMessage = m;
+    }
+    // Case 2: Quoted video message
+    else if (m.quoted && m.quoted.mtype === 'videoMessage') {
+      videoMessage = await m.getQuotedMessage();
+    }
+    // Case 3: Message with video attachment
+    else if (m.hasMedia) {
+      const mediaData = await m.downloadMedia();
+      if (mediaData.mimetype.includes('video')) {
+        videoMessage = m;
       }
     }
 
-    // Final check for media
-    if (!mediaMessage.hasMedia) {
-      console.log('No media found');
-      return m.reply('📛 Please *send a video* or *reply to a video* with this command.\nExample: Reply to a video with *!tomp3*');
+    // If no video found
+    if (!videoMessage) {
+      return m.reply(`📛 Please send or reply to a video with command ${prefix + cmd}\nExample:\n${prefix}tomp3 (with video attached)\nor\nReply ${prefix}tomp3 to a video message`);
     }
 
-    // Download the media
-    const mediaData = await mediaMessage.downloadMedia();
-    console.log('Downloaded media:', {
-      mimetype: mediaData.mimetype,
-      size: mediaData.data.length
-    });
-
-    // Verify it's a video
-    if (!mediaData.mimetype.includes('video')) {
-      return m.reply('❌ Only video files can be converted to MP3!\nPlease send or reply to a *video file*');
+    // Download the video
+    const videoData = await videoMessage.downloadMedia();
+    if (!videoData.mimetype.includes('video')) {
+      return m.reply('❌ The file must be a video!');
     }
 
-    // Create temp directory if not exists
-    if (!fs.existsSync('./temp')) {
-      fs.mkdirSync('./temp');
-    }
-
+    // Create temp directory
+    if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
     const timestamp = Date.now();
-    const inputPath = `./temp/input_${timestamp}.mp4`;
-    const outputPath = `./temp/output_${timestamp}.mp3`;
+    const inputPath = `./temp/video_${timestamp}.mp4`;
+    const outputPath = `./temp/audio_${timestamp}.mp3`;
 
-    await writeFileAsync(inputPath, mediaData.data, 'base64');
-    console.log('Video saved to:', inputPath);
+    await writeFileAsync(inputPath, videoData.data, 'base64');
 
     // Convert to MP3
-    const command = `ffmpeg -i ${inputPath} -q:a 0 -map a ${outputPath}`;
-    console.log('Executing:', command);
+    const command = `ffmpeg -i ${inputPath} -vn -acodec libmp3lame -ac 2 -ab 160k -ar 48000 ${outputPath}`;
     
     await new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.error('FFmpeg error:', error);
-          console.error('FFmpeg stderr:', stderr);
-          reject(new Error('Video conversion failed'));
-          return;
-        }
-        console.log('Conversion successful');
-        resolve();
+      exec(command, (error) => {
+        if (error) reject(new Error('FFmpeg conversion failed'));
+        else resolve();
       });
     });
 
-    // Send the converted audio
-    const audioData = fs.readFileSync(outputPath);
-    console.log('Audio file size:', audioData.length);
-    
+    // Send the MP3
+    const audioBuffer = fs.readFileSync(outputPath);
     await gss.sendMessage(
       m.from,
       {
-        audio: audioData,
+        audio: audioBuffer,
         mimetype: 'audio/mpeg',
-        ptt: false,
-        caption: '🎧 Here\'s your audio file extracted from the video!'
+        caption: '✅ Conversion successful!'
       },
       { quoted: m }
     );
@@ -108,19 +78,13 @@ const videoToMp3 = async (m, gss) => {
       unlinkAsync(inputPath),
       unlinkAsync(outputPath)
     ]);
-    console.log('Temporary files cleaned up');
 
   } catch (error) {
-    console.error('Error in videoToMp3:', error);
-    
-    let errorMsg = '⚠️ Error converting video to MP3!\n';
-    if (error.message.includes('Video conversion failed')) {
-      errorMsg += 'The video might be corrupted or too long.\nTry with a shorter video (under 1 minute).';
-    } else {
-      errorMsg += 'Please make sure:\n1. FFmpeg is installed\n2. Video is not corrupted\n3. Try again later';
-    }
-    
-    m.reply(errorMsg);
+    console.error('Conversion error:', error);
+    m.reply('❌ Conversion failed! ' + 
+      (error.message.includes('FFmpeg') ? 
+      'Make sure FFmpeg is installed' : 
+      'Try with a different video'));
   }
 };
 
