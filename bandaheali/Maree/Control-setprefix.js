@@ -12,10 +12,9 @@ const setPrefix = async (m, Matrix) => {
 
     if (cmd === 'setprefix') {
       if (!isAuthorized) return m.reply('*_This command is only for the bot and owner_*');
-    if (!text) return m.reply('*_Please Use Any symbol example => .setprefix >');
-     prefix = text;
+    if (!text) return m.reply('*_Please Use Any symbol example => .setprefix +_*');
       config.PREFIX = text;
-
+let responseMsg = `*_PREFIX CHNAGED SUCCESSFULLY NOW MY PREFIX IS ${text}_*`
       await Matrix.sendMessage(m.from, { text: responseMsg }, { quoted: m });
     }
   } catch (error) {
