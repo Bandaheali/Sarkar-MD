@@ -10,65 +10,80 @@ const unlinkAsync = promisify(fs.unlink);
 const videoToMp3 = async (m, gss) => {
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-  const text = m.body.slice(prefix.length + cmd.length).trim();
-
+  
   const validCommands = ['tomp3', 'video2mp3', 'extractaudio'];
-
   if (!validCommands.includes(cmd)) return;
 
   try {
-    if (!m.isMedia && !m.isQuotedMedia) {
-      return m.reply('Please send or reply to a video with this command.');
+    // Check for media in different ways
+    let media = m;
+    let isQuoted = false;
+
+    // Check if the message is a reply to another message
+    if (m.hasQuotedMsg) {
+      const quotedMsg = await m.getQuotedMessage();
+      if (quotedMsg.hasMedia) {
+        media = quotedMsg;
+        isQuoted = true;
+      }
     }
 
-    // Download the video
-    const media = m.isQuotedMedia ? await m.getQuotedMessage() : m;
-    if (!media.isMedia) {
-      return m.reply('No video found. Please send or reply to a video.');
+    // Check if the message itself has media
+    if (!isQuoted && !m.hasMedia) {
+      return m.reply('Please send or reply to a video message with this command.\nExample: reply to a video with *!tomp3*');
     }
 
-    const videoData = await media.downloadMedia();
-    const inputPath = `./temp/${media.id}.mp4`;
-    const outputPath = `./temp/${media.id}.mp3`;
+    // Verify it's a video
+    const mediaData = await media.downloadMedia();
+    if (!mediaData.mimetype.includes('video')) {
+      return m.reply('The file you sent/replied to is not a video. Please send/reply to a video file.');
+    }
 
-    await writeFileAsync(inputPath, videoData.data, 'base64');
+    // Create temp directory if not exists
+    if (!fs.existsSync('./temp')) {
+      fs.mkdirSync('./temp');
+    }
 
-    // Convert to MP3 using ffmpeg
-    const command = `ffmpeg -i ${inputPath} -vn -ar 44100 -ac 2 -b:a 192k -f mp3 ${outputPath}`;
+    const inputPath = `./temp/${media.id.id || media.id}.mp4`;
+    const outputPath = `./temp/${media.id.id || media.id}.mp3`;
+
+    await writeFileAsync(inputPath, mediaData.data, 'base64');
+
+    // Convert to MP3
+    const command = `ffmpeg -i ${inputPath} -q:a 0 -map a ${outputPath}`;
     
     await new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
+      exec(command, (error) => {
         if (error) {
-          console.error('FFmpeg error:', error);
-          reject(new Error('Failed to convert video to MP3'));
+          console.error('Conversion error:', error);
+          reject(new Error('Conversion failed'));
+          return;
         }
         resolve();
       });
     });
 
-    // Read the converted MP3
-    const mp3Data = fs.readFileSync(outputPath);
-    const base64Mp3 = mp3Data.toString('base64');
-
-    // Send the MP3
+    // Send the converted audio
+    const audioData = fs.readFileSync(outputPath);
     await gss.sendMessage(
       m.from,
       {
-        audio: Buffer.from(base64Mp3, 'base64'),
+        audio: audioData,
         mimetype: 'audio/mpeg',
         ptt: false
       },
       { quoted: m }
     );
 
-    // Clean up
-    await unlinkAsync(inputPath);
-    await unlinkAsync(inputPath + '.jpg'); // Remove potential thumbnail
-    await unlinkAsync(outputPath);
+    // Cleanup
+    await Promise.all([
+      unlinkAsync(inputPath),
+      unlinkAsync(outputPath)
+    ]);
 
   } catch (error) {
-    console.error('Video to MP3 error:', error);
-    m.reply('An error occurred while converting the video to MP3. Make sure FFmpeg is installed on the server.');
+    console.error('Error in videoToMp3:', error);
+    m.reply('Error converting video to MP3. Please make sure:\n1. You sent/replied to a video\n2. FFmpeg is installed on server\n3. The video is not too long');
   }
 };
 
