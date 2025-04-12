@@ -17,26 +17,46 @@ const videoToMp3 = async (m, gss) => {
     let mediaMessage = m;
     let isQuoted = false;
 
-    // Check if the message is a reply
+    // Debugging: Log message structure
+    console.log('Original message:', {
+      body: m.body,
+      hasMedia: m.hasMedia,
+      hasQuotedMsg: m.hasQuotedMsg,
+      type: m.type
+    });
+
+    // Check if the message is a reply to another message
     if (m.hasQuotedMsg) {
       const quotedMsg = await m.getQuotedMessage();
-      if (quotedMsg && quotedMsg.hasMedia) {
+      console.log('Quoted message:', {
+        body: quotedMsg.body,
+        hasMedia: quotedMsg.hasMedia,
+        type: quotedMsg.type
+      });
+
+      if (quotedMsg.hasMedia) {
         mediaMessage = quotedMsg;
         isQuoted = true;
+        console.log('Using quoted media');
       }
     }
 
-    // Check if we have media (either direct or quoted)
+    // Final check for media
     if (!mediaMessage.hasMedia) {
-      return m.reply('🚫 Please send or reply to a video message with this command.\nExample: reply to a video with *!tomp3*');
+      console.log('No media found');
+      return m.reply('📛 Please *send a video* or *reply to a video* with this command.\nExample: Reply to a video with *!tomp3*');
     }
 
     // Download the media
     const mediaData = await mediaMessage.downloadMedia();
-    
+    console.log('Downloaded media:', {
+      mimetype: mediaData.mimetype,
+      size: mediaData.data.length
+    });
+
     // Verify it's a video
     if (!mediaData.mimetype.includes('video')) {
-      return m.reply('❌ The file must be a video! Please send/reply to a video file.');
+      return m.reply('❌ Only video files can be converted to MP3!\nPlease send or reply to a *video file*');
     }
 
     // Create temp directory if not exists
@@ -49,30 +69,36 @@ const videoToMp3 = async (m, gss) => {
     const outputPath = `./temp/output_${timestamp}.mp3`;
 
     await writeFileAsync(inputPath, mediaData.data, 'base64');
+    console.log('Video saved to:', inputPath);
 
     // Convert to MP3
     const command = `ffmpeg -i ${inputPath} -q:a 0 -map a ${outputPath}`;
+    console.log('Executing:', command);
     
     await new Promise((resolve, reject) => {
-      exec(command, (error) => {
+      exec(command, (error, stdout, stderr) => {
         if (error) {
-          console.error('Conversion error:', error);
-          reject(new Error('Conversion failed'));
+          console.error('FFmpeg error:', error);
+          console.error('FFmpeg stderr:', stderr);
+          reject(new Error('Video conversion failed'));
           return;
         }
+        console.log('Conversion successful');
         resolve();
       });
     });
 
     // Send the converted audio
     const audioData = fs.readFileSync(outputPath);
+    console.log('Audio file size:', audioData.length);
+    
     await gss.sendMessage(
       m.from,
       {
         audio: audioData,
         mimetype: 'audio/mpeg',
         ptt: false,
-        caption: '✅ Here\'s your audio file extracted from the video!'
+        caption: '🎧 Here\'s your audio file extracted from the video!'
       },
       { quoted: m }
     );
@@ -82,15 +108,16 @@ const videoToMp3 = async (m, gss) => {
       unlinkAsync(inputPath),
       unlinkAsync(outputPath)
     ]);
+    console.log('Temporary files cleaned up');
 
   } catch (error) {
     console.error('Error in videoToMp3:', error);
-    let errorMsg = '❌ Error converting video to MP3. ';
     
-    if (error.message.includes('Conversion failed')) {
-      errorMsg += 'The video might be corrupted or in an unsupported format.';
+    let errorMsg = '⚠️ Error converting video to MP3!\n';
+    if (error.message.includes('Video conversion failed')) {
+      errorMsg += 'The video might be corrupted or too long.\nTry with a shorter video (under 1 minute).';
     } else {
-      errorMsg += 'Please make sure FFmpeg is installed on the server.';
+      errorMsg += 'Please make sure:\n1. FFmpeg is installed\n2. Video is not corrupted\n3. Try again later';
     }
     
     m.reply(errorMsg);
