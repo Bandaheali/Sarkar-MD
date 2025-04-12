@@ -1,4 +1,3 @@
-import axios from 'axios';
 import fs from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
@@ -15,28 +14,29 @@ const videoToMp3 = async (m, gss) => {
   if (!validCommands.includes(cmd)) return;
 
   try {
-    // Check for media in different ways
-    let media = m;
+    let mediaMessage = m;
     let isQuoted = false;
 
-    // Check if the message is a reply to another message
+    // Check if the message is a reply
     if (m.hasQuotedMsg) {
       const quotedMsg = await m.getQuotedMessage();
-      if (quotedMsg.hasMedia) {
-        media = quotedMsg;
+      if (quotedMsg && quotedMsg.hasMedia) {
+        mediaMessage = quotedMsg;
         isQuoted = true;
       }
     }
 
-    // Check if the message itself has media
-    if (!isQuoted && !m.hasMedia) {
-      return m.reply('Please send or reply to a video message with this command.\nExample: reply to a video with *!tomp3*');
+    // Check if we have media (either direct or quoted)
+    if (!mediaMessage.hasMedia) {
+      return m.reply('🚫 Please send or reply to a video message with this command.\nExample: reply to a video with *!tomp3*');
     }
 
+    // Download the media
+    const mediaData = await mediaMessage.downloadMedia();
+    
     // Verify it's a video
-    const mediaData = await media.downloadMedia();
     if (!mediaData.mimetype.includes('video')) {
-      return m.reply('The file you sent/replied to is not a video. Please send/reply to a video file.');
+      return m.reply('❌ The file must be a video! Please send/reply to a video file.');
     }
 
     // Create temp directory if not exists
@@ -44,8 +44,9 @@ const videoToMp3 = async (m, gss) => {
       fs.mkdirSync('./temp');
     }
 
-    const inputPath = `./temp/${media.id.id || media.id}.mp4`;
-    const outputPath = `./temp/${media.id.id || media.id}.mp3`;
+    const timestamp = Date.now();
+    const inputPath = `./temp/input_${timestamp}.mp4`;
+    const outputPath = `./temp/output_${timestamp}.mp3`;
 
     await writeFileAsync(inputPath, mediaData.data, 'base64');
 
@@ -70,7 +71,8 @@ const videoToMp3 = async (m, gss) => {
       {
         audio: audioData,
         mimetype: 'audio/mpeg',
-        ptt: false
+        ptt: false,
+        caption: '✅ Here\'s your audio file extracted from the video!'
       },
       { quoted: m }
     );
@@ -83,7 +85,15 @@ const videoToMp3 = async (m, gss) => {
 
   } catch (error) {
     console.error('Error in videoToMp3:', error);
-    m.reply('Error converting video to MP3. Please make sure:\n1. You sent/replied to a video\n2. FFmpeg is installed on server\n3. The video is not too long');
+    let errorMsg = '❌ Error converting video to MP3. ';
+    
+    if (error.message.includes('Conversion failed')) {
+      errorMsg += 'The video might be corrupted or in an unsupported format.';
+    } else {
+      errorMsg += 'Please make sure FFmpeg is installed on the server.';
+    }
+    
+    m.reply(errorMsg);
   }
 };
 
