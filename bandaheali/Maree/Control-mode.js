@@ -13,12 +13,12 @@ const valid = 'public' || 'private';
     if (cmd === 'mode') {
       if (!isAuthorized) return m.reply('*_This command is only for the bot and owner_*');
       if(!text) return m.reply('*_GIVE ME A TEXT PUBLIC OR PRIVATE_*');
-if(!text === 'valid') return m.reply('*_PLEAZE ONLY USE `public` or `private`');
+if(!valid) return m.reply('*_PLEAZE ONLY USE `public` or `private`');
       let responseMessage;
 config.MODE = text;
       responseMsg = `*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${mode} MODE*_`;
 
-      await Matrix.sendMessage(m.from, { text: responseMessage }, { quoted: m });
+      await Matrix.sendMessage(m.from, { text: responseMsg }, { quoted: m });
     }
   } catch (error) {
     console.error("Auto Recodinf Command Error:", error);
