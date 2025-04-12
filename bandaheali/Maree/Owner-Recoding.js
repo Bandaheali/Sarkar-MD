@@ -16,10 +16,10 @@ const recodingCommand = async (m, Matrix) => {
       let responseMessage;
 
       if (text === 'on') {
-        config.REJECT_CALL = true;
+        config.AUTO_RECORDING = true;
         responseMessage = '*✅ AUTO-RECODING system has been enabled!*';
       } else if (text === 'off') {
-        config.REJECT_CALL = false;
+        config.AUTO_RECORDING = false;
         responseMessage = '*❌ AUTO-RECODING system has been disabled!*';
       } else {
         responseMessage = `*AUTO-RECODING Usage:*\n\n- \`recoding on\`  ➜ Enable Auto recoding\n- \`recoding off\` ➜ Disable AUTO RECODING`;
