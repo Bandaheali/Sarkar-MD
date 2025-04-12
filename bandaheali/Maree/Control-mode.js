@@ -5,7 +5,6 @@ const recodingCommand = async (m, Matrix) => {
     const botNumber = await Matrix.decodeJid(Matrix.user.id);
     const dev = '923253617422@s.whatsapp.net'; // Your VIP number
     const isAuthorized = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net', dev].includes(m.sender);
-const valid = 'public' || 'private';
     const prefix = config.PREFIX;
     const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
     const text = m.body.slice(prefix.length + cmd.length).trim();
@@ -13,7 +12,8 @@ const valid = 'public' || 'private';
     if (cmd === 'mode') {
       if (!isAuthorized) return m.reply('*_This command is only for the bot and owner_*');
       if(!text) return m.reply('*_GIVE ME A TEXT PUBLIC OR PRIVATE_*');
-if(!valid) return m.reply('*_PLEAZE ONLY USE `public` or `private`');
+      if (!['public', 'private'].includes(text)) return m.reply('*_PLEAZE ONLY USE `public` or `private`');
+
       let responseMessage;
 config.MODE = text;
       responseMsg = `*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${mode} MODE*_`;
