@@ -15,7 +15,7 @@ const Mode = async (m, Matrix) => {
       if (!['public', 'private'].includes(text)) return m.reply('*_PLEAZE ONLY USE `public` or `private`_*');
 
 config.MODE = text;
-    let responseMsg = `*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${mode} MODE_*`;
+    let responseMsg = `*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${text} MODE_*`;
 
       await Matrix.sendMessage(m.from, { text: responseMsg }, { quoted: m });
     }
