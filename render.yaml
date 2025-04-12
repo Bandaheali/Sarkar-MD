@@ -2,6 +2,7 @@ services:
   - type: web
     name: Sarkar-MD
     env: node
+    plan: free
     repo: https://github.com/Bandaheali/Sarkar-MD
     branch: main
     buildCommand: npm install
