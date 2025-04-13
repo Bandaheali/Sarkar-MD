@@ -10,6 +10,6 @@ services:
     autoDeploy: true
     envVars:
       - key: SESSION_ID
-        value: ""  # Add your session ID here
+        sync: false  # Don't include the value here, will be entered manually on Render
       - key: OWNER_NUMBER
-        value: "923253617422"
+        sync: false
