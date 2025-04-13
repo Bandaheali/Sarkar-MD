@@ -31,10 +31,9 @@ const chatbotCommand = async (m, Matrix) => {
     
     if (!data.status) throw new Error('API returned false status');
     
-    const botReply = data.result || 'No response received';
+    const botReply = data.result || 'SOORY MAIN SMJHA NAI';
 
-    const formattedReply = `👾 SARKAR-MD AI ASSISTANT 🤖\n\nHello ${pushName},\n\n${botReply}`;
-    await Matrix.sendMessage(m.sender, { text: formattedReply }, { quoted: m });
+    await Matrix.sendMessage(m.sender, { text: botReply }, { quoted: m });
 
   } catch (err) {
     console.error('Error fetching AI response:', err.message);
