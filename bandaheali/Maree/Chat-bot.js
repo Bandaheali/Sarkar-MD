@@ -20,22 +20,22 @@ const chatbotCommand = async (m, Matrix) => {
   if (!chatbot) return;
   if (!m.sender || isAllowed.includes(m.sender)) return;
   if (m.key.remoteJid.endsWith("@g.us")) return;
-    if (m.key.remoteJid.endsWith("@newsletter")) return;
+  if (m.key.remoteJid.endsWith("@newsletter")) return;
 
   try {
-    const response = await fetch(`https://www.dark-yasiya-api.site/ai/chatgpt?q=${encodeURIComponent(text)}`);
+    const response = await fetch(`https://bk9.fun/ai/chataibot?q=${encodeURIComponent(text)}`);
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const data = await response.json();
-    const botReply = data.result || 'No response received';
+    const botReply = data.BK9 || 'No response received from BK9 API';
 
     const formattedReply = `👾 SARKAR-MD AI ASSISTANT 🤖\n\nHello ${pushName},\n\n${botReply}`;
     await Matrix.sendMessage(m.sender, { text: formattedReply }, { quoted: m });
 
   } catch (err) {
     console.error('Error fetching AI response:', err.message);
-    await Matrix.sendMessage(m.sender, { text: '❌ Failed to fetch response from the server.' }, { quoted: m });
+    await Matrix.sendMessage(m.sender, { text: '❌ Failed to fetch response from the BK9 server.' }, { quoted: m });
   }
 };
 
