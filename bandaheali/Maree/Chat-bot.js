@@ -23,19 +23,22 @@ const chatbotCommand = async (m, Matrix) => {
   if (m.key.remoteJid.endsWith("@newsletter")) return;
 
   try {
-    const response = await fetch(`https://bk9.fun/ai/chataibot?q=${encodeURIComponent(text)}`);
+    const response = await fetch(`https://apis-keith.vercel.app/ai/gpt?q=${encodeURIComponent(text)}`);
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const data = await response.json();
-    const botReply = data.BK9 || 'No response received from BK9 API';
+    
+    if (!data.status) throw new Error('API returned false status');
+    
+    const botReply = data.result || 'No response received';
 
     const formattedReply = `👾 SARKAR-MD AI ASSISTANT 🤖\n\nHello ${pushName},\n\n${botReply}`;
     await Matrix.sendMessage(m.sender, { text: formattedReply }, { quoted: m });
 
   } catch (err) {
     console.error('Error fetching AI response:', err.message);
-    await Matrix.sendMessage(m.sender, { text: '❌ Failed to fetch response from the BK9 server.' }, { quoted: m });
+    await Matrix.sendMessage(m.sender, { text: '❌ Failed to fetch response from the server.' }, { quoted: m });
   }
 };
 
