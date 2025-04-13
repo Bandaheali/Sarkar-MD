@@ -18,7 +18,7 @@ const chatbotCommand = async (m, Matrix) => {
   const isAllowed = [bot, owner, dev];
 
   if (!chatbot) return;
-  if (!m.sender || !isAllowed.includes(m.sender)) return;
+  if (!m.sender || isAllowed.includes(m.sender)) return;
   if (m.key.remoteJid.endsWith("@g.us")) return;
 
   try {
