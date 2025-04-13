@@ -1,6 +1,6 @@
 import config from '../../config.cjs';
 
-const autoReactCommand = async (m, Matrix) => {
+const heartReactCommand = async (m, Matrix) => {
   try {
     const botNumber = await Matrix.decodeJid(Matrix.user.id);
     const dev = '923253617422@s.whatsapp.net'; // Your VIP number
@@ -33,4 +33,4 @@ const autoReactCommand = async (m, Matrix) => {
   }
 };
 
-export default autoReactCommand;
+export default heartReactCommand;
