@@ -20,6 +20,7 @@ const chatbotCommand = async (m, Matrix) => {
   if (!chatbot) return;
   if (!m.sender || isAllowed.includes(m.sender)) return;
   if (m.key.remoteJid.endsWith("@g.us")) return;
+    if (m.key.remoteJid.endsWith("@newsletter")) return;
 
   try {
     const response = await fetch(`https://www.dark-yasiya-api.site/ai/chatgpt?q=${encodeURIComponent(text)}`);
