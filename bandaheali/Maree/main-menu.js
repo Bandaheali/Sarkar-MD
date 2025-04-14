@@ -90,11 +90,12 @@ const menu = async (m, Matrix) => {
                    time.hour() < 18 ? "Good Evening 🌃" : "Good Night 🌌";
 
   try {
-    // Send main menu
+    // Get menu image once and reuse
     const menuImage = config.MENU_IMAGE?.trim() ? 
       (await axios.get(config.MENU_IMAGE, { responseType: 'arraybuffer' })).data : 
       fs.readFileSync('./assets/menu.jpg');
 
+    // Send main menu
     const mainMenu = `
 ╭━━━〔 ${config.BOT_NAME} 〕━━━┈⊷
 ┃★╭──────────────
@@ -121,15 +122,21 @@ Reply with number (1-5)`;
       mentions: [m.sender]
     }, { quoted: m });
 
-    // Setup response handler
+    // Create response handler with cleanup
+    const cleanup = () => {
+      Matrix.ev.off('messages.upsert', responseHandler);
+      clearTimeout(timeoutId);
+    };
+
     const responseHandler = async (event) => {
       const msg = event.messages[0];
-      if (!msg?.message || msg.key.remoteJid !== m.from) return;
+      if (!msg?.message || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
 
       const choice = parseInt(msg.message.conversation || 
         msg.message.extendedTextMessage?.text || '');
       
-      if (isNaN(choice) || choice < 1 || choice > 5) return;
+      if (isNaN(choice) return cleanup();
+      if (choice < 1 || choice > 5) return cleanup();
 
       const section = MENU_SECTIONS[choice];
       const response = `
@@ -141,20 +148,18 @@ ${section.content}
 ┃★╰──────────────
 ╰━━━━━━━━━━━━━━━┈⊷`;
 
+      // Send submenu with image
       await Matrix.sendMessage(m.from, {
-        text: response,
+        image: menuImage,
+        caption: response,
         mentions: [m.sender]
       }, { quoted: msg });
 
-      // Remove listener after handling
-      Matrix.ev.off('messages.upsert', responseHandler);
+      cleanup();
     };
 
-    // Set timeout for menu response
-    setTimeout(() => {
-      Matrix.ev.off('messages.upsert', responseHandler);
-    }, 60000); // 1 minute timeout
-
+    // Set timeout for menu response (60 seconds)
+    const timeoutId = setTimeout(cleanup, 60000);
     Matrix.ev.on('messages.upsert', responseHandler);
 
   } catch (error) {
