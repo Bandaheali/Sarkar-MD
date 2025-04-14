@@ -1,10 +1,10 @@
 import moment from 'moment-timezone';
 import fs from 'fs';
 import os from 'os';
+import axios from 'axios';
+import config from '../../config.cjs';
 import pkg from '@whiskeysockets/baileys';
 const { generateWAMessageFromContent, proto } = pkg;
-import config from '../../config.cjs';
-import axios from 'axios';
 
 // Helpers
 const formatBytes = (bytes) => {
@@ -66,7 +66,7 @@ const MENU_SECTIONS = {
   }
 };
 
-const menu = async (m, Matrix) => {
+const menu = async (m, sock) => {
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
@@ -103,11 +103,13 @@ ${Object.entries(MENU_SECTIONS).map(([key, { title }]) => `┃✦ ${key}. ${titl
 
 _Reply to this message with 1-5 to view that section._`;
 
-      const sentMsg = await Matrix.sendMessage(m.from, {
+      const sentMsg = await sock.sendMessage(m.from, {
         image: menuImage,
         caption: menuText,
         mentions: [m.sender]
       }, { quoted: m });
+
+      await m.react('✅'); // Success icon
 
       const userJid = m.sender;
       const mainMsgId = sentMsg.key.id;
@@ -120,7 +122,7 @@ _Reply to this message with 1-5 to view that section._`;
         if (senderJid !== userJid) return;
 
         const quotedMsgId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
-        if (quotedMsgId !== mainMsgId) return; // Must reply to main menu message
+        if (quotedMsgId !== mainMsgId) return;
 
         const text = msg.message.conversation || msg.message?.extendedTextMessage?.text;
         if (!text) return;
@@ -130,7 +132,7 @@ _Reply to this message with 1-5 to view that section._`;
 
         const { title, content } = MENU_SECTIONS[choice];
 
-        await Matrix.sendMessage(m.from, {
+        await sock.sendMessage(m.from, {
           text: `
 ╭━〔 *${title}* 〕━⊷
 ┃✦ Prefix: ${prefix}
@@ -140,19 +142,19 @@ ${content}
           mentions: [msg.sender || msg.participant]
         }, { quoted: msg });
 
-        Matrix.ev.off('messages.upsert', responseHandler);
+        sock.ev.off('messages.upsert', responseHandler);
         clearTimeout(timeout);
       };
 
-      Matrix.ev.on('messages.upsert', responseHandler);
+      sock.ev.on('messages.upsert', responseHandler);
 
       const timeout = setTimeout(() => {
-        Matrix.ev.off('messages.upsert', responseHandler);
+        sock.ev.off('messages.upsert', responseHandler);
       }, 60000);
 
     } catch (err) {
       console.error('Menu Error:', err);
-      await Matrix.sendMessage(m.from, {
+      await sock.sendMessage(m.from, {
         text: '⚠️ *Error loading menu. Try again later.*'
       }, { quoted: m });
     }
