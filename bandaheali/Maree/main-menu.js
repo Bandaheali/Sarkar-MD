@@ -26,27 +26,29 @@ const menu = async (m, sock) => {
   else if (realTime < "20:00:00") pushwish = `𝙶𝙾𝙾𝙳 𝙴𝚅𝙴𝙽𝙸𝙽𝙶 🌃`;
   else pushwish = `𝙶𝙾𝙾𝙳 𝙽𝙸𝙶𝙷𝚃 🌌`;
 
-  const sendMenuResponse = async (messageContent, quotedMsg = m) => {
-    await sock.sendMessage(
-      m.from,
-      {
-        text: messageContent,
-        contextInfo: {
-          mentionedJid: [m.sender],
-          forwardingScore: 999,
-          isForwarded: true,
-          externalAdReply: {
-            title: "✨𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨",
-            body: pushName,
-            thumbnailUrl: img,
-            sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
-            mediaType: 1,
-            renderLargerThumbnail: true,
-          },
+  const sendMenuMessage = async (content, options = {}) => {
+    const baseMessage = {
+      contextInfo: {
+        isForwarded: true,
+        forwardingScore: 999,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: '120363315182578784@newsletter',
+          newsletterName: "𝚂𝙰𝚁𝙺𝙰𝚁-𝙼𝙳",
+          serverMessageId: -1,
+        },
+        externalAdReply: {
+          title: "✨𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨",
+          body: pushName,
+          thumbnailUrl: img,
+          sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
+          mediaType: 1,
+          renderLargerThumbnail: true,
         },
       },
-      { quoted: quotedMsg }
-    );
+      ...options
+    };
+
+    await sock.sendMessage(m.from, baseMessage, { quoted: m });
   };
 
   if (cmd === "menu") {
@@ -73,46 +75,27 @@ const menu = async (m, sock) => {
 
 *⚡ 𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃⚡*`;
 
-    // Send the main menu
-    const sentMsg = await sock.sendMessage(
-      m.from,
-      { 
-        image: { url: img },
-        caption: responseText,
-        contextInfo: {
-          mentionedJid: [m.sender],
-          forwardingScore: 999,
-          isForwarded: true,
-          externalAdReply: {
-            title: "✨𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨",
-            body: pushName,
-            thumbnailUrl: img,
-            sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
-            mediaType: 1,
-            renderLargerThumbnail: true,
-          },
-        }
-      },
-      { quoted: m }
-    );
+    // Send main menu with image
+    const sentMsg = await sendMenuMessage({
+      image: { url: img },
+      caption: responseText,
+      mentions: [m.sender]
+    });
 
-    // Create a reply handler for this specific menu
-    const replyHandler = async (responseMsg) => {
-      if (!responseMsg?.message?.extendedTextMessage || 
-          responseMsg.key.remoteJid !== m.from || 
-          responseMsg.key.participant !== m.sender) {
-        return;
-      }
+    // Temporary listener for menu responses
+    const menuResponseHandler = async (event) => {
+      const receivedMsg = event.messages[0];
+      if (!receivedMsg?.message?.extendedTextMessage || 
+          receivedMsg.key.remoteJid !== m.from ||
+          !receivedMsg.message.extendedTextMessage.contextInfo?.stanzaId) return;
 
-      const replyText = responseMsg.message.extendedTextMessage.text.trim();
-      const isReplyToMenu = responseMsg.message.extendedTextMessage.contextInfo?.stanzaId === sentMsg.key.id;
+      // Check if this is a reply to our menu message
+      if (receivedMsg.message.extendedTextMessage.contextInfo.stanzaId !== sentMsg.key.id) return;
 
-      if (!isReplyToMenu) return;
-
-      let menuResponse = '';
-      switch (replyText) {
-        case "1":
-          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+      const choice = receivedMsg.message.extendedTextMessage.text.trim();
+      
+      const menuTemplates = {
+        "1": `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
 │ 🧑‍💻 *𝐔𝐒𝐄𝐑:* ${pushName} ${pushwish}
 │ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
 │ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}🇵🇰*
@@ -127,27 +110,46 @@ const menu = async (m, sock) => {
 *│* 💙 *${prefix}𝐏𝐫𝐚𝐲𝐞𝐫𝐓𝐢𝐦𝐞*
 *│* 💙 *${prefix}𝐏𝐓𝐢𝐦𝐞*
 *│* 💙 *${prefix}𝐒𝐁𝐮𝐤𝐡𝐚𝐫𝐢*
- ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
-          break;
-        // Add other cases here...
-        default:
-          menuResponse = "*❌ 𝐈𝐍𝐕𝐀𝐋𝐈𝐃 𝐂𝐇𝐎𝐈𝐂𝐄. 𝐏𝐋𝐄𝐀𝐒𝐄 𝐑𝐄𝐏𝐋𝐘 𝐖𝐈𝐓𝐇 1 𝐓𝐎 9.*";
-      }
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`,
+        
+        "2": `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName}* *${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}🇵🇰*
+│ 📅 *𝐃𝐀𝐓𝐄*: *${realDate}* 
+│ 🤖 *𝐔𝐏𝐓𝐈𝐌𝐄:* *${hours}/${minutes}/${seconds}*
+╰───────────❍
+ ╭───❍「 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃 𝐌𝐄𝐍𝐔 」
+ *│* 💙 *${prefix}𝐏𝐥𝐚𝐲*
+ *│* 💙 *${prefix}𝐒𝐨𝐧𝐠*
+ *│* 💙 *${prefix}𝐒𝐨𝐧𝐠2*
+ *│* 💙 *${prefix}𝐒𝐨𝐧𝐠3*
+ *│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨*
+ *│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨2*
+ *│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨3*
+ *│* 💙 *${prefix}𝐅𝐁*
+ *│* 💙 *${prefix}𝐅𝐁2*
+ *│* 💙 *${prefix}𝐈𝐧𝐬𝐭𝐚*
+ *│* 💙 *${prefix}𝐈𝐧𝐬𝐭𝐚*
+ *│* 💙 *${prefix}𝐓𝐢𝐤𝐓𝐨𝐤*
+ *│* 💙 *${prefix}𝐓𝐢𝐤𝐓𝐨𝐤2*
+ *│* 💙 *${prefix}𝐓𝐢𝐤𝐬*
+ *│* 💙 *${prefix}𝐒𝐧𝐚𝐜𝐤*
+ *│* 💙 *${prefix}𝐓𝐰𝐞𝐞𝐓*
+ *│* 💙 *${prefix}𝐀𝐩𝐤*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`,
+        
+        // Add other menu templates here...
+        
+        "default": "*❌ 𝐈𝐍𝐕𝐀𝐋𝐈𝐃 𝐂𝐇𝐎𝐈𝐂𝐄. 𝐏𝐋𝐄𝐀𝐒𝐄 𝐑𝐄𝐏𝐋𝐘 𝐖𝐈𝐓𝐇 1 𝐓𝐎 9.*"
+      };
 
-      await sendMenuResponse(menuResponse, responseMsg);
+      const response = menuTemplates[choice] || menuTemplates.default;
+      await sendMenuMessage({ text: response }, { quoted: receivedMsg });
     };
 
     // Add temporary listener
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-      const responseMsg = messages[0];
-      await replyHandler(responseMsg);
-    });
+    const listener = (event) => menuResponseHandler(event);
+    sock.ev.on('messages.upsert', listener);
 
-    // Remove listener after some time (e.g., 2 minutes)
-    setTimeout(() => {
-      sock.ev.off('messages.upsert', replyHandler);
-    }, 120000);
-  }
-};
-
-export default menu;
+    // Remove listener after 2 minutes
