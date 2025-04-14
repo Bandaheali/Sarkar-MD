@@ -62,13 +62,14 @@ const menu = async (m, Matrix) => {
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
   const mode = config.MODE === 'public' ? 'public' : 'private';
-  const pref = config.PREFIX;
+  const botName = config.BOT_NAME || '*_SARKAR-MD_*';
+  const caption = config.CAPTION || '*_Powered By Sarkar-MD_*'
 
   const validCommands = ['list', 'help', 'menu'];
 
   if (validCommands.includes(cmd)) {
     const mainMenu = `
-╭━━━〔 *${config.BOT_NAME}* 〕━━━┈⊷
+╭━━━〔 *${botName}* 〕━━━┈⊷
 ┃★╭──────────────
 ┃★│ Owner : *${config.OWNER_NAME}*
 ┃★│ User : *${m.pushName}*
