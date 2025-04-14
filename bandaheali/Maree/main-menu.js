@@ -101,7 +101,7 @@ const menu = async (m, Matrix) => {
 
     // Function to get menu image
     const getMenuImage = async () => {
-      if (config.MENU_IMAGE && config.MENU_IMAGE.trim() !== '') {
+      if (config.MENU_IMAGE || 'https://files.catbox.moe/htnkaq.jpg' && config.MENU_IMAGE.trim() !== '') {
         try {
           const response = await axios.get(config.MENU_IMAGE, { responseType: 'arraybuffer' });
           return Buffer.from(response.data, 'binary');
