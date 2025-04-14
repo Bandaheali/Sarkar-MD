@@ -63,14 +63,12 @@ const menu = async (m, Matrix) => {
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
   const mode = config.MODE === 'public' ? 'public' : 'private';
   const pref = config.PREFIX;
-const botname = config.BOT_NAME || 'SARKAR-MD';
-  const cap = config.DESCRIPTION || 'POWERED BY SARKAR-MD';
-  const menuImage = 'https://files.catbox.moe/htnkaq.jpg';
+
   const validCommands = ['list', 'help', 'menu'];
 
   if (validCommands.includes(cmd)) {
     const mainMenu = `
-╭━━━〔 *${botname}* 〕━━━┈⊷
+╭━━━〔 *Bandaheali* 〕━━━┈⊷
 ┃★╭──────────────
 ┃★│ Owner : *${config.OWNER_NAME}*
 ┃★│ User : *${m.pushName}*
@@ -101,7 +99,7 @@ const botname = config.BOT_NAME || 'SARKAR-MD';
 ╰──────────────┈⊷
 > *Reply with the number (1-9)*`;
 
-   /* // Function to get menu image
+    // Function to get menu image
     const getMenuImage = async () => {
       if (config.MENU_IMAGE && config.MENU_IMAGE.trim() !== '') {
         try {
@@ -109,14 +107,14 @@ const botname = config.BOT_NAME || 'SARKAR-MD';
           return Buffer.from(response.data, 'binary');
         } catch (error) {
           console.error('Error fetching menu image from URL, falling back to local image:', error);
-          return fs.readFileSync('./media/khan.jpg');
+          return fs.readFileSync('../../khan.jpg');
         }
       } else {
-        return fs.readFileSync('./media/khan.jpg');
+        return fs.readFileSync('../../khan.jpg');
       }
     };
 
-    const menuImage = await getMenuImage(); */
+    const menuImage = await getMenuImage();
 
     const sentMessage = await Matrix.sendMessage(m.from, {
       image: menuImage,
@@ -323,7 +321,7 @@ const botname = config.BOT_NAME || 'SARKAR-MD';
 
       // Format the full response with title and description
       const fullResponse = `
-╭━━━〔 *${config.BOT_NAME} - ${menuTitle}* 〕━━━┈⊷
+╭━━━〔 *BANDAHEALI - ${menuTitle}* 〕━━━┈⊷
 ┃★╭──────────────
 ┃★│• Owner : *${config.OWNER_NAME}*
 ┃★│• User : *${m.pushName}*
@@ -334,7 +332,7 @@ const botname = config.BOT_NAME || 'SARKAR-MD';
 
 ${menuResponse}
 
-> *${cap}*`;
+> *SARKAR-MD*`;
 
       // Send the response with image and context info
       await Matrix.sendMessage(m.from, {
