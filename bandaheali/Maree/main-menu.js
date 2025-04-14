@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import pkg from '@whiskeysockets/baileys';
 const { generateWAMessageFromContent, proto } = pkg;
-import config from '../config.cjs';
+import config from '../../config.cjs';
 import axios from 'axios';
 
 // System Information Functions
