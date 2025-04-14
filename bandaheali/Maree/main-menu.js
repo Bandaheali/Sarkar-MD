@@ -13,6 +13,7 @@ const menu = async (m, sock) => {
   const mode = config.MODE;
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
   const pushName = m.pushName || '𝐔𝐒𝐄𝐑';
+  const img = config.ALIVE_IMG || 'https://files.catbox.moe/htnkaq.jpg';
 
   // Get current time and date
   const realTime = moment().tz("Asia/Karachi").format("HH:mm:ss");
@@ -47,7 +48,7 @@ const menu = async (m, sock) => {
           externalAdReply: {
             title: "✨𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨",
             body: pushName,
-            thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
+            thumbnailUrl: img,
             sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
             mediaType: 1,
             renderLargerThumbnail: true,
