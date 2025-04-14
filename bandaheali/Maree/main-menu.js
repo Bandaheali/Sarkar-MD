@@ -104,13 +104,23 @@ _Reply with the number (1-5) to view commands in that section._`;
 
     const responseHandler = async (event) => {
       const msg = event.messages?.[0];
-      if (!msg?.message || msg.key.remoteJid !== m.from) return;
+if (!msg || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
 
-      const body = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
-      const choice = parseInt(body);
+// Extract message text safely
+let text = '';
+if (msg.message?.conversation) {
+  text = msg.message.conversation;
+} else if (msg.message?.extendedTextMessage?.text) {
+  text = msg.message.extendedTextMessage.text;
+} else {
+  return; // Ignore non-text responses
+}
 
-      if (isNaN(choice) || !MENU_SECTIONS[choice]) return;
+// Make sure it's from the same user
+if (msg.pushName !== m.pushName && msg.participant !== m.sender) return;
 
+const choice = parseInt(text.trim());
+if (isNaN(choice) || !MENU_SECTIONS[choice]) return;
       const { title, content } = MENU_SECTIONS[choice];
 
       const sectionText = `
