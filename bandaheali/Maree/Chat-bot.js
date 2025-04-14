@@ -21,6 +21,8 @@ const chatbotCommand = async (m, Matrix) => {
   if (!m.sender || isAllowed.includes(m.sender)) return;
   if (m.key.remoteJid.endsWith("@g.us")) return;
   if (m.key.remoteJid.endsWith("@newsletter")) return;
+  if (text === 'who are you' || text === 'which ai model you are')
+    return m.reply('I am an Ai my name is Sarkar created By Bandaheali How can I help You Sir');
 
   try {
     const response = await fetch(`https://apis-keith.vercel.app/ai/gpt?q=${encodeURIComponent(text)}`);
@@ -31,9 +33,10 @@ const chatbotCommand = async (m, Matrix) => {
     
     if (!data.status) throw new Error('API returned false status');
     
-    const botReply = data.result || 'SOORY MAIN SMJHA NAI';
+    const botReply = data.result || 'No response received';
 
-    await Matrix.sendMessage(m.sender, { text: botReply }, { quoted: m });
+    const formattedReply = `👾 SARKAR-MD AI ASSISTANT 🤖\n\nHello ${pushName},\n\n${botReply}`;
+    await Matrix.sendMessage(m.sender, { text: formattedReply }, { quoted: m });
 
   } catch (err) {
     console.error('Error fetching AI response:', err.message);
