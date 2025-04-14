@@ -21,7 +21,7 @@ const chatbotCommand = async (m, Matrix) => {
   if (m.key.remoteJid.endsWith("@newsletter")) return;
 
   // Custom reply for specific questions
-  if (text.toLowerCase() === 'who are you' || text.toLowerCase() === 'which ai model you are') {
+  if (text.toLowerCase() === 'who are you' || text.toLowerCase() === 'which ai model you are' || text.toLowerCase() === 'apko kisne bnaya' || text.LowerCase() === 'which ai you model you are?' || text.LowerCase() === 'ap kon ho') {
     return await Matrix.sendMessage(m.sender, { text: 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?' }, { quoted: m });
   }
 
