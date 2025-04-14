@@ -6,166 +6,138 @@ const { generateWAMessageFromContent, proto } = pkg;
 import config from '../../config.cjs';
 import axios from 'axios';
 
-// System Information Functions
+// Helpers
 const formatBytes = (bytes) => {
-  const units = ['bytes', 'KB', 'MB', 'GB'];
-  let unitIndex = 0;
-  while (bytes >= 1024 && unitIndex < units.length - 1) {
-    bytes /= 1024;
-    unitIndex++;
-  }
-  return `${bytes.toFixed(2)} ${units[unitIndex]}`;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  if (bytes === 0) return '0 Byte';
+  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
 };
 
 const getUptime = () => {
-  const uptime = process.uptime();
-  const days = Math.floor(uptime / (24 * 3600));
-  const hours = Math.floor((uptime % (24 * 3600)) / 3600);
-  const minutes = Math.floor((uptime % 3600) / 60);
-  const seconds = Math.floor(uptime % 60);
-  return `*${days}d ${hours}h ${minutes}m ${seconds}s*`;
+  const seconds = process.uptime();
+  const d = Math.floor(seconds / (3600 * 24));
+  const h = Math.floor((seconds % (3600 * 24)) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return `${d}d ${h}h ${m}m ${s}s`;
 };
 
-// Menu Configuration
 const MENU_SECTIONS = {
   1: {
     title: "Download Menu",
     content: `
-┃◈╭─────────────·๏
-┃◈┃• ytmp3
-┃◈┃• ytmp4
-┃◈┃• tiktok
-┃◈┃• play
-┃◈┃• song
-┃◈┃• video
-┃◈└───────────┈⊷`
+┃✦ • ytmp3
+┃✦ • ytmp4
+┃✦ • tiktok
+┃✦ • play
+┃✦ • song
+┃✦ • video`
   },
   2: {
     title: "Converter Menu",
     content: `
-┃◈╭─────────────·๏
-┃◈┃• attp
-┃◈┃• emojimix
-┃◈┃• mp3
-┃◈└───────────┈⊷`
+┃✦ • attp
+┃✦ • emojimix
+┃✦ • mp3`
   },
   3: {
     title: "AI Menu",
     content: `
-┃◈╭─────────────·๏
-┃◈┃• gpt
-┃◈┃• dalle
-┃◈┃• gemini
-┃◈└───────────┈⊷`
+┃✦ • gpt
+┃✦ • dalle
+┃✦ • gemini`
   },
   4: {
     title: "Group Tools",
     content: `
-┃◈╭─────────────·๏
-┃◈┃• add
-┃◈┃• kick
-┃◈┃• promote
-┃◈┃• demote
-┃◈┃• tagall
-┃◈└───────────┈⊷`
+┃✦ • add
+┃✦ • kick
+┃✦ • promote
+┃✦ • demote
+┃✦ • tagall`
   },
   5: {
     title: "Search Menu",
     content: `
-┃◈╭─────────────·๏
-┃◈┃• google
-┃◈┃• lyrics
-┃◈┃• wallpaper
-┃◈└───────────┈⊷`
+┃✦ • google
+┃✦ • lyrics
+┃✦ • wallpaper`
   }
 };
 
 const menu = async (m, Matrix) => {
   const prefix = config.PREFIX;
-  const mode = config.MODE === 'public' ? 'public' : 'private';
-  const time = moment.tz("Asia/Colombo");
-  const pushwish = time.hour() < 5 ? "Good Morning 🌄" :
-                   time.hour() < 11 ? "Good Morning 🌄" :
-                   time.hour() < 15 ? "Good Afternoon 🌅" :
-                   time.hour() < 18 ? "Good Evening 🌃" : "Good Night 🌌";
+  const mode = config.MODE === 'public' ? 'Public' : 'Private';
+  const time = moment.tz('Asia/Colombo');
+  const greeting = time.hour() < 5 ? 'Good Night' :
+                   time.hour() < 12 ? 'Good Morning' :
+                   time.hour() < 17 ? 'Good Afternoon' : 'Good Evening';
 
   try {
-    // Get menu image once and reuse
-    const menuImage = config.MENU_IMAGE?.trim() ? 
-      (await axios.get(config.MENU_IMAGE, { responseType: 'arraybuffer' })).data : 
-      fs.readFileSync('./assets/menu.jpg');
+    const menuImage = config.MENU_IMAGE?.trim()
+      ? (await axios.get(config.MENU_IMAGE, { responseType: 'arraybuffer' })).data
+      : fs.readFileSync('./assets/menu.jpg');
 
-    // Send main menu
-    const mainMenu = `
-╭━━━〔 ${config.BOT_NAME} 〕━━━┈⊷
-┃★╭──────────────
-┃★│ Owner: ${config.OWNER_NAME}
-┃★│ User: ${m.pushName}
-┃★│ Uptime: ${getUptime()}
-┃★│ Memory: ${formatBytes(os.freemem())}/${formatBytes(os.totalmem())}
-┃★╰──────────────
-╰━━━━━━━━━━━━━━━┈⊷
+    const menuText = `
+╭━━━〔 *${config.BOT_NAME}* 〕━━━⊷
+┃✦ Owner: ${config.OWNER_NAME}
+┃✦ User: ${m.pushName}
+┃✦ Mode: ${mode}
+┃✦ Uptime: ${getUptime()}
+┃✦ RAM: ${formatBytes(os.freemem())} / ${formatBytes(os.totalmem())}
+╰━━━━━━━━━━━━━━━⊷
 
-${pushwish}!
+${greeting}, *${m.pushName}*!
 
-╭━━〔 MAIN MENU 〕━━┈⊷
-┃◈╭─────────────·๏
-${Object.entries(MENU_SECTIONS).map(([num, section]) => 
-  `┃◈┃• ${num}. ${section.title}`).join('\n')}
-┃◈└───────────┈⊷
-╰──────────────┈⊷
-Reply with number (1-5)`;
+╭━〔 MAIN MENU 〕━⊷
+${Object.entries(MENU_SECTIONS).map(([key, { title }]) => `┃✦ ${key}. ${title}`).join('\n')}
+╰━━━━━━━━━━━━━━━⊷
+
+_Reply with the number (1-5) to view commands in that section._`;
 
     await Matrix.sendMessage(m.from, {
       image: menuImage,
-      caption: mainMenu,
+      caption: menuText,
       mentions: [m.sender]
     }, { quoted: m });
 
-    // Create response handler with cleanup
-    const cleanup = () => {
-      Matrix.ev.off('messages.upsert', responseHandler);
-      clearTimeout(timeoutId);
-    };
-
     const responseHandler = async (event) => {
-      const msg = event.messages[0];
-      if (!msg?.message || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
+      const msg = event.messages?.[0];
+      if (!msg?.message || msg.key.remoteJid !== m.from) return;
 
-      const choice = parseInt(msg.message.conversation || 
-        msg.message.extendedTextMessage?.text || '');
-      
-      if (isNaN(choice) return cleanup();
-      if (choice < 1 || choice > 5) return cleanup();
+      const body = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
+      const choice = parseInt(body);
 
-      const section = MENU_SECTIONS[choice];
-      const response = `
-╭━━━〔 ${section.title} 〕━━━┈⊷
-┃★╭──────────────
-┃★│ Prefix: ${prefix}
-┃★│ Commands:
-${section.content}
-┃★╰──────────────
-╰━━━━━━━━━━━━━━━┈⊷`;
+      if (isNaN(choice) || !MENU_SECTIONS[choice]) return;
 
-      // Send submenu with image
+      const { title, content } = MENU_SECTIONS[choice];
+
+      const sectionText = `
+╭━〔 *${title}* 〕━⊷
+┃✦ Prefix: ${prefix}
+┃✦ Commands:
+${content}
+╰━━━━━━━━━━━━━━━⊷`;
+
       await Matrix.sendMessage(m.from, {
-        image: menuImage,
-        caption: response,
+        text: sectionText,
         mentions: [m.sender]
       }, { quoted: msg });
 
-      cleanup();
+      Matrix.ev.off('messages.upsert', responseHandler);
     };
 
-    // Set timeout for menu response (60 seconds)
-    const timeoutId = setTimeout(cleanup, 60000);
+    const timeout = setTimeout(() => {
+      Matrix.ev.off('messages.upsert', responseHandler);
+    }, 60000); // Remove listener after 1 min
+
     Matrix.ev.on('messages.upsert', responseHandler);
 
-  } catch (error) {
-    console.error('Menu Error:', error);
-    await Matrix.sendMessage(m.from, { 
-      text: "🚨 Error loading menu. Please try again later." 
+  } catch (err) {
+    console.error('Menu Error:', err);
+    await Matrix.sendMessage(m.from, {
+      text: '⚠️ *An error occurred while loading the menu. Please try again later.*'
     }, { quoted: m });
   }
 };
