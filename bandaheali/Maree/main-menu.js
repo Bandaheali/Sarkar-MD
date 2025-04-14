@@ -83,7 +83,7 @@ const menu = async (m, sock) => {
 
 *⚡ 𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃⚡*`;
 
-   const sentMessage = await sock.sendMessage(m.from, {
+   await sock.sendMessage(m.from, {
       image: img,
       caption: responseText,
       contextInfo: {
