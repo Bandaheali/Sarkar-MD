@@ -68,18 +68,25 @@ const MENU_SECTIONS = {
 
 const menu = async (m, Matrix) => {
   const prefix = config.PREFIX;
-  const mode = config.MODE === 'public' ? 'Public' : 'Private';
-  const time = moment.tz('Asia/Colombo');
-  const greeting = time.hour() < 5 ? 'Good Night' :
-                   time.hour() < 12 ? 'Good Morning' :
-                   time.hour() < 17 ? 'Good Afternoon' : 'Good Evening';
+  const cmd = m.body.startsWith(prefix)
+    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
+    : '';
 
-  try {
-    const menuImage = config.MENU_IMAGE?.trim()
-      ? (await axios.get(config.MENU_IMAGE, { responseType: 'arraybuffer' })).data
-      : fs.readFileSync('./assets/menu.jpg');
+  if (cmd === "menu") {
+    await m.react('⏳');
 
-    const menuText = `
+    const mode = config.MODE === 'public' ? 'Public' : 'Private';
+    const time = moment.tz('Asia/Colombo');
+    const greeting = time.hour() < 5 ? 'Good Night' :
+                     time.hour() < 12 ? 'Good Morning' :
+                     time.hour() < 17 ? 'Good Afternoon' : 'Good Evening';
+
+    try {
+      const menuImage = config.MENU_IMAGE?.trim()
+        ? (await axios.get(config.MENU_IMAGE, { responseType: 'arraybuffer' })).data
+        : fs.readFileSync('./assets/menu.jpg');
+
+      const menuText = `
 ╭━━〔 *${config.BOT_NAME}* 〕━━⊷
 ┃✦ Owner: ${config.OWNER_NAME}
 ┃✦ User: ${m.pushName}
@@ -94,56 +101,61 @@ ${greeting}, *${m.pushName}*!
 ${Object.entries(MENU_SECTIONS).map(([key, { title }]) => `┃✦ ${key}. ${title}`).join('\n')}
 ╰━━━━━━━━━━━━━━━⊷
 
-_Reply with the number (1-5) within 60s to view commands in that section._`;
+_Reply to this message with 1-5 to view that section._`;
 
-    await Matrix.sendMessage(m.from, {
-      image: menuImage,
-      caption: menuText,
-      mentions: [m.sender]
-    }, { quoted: m });
+      const sentMsg = await Matrix.sendMessage(m.from, {
+        image: menuImage,
+        caption: menuText,
+        mentions: [m.sender]
+      }, { quoted: m });
 
-    const userJid = m.sender;
+      const userJid = m.sender;
+      const mainMsgId = sentMsg.key.id;
 
-    const responseHandler = async (event) => {
-      const msg = event.messages?.[0];
-      if (!msg || !msg.message || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
+      const responseHandler = async (event) => {
+        const msg = event.messages?.[0];
+        if (!msg || !msg.message || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
 
-      const senderJid = msg.key.participant || msg.key.remoteJid;
-      if (senderJid !== userJid) return;
+        const senderJid = msg.key.participant || msg.key.remoteJid;
+        if (senderJid !== userJid) return;
 
-      const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
-      if (!text) return;
+        const quotedMsgId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
+        if (quotedMsgId !== mainMsgId) return; // Must reply to main menu message
 
-      const choice = parseInt(text.trim());
-      if (!MENU_SECTIONS[choice]) return;
+        const text = msg.message.conversation || msg.message?.extendedTextMessage?.text;
+        if (!text) return;
 
-      const { title, content } = MENU_SECTIONS[choice];
+        const choice = parseInt(text.trim());
+        if (!MENU_SECTIONS[choice]) return;
 
-      await Matrix.sendMessage(m.from, {
-        text: `
+        const { title, content } = MENU_SECTIONS[choice];
+
+        await Matrix.sendMessage(m.from, {
+          text: `
 ╭━〔 *${title}* 〕━⊷
 ┃✦ Prefix: ${prefix}
 ┃✦ Commands:
 ${content}
 ╰━━━━━━━━━━━━━━━⊷`,
-        mentions: [msg.sender || msg.participant]
-      }, { quoted: msg });
+          mentions: [msg.sender || msg.participant]
+        }, { quoted: msg });
 
-      Matrix.ev.off('messages.upsert', responseHandler);
-      clearTimeout(timeout);
-    };
+        Matrix.ev.off('messages.upsert', responseHandler);
+        clearTimeout(timeout);
+      };
 
-    Matrix.ev.on('messages.upsert', responseHandler);
+      Matrix.ev.on('messages.upsert', responseHandler);
 
-    const timeout = setTimeout(() => {
-      Matrix.ev.off('messages.upsert', responseHandler);
-    }, 60000); // Auto-remove listener in 1 minute
+      const timeout = setTimeout(() => {
+        Matrix.ev.off('messages.upsert', responseHandler);
+      }, 60000);
 
-  } catch (err) {
-    console.error('Menu Error:', err);
-    await Matrix.sendMessage(m.from, {
-      text: '⚠️ *Error loading menu. Try again later.*'
-    }, { quoted: m });
+    } catch (err) {
+      console.error('Menu Error:', err);
+      await Matrix.sendMessage(m.from, {
+        text: '⚠️ *Error loading menu. Try again later.*'
+      }, { quoted: m });
+    }
   }
 };
 
