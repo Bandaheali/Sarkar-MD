@@ -11,8 +11,6 @@ const chatbotCommand = async (m, Matrix) => {
     || null;
   if (!text) return;
 
-  const pushName = m.pushName || "USER";
-
   const bot = await Matrix.decodeJid(Matrix.user.id);
   const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
   const isAllowed = [bot, owner, dev];
@@ -21,8 +19,11 @@ const chatbotCommand = async (m, Matrix) => {
   if (!m.sender || isAllowed.includes(m.sender)) return;
   if (m.key.remoteJid.endsWith("@g.us")) return;
   if (m.key.remoteJid.endsWith("@newsletter")) return;
-  if (text === 'who are you' || text === 'which ai model you are')
-    return m.reply('I am an Ai my name is Sarkar created By Bandaheali How can I help You Sir');
+
+  // Custom reply for specific questions
+  if (text.toLowerCase() === 'who are you' || text.toLowerCase() === 'which ai model you are') {
+    return await Matrix.sendMessage(m.sender, { text: 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?' }, { quoted: m });
+  }
 
   try {
     const response = await fetch(`https://apis-keith.vercel.app/ai/gpt?q=${encodeURIComponent(text)}`);
@@ -33,10 +34,9 @@ const chatbotCommand = async (m, Matrix) => {
     
     if (!data.status) throw new Error('API returned false status');
     
-    const botReply = data.result || 'No response received';
-
-    const formattedReply = `👾 SARKAR-MD AI ASSISTANT 🤖\n\nHello ${pushName},\n\n${botReply}`;
-    await Matrix.sendMessage(m.sender, { text: formattedReply }, { quoted: m });
+    const botReply = data.result || '_*SOORY SIR MAIN SMJHA NAI*_';
+    
+    await Matrix.sendMessage(m.sender, { text: botReply }, { quoted: m });
 
   } catch (err) {
     console.error('Error fetching AI response:', err.message);
