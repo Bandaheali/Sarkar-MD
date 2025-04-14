@@ -80,7 +80,7 @@ const menu = async (m, Matrix) => {
       : fs.readFileSync('./assets/menu.jpg');
 
     const menuText = `
-╭━━━〔 *${config.BOT_NAME}* 〕━━━⊷
+╭━━〔 *${config.BOT_NAME}* 〕━━⊷
 ┃✦ Owner: ${config.OWNER_NAME}
 ┃✦ User: ${m.pushName}
 ┃✦ Mode: ${mode}
@@ -94,7 +94,7 @@ ${greeting}, *${m.pushName}*!
 ${Object.entries(MENU_SECTIONS).map(([key, { title }]) => `┃✦ ${key}. ${title}`).join('\n')}
 ╰━━━━━━━━━━━━━━━⊷
 
-_Reply with the number (1-5) to view commands in that section._`;
+_Reply with the number (1-5) within 60s to view commands in that section._`;
 
     await Matrix.sendMessage(m.from, {
       image: menuImage,
@@ -102,52 +102,47 @@ _Reply with the number (1-5) to view commands in that section._`;
       mentions: [m.sender]
     }, { quoted: m });
 
+    const userJid = m.sender;
+
     const responseHandler = async (event) => {
       const msg = event.messages?.[0];
-if (!msg || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
+      if (!msg || !msg.message || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
 
-// Extract message text safely
-let text = '';
-if (msg.message?.conversation) {
-  text = msg.message.conversation;
-} else if (msg.message?.extendedTextMessage?.text) {
-  text = msg.message.extendedTextMessage.text;
-} else {
-  return; // Ignore non-text responses
-}
+      const senderJid = msg.key.participant || msg.key.remoteJid;
+      if (senderJid !== userJid) return;
 
-// Make sure it's from the same user
-if (msg.pushName !== m.pushName && msg.participant !== m.sender) return;
+      const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
+      if (!text) return;
 
-const choice = parseInt(text.trim());
-if (isNaN(choice) || !MENU_SECTIONS[choice]) return;
+      const choice = parseInt(text.trim());
+      if (!MENU_SECTIONS[choice]) return;
+
       const { title, content } = MENU_SECTIONS[choice];
 
-      const sectionText = `
+      await Matrix.sendMessage(m.from, {
+        text: `
 ╭━〔 *${title}* 〕━⊷
 ┃✦ Prefix: ${prefix}
 ┃✦ Commands:
 ${content}
-╰━━━━━━━━━━━━━━━⊷`;
-
-      await Matrix.sendMessage(m.from, {
-        text: sectionText,
-        mentions: [m.sender]
+╰━━━━━━━━━━━━━━━⊷`,
+        mentions: [msg.sender || msg.participant]
       }, { quoted: msg });
 
       Matrix.ev.off('messages.upsert', responseHandler);
+      clearTimeout(timeout);
     };
+
+    Matrix.ev.on('messages.upsert', responseHandler);
 
     const timeout = setTimeout(() => {
       Matrix.ev.off('messages.upsert', responseHandler);
-    }, 60000); // Remove listener after 1 min
-
-    Matrix.ev.on('messages.upsert', responseHandler);
+    }, 60000); // Auto-remove listener in 1 minute
 
   } catch (err) {
     console.error('Menu Error:', err);
     await Matrix.sendMessage(m.from, {
-      text: '⚠️ *An error occurred while loading the menu. Please try again later.*'
+      text: '⚠️ *Error loading menu. Try again later.*'
     }, { quoted: m });
   }
 };
