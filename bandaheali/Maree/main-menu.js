@@ -63,12 +63,14 @@ const menu = async (m, Matrix) => {
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
   const mode = config.MODE === 'public' ? 'public' : 'private';
   const pref = config.PREFIX;
-
+const botname = config.BOT_NAME || 'SARKAR-MD';
+  const cap = config.DESCRIPTION || 'POWERED BY SARKAR-MD';
+  const menuImage = 'https://files.catbox.moe/htnkaq.jpg';
   const validCommands = ['list', 'help', 'menu'];
 
   if (validCommands.includes(cmd)) {
     const mainMenu = `
-╭━━━〔 *${config.BOT_NAME}* 〕━━━┈⊷
+╭━━━〔 *${botname}* 〕━━━┈⊷
 ┃★╭──────────────
 ┃★│ Owner : *${config.OWNER_NAME}*
 ┃★│ User : *${m.pushName}*
@@ -99,7 +101,7 @@ const menu = async (m, Matrix) => {
 ╰──────────────┈⊷
 > *Reply with the number (1-9)*`;
 
-    // Function to get menu image
+   /* // Function to get menu image
     const getMenuImage = async () => {
       if (config.MENU_IMAGE && config.MENU_IMAGE.trim() !== '') {
         try {
@@ -114,7 +116,7 @@ const menu = async (m, Matrix) => {
       }
     };
 
-    const menuImage = await getMenuImage();
+    const menuImage = await getMenuImage(); */
 
     const sentMessage = await Matrix.sendMessage(m.from, {
       image: menuImage,
@@ -332,7 +334,7 @@ const menu = async (m, Matrix) => {
 
 ${menuResponse}
 
-> *${config.DESCRIPTION}*`;
+> *${cap}*`;
 
       // Send the response with image and context info
       await Matrix.sendMessage(m.from, {
