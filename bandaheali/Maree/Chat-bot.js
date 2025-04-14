@@ -19,17 +19,11 @@ const chatbotCommand = async (m, Matrix) => {
   if (!m.sender || isAllowed.includes(m.sender)) return;
   if (m.key.remoteJid.endsWith("@g.us")) return;
   if (m.key.remoteJid.endsWith("@newsletter")) return;
-  
-const lowerText = text.toLowerCase();
-if (
-  ['who are you', 'which ai model you are', 'apko kisne bnaya', 'which ai you model you are?', 'ap kon ho'].includes(lowerText)
-) {
-  return await Matrix.sendMessage(
-    m.sender,
-    { text: 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?' },
-    { quoted: m }
-  );
-}
+
+  // Custom reply for specific questions
+  if (text.toLowerCase() === 'who are you' || text.toLowerCase() === 'which ai model you are' || text.toLowerCase() === 'apko kisne bnaya' || text.toLowerCase() === 'which ai you model you are?' || text.toLowerCase() === 'ap kon ho') {
+    return await Matrix.sendMessage(m.sender, { text: 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?' }, { quoted: m });
+  }
 
   try {
     const response = await fetch(`https://apis-keith.vercel.app/ai/gpt?q=${encodeURIComponent(text)}`);
