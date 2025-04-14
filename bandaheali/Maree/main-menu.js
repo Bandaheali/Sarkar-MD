@@ -1,155 +1,345 @@
-import config from '../../config.cjs';
 import moment from 'moment-timezone';
+import fs from 'fs';
+import os from 'os';
+import pkg from '@whiskeysockets/baileys';
+const { generateWAMessageFromContent, proto } = pkg;
+import config from '../config.cjs';
+import axios from 'axios';
 
-const menu = async (m, sock) => {
+// Get total memory and free memory in bytes
+const totalMemoryBytes = os.totalmem();
+const freeMemoryBytes = os.freemem();
+
+// Define unit conversions
+const byteToKB = 1 / 1024;
+const byteToMB = byteToKB / 1024;
+const byteToGB = byteToMB / 1024;
+
+// Function to format bytes to a human-readable format
+function formatBytes(bytes) {
+  if (bytes >= Math.pow(1024, 3)) {
+    return (bytes * byteToGB).toFixed(2) + ' GB';
+  } else if (bytes >= Math.pow(1024, 2)) {
+    return (bytes * byteToMB).toFixed(2) + ' MB';
+  } else if (bytes >= 1024) {
+    return (bytes * byteToKB).toFixed(2) + ' KB';
+  } else {
+    return bytes.toFixed(2) + ' bytes';
+  }
+}
+
+// Bot Process Time
+const uptime = process.uptime();
+const day = Math.floor(uptime / (24 * 3600)); // Calculate days
+const hours = Math.floor((uptime % (24 * 3600)) / 3600); // Calculate hours
+const minutes = Math.floor((uptime % 3600) / 60); // Calculate minutes
+const seconds = Math.floor(uptime % 60); // Calculate seconds
+
+// Uptime
+const uptimeMessage = `*I am alive now since ${day}d ${hours}h ${minutes}m ${seconds}s*`;
+const runMessage = `*☀️ ${day} Day*\n*🕐 ${hours} Hour*\n*⏰ ${minutes} Minutes*\n*⏱️ ${seconds} Seconds*\n`;
+
+const xtime = moment.tz("Asia/Colombo").format("HH:mm:ss");
+const xdate = moment.tz("Asia/Colombo").format("DD/MM/YYYY");
+const time2 = moment().tz("Asia/Colombo").format("HH:mm:ss");
+let pushwish = "";
+
+if (time2 < "05:00:00") {
+  pushwish = `Good Morning 🌄`;
+} else if (time2 < "11:00:00") {
+  pushwish = `Good Morning 🌄`;
+} else if (time2 < "15:00:00") {
+  pushwish = `Good Afternoon 🌅`;
+} else if (time2 < "18:00:00") {
+  pushwish = `Good Evening 🌃`;
+} else if (time2 < "19:00:00") {
+  pushwish = `Good Evening 🌃`;
+} else {
+  pushwish = `Good Night 🌌`;
+}
+
+const menu = async (m, Matrix) => {
   const prefix = config.PREFIX;
-  const mode = config.MODE;
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-  const pushName = m.pushName || '𝐔𝐒𝐄𝐑';
-  const img = config.ALIVE_IMG || 'https://files.catbox.moe/htnkaq.jpg';
+  const mode = config.MODE === 'public' ? 'public' : 'private';
+  const pref = config.PREFIX;
 
-  // Uptime calculation
-  const uptimeSeconds = process.uptime();
-  const hours = Math.floor(uptimeSeconds / 3600);
-  const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-  const seconds = Math.floor(uptimeSeconds % 60);
+  const validCommands = ['list', 'help', 'menu'];
 
-  // Time and date
-  const realTime = moment().tz("Asia/Karachi").format("HH:mm:ss");
-  const realDate = moment().tz("Asia/Karachi").format("DD/MM/YYYY");
+  if (validCommands.includes(cmd)) {
+    const mainMenu = `
+╭━━━〔 *${config.BOT_NAME}* 〕━━━┈⊷
+┃★╭──────────────
+┃★│ Owner : *${config.OWNER_NAME}*
+┃★│ User : *${m.pushName}*
+┃★│ Baileys : *Multi Device*
+┃★│ Type : *NodeJs*
+┃★│ Mode : *${mode}*
+┃★│ Platform : *${os.platform()}*
+┃★│ Prefix : [${prefix}]
+┃★│ Version : *3.1.0*
+┃★╰──────────────
+╰━━━━━━━━━━━━━━━┈⊷
 
-  // Greeting based on time
-  let pushwish = "";
-  if (realTime < "05:00:00") pushwish = `𝙶𝙾𝙾𝙳 𝙽𝙸𝙶𝙷𝚃 🌌`;
-  else if (realTime < "12:00:00") pushwish = `𝙶𝙾𝙾𝙳 𝙼𝙾𝚁𝙽𝙸𝙽𝙶 🌄`;
-  else if (realTime < "17:00:00") pushwish = `𝙶𝙾𝙾𝙳 𝙰𝙵𝚃𝙴𝚁𝙽𝙾𝙾𝙽 🌅`;
-  else if (realTime < "20:00:00") pushwish = `𝙶𝙾𝙾𝙳 𝙴𝚅𝙴𝙽𝙸𝙽𝙶 🌃`;
-  else pushwish = `𝙶𝙾𝙾𝙳 𝙽𝙸𝙶𝙷𝚃 🌌`;
+> ${pushwish} *${m.pushName}*!
 
-  const sendMenuMessage = async (content, options = {}) => {
-    const baseMessage = {
+╭━━〔 *Menu List* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• 1. Download Menu      
+┃◈┃• 2. Converter Menu        
+┃◈┃• 3. AI Menu  
+┃◈┃• 4. Tools Menu  
+┃◈┃• 5. Group Menu 
+┃◈┃• 6. Search Menu   
+┃◈┃• 7. Main Menu
+┃◈┃• 8. Owner Menu 
+┃◈┃• 9. Stalk Menu     
+┃◈┃• update
+┃◈└───────────┈⊷
+╰──────────────┈⊷
+> *Reply with the number (1-9)*`;
+
+
+
+    const menuImage = config.ALIVE_IMG || 'https://files.catbox.moe/htnkaq.jpg';
+
+    const sentMessage = await Matrix.sendMessage(m.from, {
+      image: menuImage,
+      caption: mainMenu,
       contextInfo: {
-        isForwarded: true,
+        mentionedJid: [m.sender],
         forwardingScore: 999,
+        isForwarded: true,
         forwardedNewsletterMessageInfo: {
           newsletterJid: '120363315182578784@newsletter',
-          newsletterName: "𝚂𝙰𝚁𝙺𝙰𝚁-𝙼𝙳",
-          serverMessageId: -1,
-        },
-        externalAdReply: {
-          title: "✨𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨",
-          body: pushName,
-          thumbnailUrl: img,
-          sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
-          mediaType: 1,
-          renderLargerThumbnail: true,
-        },
-      },
-      ...options
-    };
-
-    await sock.sendMessage(m.from, baseMessage, { quoted: m });
-  };
-
-  if (cmd === "menu") {
-    const responseText = `╭───❍ *✨ 𝚂𝙰𝚁𝙺𝙰𝚁-𝙼𝙳 ✨* ❍───╮  
-│ 👤 *𝐔𝐒𝐄𝐑:* *${pushName}* \n│ ${pushwish}  
-│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*  
-│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}🇵🇰*  
-│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
-│ 🤖 *𝐔𝐏𝐓𝐈𝐌𝐄:* *${hours}/${minutes}/${seconds}*
-╰───────────────❍  
-
-*📌 𝐌𝐄𝐍𝐔 𝐎𝐏𝐓𝐈𝐎𝐍𝐒:*  
-1️⃣ 🕌 *𝐈𝐬𝐥𝐚𝐦𝐢𝐜 𝐌𝐞𝐧𝐮*
-2️⃣ ⬇️ *𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝 𝐌𝐞𝐧𝐮*
-3️⃣ 🤖 *𝐀𝐢 𝐌𝐞𝐧𝐮*
-4️⃣ 👥 *𝐆𝐫𝐨𝐮𝐩 𝐌𝐞𝐧𝐮*
-5️⃣ 🎨 *𝐋𝐨𝐠𝐨 𝐌𝐞𝐧𝐮*
-6️⃣ 🛠️ *𝐎𝐰𝐧𝐞𝐫 𝐌𝐞𝐧𝐮*
-7️⃣ ⚡ *𝐎𝐭𝐡𝐞𝐫 𝐌𝐞𝐧𝐮*
-8️⃣ 🎁 *𝐄𝐱𝐭𝐫𝐚 𝐌𝐞𝐧𝐮* 
-9️⃣ 🔍 *𝐒𝐞𝐚𝐫𝐜𝐡 𝐌𝐞𝐧𝐮*
-
-➤ *Reply with a number (1-9) to select a menu.*  
-
-*⚡ 𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃⚡*`;
-
-    // Send main menu with image
-    const sentMsg = await sendMenuMessage({
-      image: { url: img },
-      caption: responseText,
-      mentions: [m.sender]
+          newsletterName: "SARKAR-MD",
+          serverMessageId: 143
+        }
+      }
+    }, {
+      quoted: m
     });
 
-    // Temporary listener for menu responses
-    const menuResponseHandler = async (event) => {
-      const receivedMsg = event.messages[0];
-      if (!receivedMsg?.message?.extendedTextMessage || 
-          receivedMsg.key.remoteJid !== m.from ||
-          !receivedMsg.message.extendedTextMessage.contextInfo?.stanzaId) return;
+    // Send audio after sending the menu
+    await Matrix.sendMessage(m.from, {
+      audio: { url: 'https://github.com/XdTechPro/KHAN-DATA/raw/refs/heads/main/autovoice/menunew.m4a' },
+      mimetype: 'audio/mp4',
+      ptt: true
+    }, { quoted: m });
 
-      // Check if this is a reply to our menu message
-      if (receivedMsg.message.extendedTextMessage.contextInfo.stanzaId !== sentMsg.key.id) return;
+    // Set up listener for menu selection
+    Matrix.ev.on('messages.upsert', async (event) => {
+      const receivedMessage = event.messages[0];
+      if (!receivedMessage?.message?.extendedTextMessage) return;
 
-      const choice = receivedMsg.message.extendedTextMessage.text.trim();
+      const receivedText = receivedMessage.message.extendedTextMessage.text.trim();
+      if (receivedMessage.message.extendedTextMessage.contextInfo?.stanzaId !== sentMessage.key.id) return;
+
+      let menuResponse;
+      let menuTitle;
       
-      const menuTemplates = {
-        "1": `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
-│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* ${pushName} ${pushwish}
-│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
-│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}🇵🇰*
-│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*
-│ 🤖 *𝐔𝐏𝐓𝐈𝐌𝐄:* *${hours}/${minutes}/${seconds}*
-╰───────────❍
- ╭───❍「 *𝐈𝐒𝐋𝐀𝐌𝐈𝐂 𝐌𝐄𝐍𝐔* 」
-*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐀𝐮𝐝𝐢𝐨*
-*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐔𝐫𝐝𝐮*
-*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐀𝐫𝐛𝐢𝐜*
-*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐄𝐧𝐠*
-*│* 💙 *${prefix}𝐏𝐫𝐚𝐲𝐞𝐫𝐓𝐢𝐦𝐞*
-*│* 💙 *${prefix}𝐏𝐓𝐢𝐦𝐞*
-*│* 💙 *${prefix}𝐒𝐁𝐮𝐤𝐡𝐚𝐫𝐢*
- ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`,
-        
-        "2": `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
-│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName}* *${pushwish}*
-│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
-│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}🇵🇰*
-│ 📅 *𝐃𝐀𝐓𝐄*: *${realDate}* 
-│ 🤖 *𝐔𝐏𝐓𝐈𝐌𝐄:* *${hours}/${minutes}/${seconds}*
-╰───────────❍
- ╭───❍「 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃 𝐌𝐄𝐍𝐔 」
- *│* 💙 *${prefix}𝐏𝐥𝐚𝐲*
- *│* 💙 *${prefix}𝐒𝐨𝐧𝐠*
- *│* 💙 *${prefix}𝐒𝐨𝐧𝐠2*
- *│* 💙 *${prefix}𝐒𝐨𝐧𝐠3*
- *│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨*
- *│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨2*
- *│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨3*
- *│* 💙 *${prefix}𝐅𝐁*
- *│* 💙 *${prefix}𝐅𝐁2*
- *│* 💙 *${prefix}𝐈𝐧𝐬𝐭𝐚*
- *│* 💙 *${prefix}𝐈𝐧𝐬𝐭𝐚*
- *│* 💙 *${prefix}𝐓𝐢𝐤𝐓𝐨𝐤*
- *│* 💙 *${prefix}𝐓𝐢𝐤𝐓𝐨𝐤2*
- *│* 💙 *${prefix}𝐓𝐢𝐤𝐬*
- *│* 💙 *${prefix}𝐒𝐧𝐚𝐜𝐤*
- *│* 💙 *${prefix}𝐓𝐰𝐞𝐞𝐓*
- *│* 💙 *${prefix}𝐀𝐩𝐤*
- ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`,
-        
-        // Add other menu templates here...
-        
-        "default": "*❌ 𝐈𝐍𝐕𝐀𝐋𝐈𝐃 𝐂𝐇𝐎𝐈𝐂𝐄. 𝐏𝐋𝐄𝐀𝐒𝐄 𝐑𝐄𝐏𝐋𝐘 𝐖𝐈𝐓𝐇 1 𝐓𝐎 9.*"
-      };
+      switch (receivedText) {
+        case "1":
+          menuTitle = "Download Menu";
+          menuResponse = `
+╭━━〔 *Download Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• apk
+┃◈┃• facebook
+┃◈┃• mediafire
+┃◈┃• pinterestdl
+┃◈┃• gitclone
+┃◈┃• gdrive
+┃◈┃• insta
+┃◈┃• ytmp3
+┃◈┃• ytmp4
+┃◈┃• play
+┃◈┃• song
+┃◈┃• video
+┃◈┃• ytmp3doc
+┃◈┃• ytmp4doc
+┃◈┃• tiktok
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        case "2":
+          menuTitle = "Converter Menu";
+          menuResponse = `
+╭━━〔 *Converter Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• attp
+┃◈┃• attp2
+┃◈┃• attp3
+┃◈┃• ebinary
+┃◈┃• dbinary
+┃◈┃• emojimix
+┃◈┃• mp3
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        case "3":
+          menuTitle = "AI Menu";
+          menuResponse = `
+╭━━〔 *AI Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• ai
+┃◈┃• bug
+┃◈┃• report
+┃◈┃• gpt
+┃◈┃• dalle
+┃◈┃• remini
+┃◈┃• gemini
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        case "4":
+          menuTitle = "Tools Menu";
+          menuResponse = `
+╭━━〔 *Tools Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• calculator
+┃◈┃• tempmail
+┃◈┃• checkmail
+┃◈┃• trt
+┃◈┃• tts
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        case "5":
+          menuTitle = "Group Menu";
+          menuResponse = `
+╭━━〔 *Group Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• linkgroup
+┃◈┃• setppgc
+┃◈┃• setname
+┃◈┃• setdesc
+┃◈┃• group
+┃◈┃• gcsetting
+┃◈┃• welcome
+┃◈┃• add
+┃◈┃• kick
+┃◈┃• hidetag
+┃◈┃• tagall
+┃◈┃• antilink
+┃◈┃• antitoxic
+┃◈┃• promote
+┃◈┃• demote
+┃◈┃• getbio
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        case "6":
+          menuTitle = "Search Menu";
+          menuResponse = `
+╭━━〔 *Search Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• play
+┃◈┃• yts
+┃◈┃• imdb
+┃◈┃• google
+┃◈┃• gimage
+┃◈┃• pinterest
+┃◈┃• wallpaper
+┃◈┃• wikimedia
+┃◈┃• ytsearch
+┃◈┃• ringtone
+┃◈┃• lyrics
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        case "7":
+          menuTitle = "Main Menu";
+          menuResponse = `
+╭━━〔 *Main Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• ping
+┃◈┃• alive
+┃◈┃• owner
+┃◈┃• menu
+┃◈┃• infobot
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        case "8":
+          menuTitle = "Owner Menu";
+          menuResponse = `
+╭━━〔 *Owner Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• join
+┃◈┃• leave
+┃◈┃• block
+┃◈┃• unblock
+┃◈┃• setppbot
+┃◈┃• anticall
+┃◈┃• setstatus
+┃◈┃• setnamebot
+┃◈┃• autotyping
+┃◈┃• alwaysonline
+┃◈┃• autoread
+┃◈┃• autosview
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        case "9":
+          menuTitle = "Stalk Menu";
+          menuResponse = `
+╭━━〔 *Stalk Menu* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• truecaller
+┃◈┃• instastalk
+┃◈┃• githubstalk
+┃◈└───────────┈⊷
+╰──────────────┈⊷`;
+          break;
+          
+        default:
+          menuTitle = "Invalid Choice";
+          menuResponse = "*Invalid Reply Please Reply With A Number Between 1 to 9*";
+      }
 
-      const response = menuTemplates[choice] || menuTemplates.default;
-      await sendMenuMessage({ text: response }, { quoted: receivedMsg });
-    };
+      // Format the full response with title and description
+      const fullResponse = `
+╭━━━〔 *${botName} - ${menuTitle}* 〕━━━┈⊷
+┃★╭──────────────
+┃★│• Owner : *${config.OWNER_NAME}*
+┃★│• User : *${m.pushName}*
+┃★│• Prefix : [${prefix}]
+┃★│• Version : *1.0.0*
+┃★╰──────────────
+╰━━━━━━━━━━━━━━━┈⊷
 
-    // Add temporary listener
-    const listener = (event) => menuResponseHandler(event);
-    sock.ev.on('messages.upsert', listener);
+${menuResponse}
 
-    // Remove listener after 2 minutes
+> *${caption}*`;
+
+      // Send the response with image and context info
+      await Matrix.sendMessage(m.from, {
+        image: menuImage,
+        caption: fullResponse,
+        contextInfo: {
+          mentionedJid: [m.sender],
+          forwardingScore: 999,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363315182578784@newsletter',
+            newsletterName: "SARKAR-MD",
+            serverMessageId: 143
+          }
+        }
+      }, {
+        quoted: receivedMessage
+      });
+    });
+  }
+};
+
+export default menu;
