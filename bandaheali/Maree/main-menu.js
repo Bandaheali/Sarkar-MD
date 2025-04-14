@@ -83,8 +83,23 @@ const menu = async (m, sock) => {
 
 *⚡ 𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃⚡*`;
 
-    const sentMessage = await sock.sendMessage(m.from, { text: responseText }, { quoted: m });
-
+   const sentMessage = await Matrix.sendMessage(m.from, {
+      image: img,
+      caption: responseText,
+      contextInfo: {
+        mentionedJid: [m.sender],
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: '120363315182578784@newsletter',
+          newsletterName: "𝐒𝐚𝐫𝐤𝐚𝐫-𝐌𝐃",
+          serverMessageId: 143
+        }
+      }
+    }, {
+      quoted: m
+    });
+   
     sock.ev.on('messages.upsert', async (event) => {
       const receivedMessage = event.messages[0];
       if (!receivedMessage?.message?.extendedTextMessage) return;
