@@ -3,8 +3,12 @@ import fetch from 'node-fetch';
 
 const chatbotCommand = async (m, Matrix) => {
   const dev = "923253617422@s.whatsapp.net";
-  const chatbot = config.CHAT_BOT || false;
+  const chatbot = config.CHAT_BOT || false; 
+const chatMode = "group"; // You can move this to config.cjs
+const isGroup = m.key.remoteJid.endsWith("@g.us");
 
+
+// command runs here for both if mode is "both"
   const text = m.message?.conversation
     || m.message?.extendedTextMessage?.text
     || m.message?.imageMessage?.caption
@@ -17,7 +21,8 @@ const chatbotCommand = async (m, Matrix) => {
 
   if (!chatbot) return;
   if (!m.sender || isAllowed.includes(m.sender)) return;
-  if (m.key.remoteJid.endsWith("@g.us")) return;
+  if (chatMode === "group" && !isGroup) return;
+  if (chatMode === "pm" && isGroup) return;
   if (m.key.remoteJid.endsWith("@newsletter")) return;
 
   // Custom reply for specific questions
