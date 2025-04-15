@@ -240,7 +240,11 @@ Reply with a number (1-${Object.keys(MENU_SECTIONS).length}) to select a menu se
       const sectionText = `╭───❍ *${section.title}* ❍───╮
 │ 👤 User: ${pushName}
 │ ${greeting}
-│ 🌐 Prefix: ${prefix}
+│ 🌐 Mode: ${mode}
+│ ⏰ Time: ${realTime}
+│ 📅 Date: ${realDate}
+│ ⚡ Uptime: ${getUptime()}
+│ 💾 RAM: ${formatBytes(os.freemem())}/${formatBytes(os.totalmem())}
 ╰───────────────❍
 
 *Available Commands:*
