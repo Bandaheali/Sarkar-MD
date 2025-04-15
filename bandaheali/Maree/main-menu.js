@@ -1,163 +1,272 @@
-import moment from 'moment-timezone';
-import fs from 'fs';
-import os from 'os';
-import axios from 'axios';
 import config from '../../config.cjs';
-import pkg from '@whiskeysockets/baileys';
-const { generateWAMessageFromContent, proto } = pkg;
-
-// Helpers
-const formatBytes = (bytes) => {
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  if (bytes === 0) return '0 Byte';
-  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
-};
-
-const getUptime = () => {
-  const seconds = process.uptime();
-  const d = Math.floor(seconds / (3600 * 24));
-  const h = Math.floor((seconds % (3600 * 24)) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  return `${d}d ${h}h ${m}m ${s}s`;
-};
-
-const MENU_SECTIONS = {
-  1: {
-    title: "Download Menu",
-    content: `
-┃✦ • ytmp3
-┃✦ • ytmp4
-┃✦ • tiktok
-┃✦ • play
-┃✦ • song
-┃✦ • video`
-  },
-  2: {
-    title: "Converter Menu",
-    content: `
-┃✦ • attp
-┃✦ • emojimix
-┃✦ • mp3`
-  },
-  3: {
-    title: "AI Menu",
-    content: `
-┃✦ • gpt
-┃✦ • dalle
-┃✦ • gemini`
-  },
-  4: {
-    title: "Group Tools",
-    content: `
-┃✦ • add
-┃✦ • kick
-┃✦ • promote
-┃✦ • demote
-┃✦ • tagall`
-  },
-  5: {
-    title: "Search Menu",
-    content: `
-┃✦ • google
-┃✦ • lyrics
-┃✦ • wallpaper`
-  }
-};
+import moment from 'moment-timezone';
 
 const menu = async (m, sock) => {
   const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix)
-    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
-    : '';
+  const mode = config.MODE;
+  const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+  const pushName = m.pushName || '𝐔𝐒𝐄𝐑';
+
+  // Get current time and date
+  const realTime = moment().tz("Asia/Karachi").format("HH:mm:ss");
+  const realDate = moment().tz("Asia/Karachi").format("DD/MM/YYYY");
+
+  let pushwish = "";
+  if (realTime < "05:00:00") {
+    pushwish = `𝙶𝙾𝙾𝙳 𝙽𝙸𝙶𝙷𝚃 🌌`;
+  } else if (realTime < "12:00:00") {
+    pushwish = `𝙶𝙾𝙾𝙳 𝙼𝙾𝚁𝙽𝙸𝙽𝙶 🌄`;
+  } else if (realTime < "17:00:00") {
+    pushwish = `𝙶𝙾𝙾𝙳 𝙰𝙵𝚃𝙴𝚁𝙽𝙾𝙾𝙽 🌅`;
+  } else if (realTime < "20:00:00") {
+    pushwish = `𝙶𝙾𝙾𝙳 𝙴𝚅𝙴𝙽𝙸𝙽𝙶 🌃`;
+  } else {
+    pushwish = `𝙶𝙾𝙾𝙳 𝙽𝙸𝙶𝙷𝚃 🌌`;
+  }
+
+  const sendCommandMessage = async (messageContent, quotedMsg = m) => {
+    await sock.sendMessage(
+      m.from,
+      {
+        text: messageContent,
+        contextInfo: {
+          isForwarded: true,
+          forwardingScore: 999,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363315182578784@newsletter',
+            newsletterName: "𝚂𝙰𝚁𝙺𝙰𝚁-𝙼𝙳",
+            serverMessageId: -1,
+          },
+          externalAdReply: {
+            title: "✨𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨",
+            body: pushName,
+            thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
+            sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
+            mediaType: 1,
+            renderLargerThumbnail: true,
+          },
+        },
+      },
+      { quoted: quotedMsg }
+    );
+  };
 
   if (cmd === "menu") {
-    await m.react('⏳');
+    const responseText = `╭───❍ *✨ 𝚂𝙰𝚁𝙺𝙰𝚁-𝙼𝙳 ✨* ❍───╮  
+│ 👤 𝐔𝐒𝐄𝐑 : *${pushName}* \n│ ${pushwish}  
+│ 🌐 𝐌𝐎𝐃𝐄 : *${mode}*  
+│ ⏰ 𝐓𝐈𝐌𝐄 : *${realTime}*  
+│ 📅 𝐃𝐀𝐓𝐄 : *${realDate}*  
+╰───────────────❍  
 
-    const mode = config.MODE === 'public' ? 'Public' : 'Private';
-    const time = moment.tz('Asia/Colombo');
-    const greeting = time.hour() < 5 ? 'Good Night' :
-                     time.hour() < 12 ? 'Good Morning' :
-                     time.hour() < 17 ? 'Good Afternoon' : 'Good Evening';
+*📌 𝐌𝐄𝐍𝐔 𝐎𝐏𝐓𝐈𝐎𝐍𝐒:*  
+1️⃣ 🕌 *𝐈𝐬𝐥𝐚𝐦𝐢𝐜 𝐌𝐞𝐧𝐮*
+2️⃣ ⬇️ *𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝 𝐌𝐞𝐧𝐮*
+3️⃣ 🤖 *𝐀𝐢 𝐌𝐞𝐧𝐮*
+4️⃣ 👥 *𝐆𝐫𝐨𝐮𝐩 𝐌𝐞𝐧𝐮*
+5️⃣ 🎨 *𝐋𝐨𝐠𝐨 𝐌𝐞𝐧𝐮*
+6️⃣ 🛠️ *𝐎𝐰𝐧𝐞𝐫 𝐌𝐞𝐧𝐮*
+7️⃣ ⚡ *𝐎𝐭𝐡𝐞𝐫 𝐌𝐞𝐧𝐮*
+8️⃣ 🎁 *𝐄𝐱𝐭𝐫𝐚 𝐌𝐞𝐧𝐮* 
+9️⃣ 🔍 *Search Menu*
 
-    try {
-      const menuImage = config.MENU_IMAGE?.trim()
-        ? (await axios.get(config.MENU_IMAGE, { responseType: 'arraybuffer' })).data
-        : fs.readFileSync('./assets/menu.jpg');
+➤ *Reply with a number (1-9) to select a menu.*  
 
-      const menuText = `
-╭━━〔 *${config.BOT_NAME}* 〕━━⊷
-┃✦ Owner: ${config.OWNER_NAME}
-┃✦ User: ${m.pushName}
-┃✦ Mode: ${mode}
-┃✦ Uptime: ${getUptime()}
-┃✦ RAM: ${formatBytes(os.freemem())} / ${formatBytes(os.totalmem())}
-╰━━━━━━━━━━━━━━━⊷
+*⚡ 𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃⚡*`;
 
-${greeting}, *${m.pushName}*!
+    const sentMessage = await sock.sendMessage(m.from, { text: responseText }, { quoted: m });
 
-╭━〔 MAIN MENU 〕━⊷
-${Object.entries(MENU_SECTIONS).map(([key, { title }]) => `┃✦ ${key}. ${title}`).join('\n')}
-╰━━━━━━━━━━━━━━━⊷
+    sock.ev.on('messages.upsert', async (event) => {
+      const receivedMessage = event.messages[0];
+      if (!receivedMessage?.message?.extendedTextMessage) return;
 
-_Reply to this message with 1-5 to view that section._`;
+      const receivedText = receivedMessage.message.extendedTextMessage.text.trim();
+      if (receivedMessage.message.extendedTextMessage.contextInfo?.stanzaId !== sentMessage.key.id) return;
 
-      const sentMsg = await sock.sendMessage(m.from, {
-        image: menuImage,
-        caption: menuText,
-        mentions: [m.sender]
-      }, { quoted: m });
+      let menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
+╰───────────❍
+`;
+      switch (receivedText) {
+        case "1":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* ${pushName} ${pushwish}
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
+╰───────────❍
+ ╭───❍「 *𝐈𝐒𝐋𝐀𝐌𝐈𝐂 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐀𝐮𝐝𝐢𝐨*
+*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐔𝐫𝐝𝐮*
+*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐀𝐫𝐛𝐢𝐜*
+*│* 💙 *${prefix}𝐒𝐮𝐫𝐚𝐡𝐄𝐧𝐠*
+*│* 💙 *${prefix}𝐏𝐫𝐚𝐲𝐞𝐫𝐓𝐢𝐦𝐞*
+*│* 💙 *${prefix}𝐏𝐓𝐢𝐦𝐞*
+*│* 💙 *${prefix}𝐒𝐁𝐮𝐤𝐡𝐚𝐫𝐢*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
+          break;
+        case "2":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName}* *${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄*: *${realDate}* 
+╰───────────❍
+ ╭───❍「 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃 𝐌𝐄𝐍𝐔 」
+*│* 💙 *${prefix}𝐒𝐨𝐧𝐠*
+*│* 💙 *${prefix}𝐒𝐨𝐧𝐠2*
+*│* 💙 *${prefix}𝐒𝐨𝐧𝐠3*
+*│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨*
+*│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨2*
+*│* 💙 *${prefix}𝐕𝐢𝐝𝐞𝐨3*
+*│* 💙 *${prefix}𝐅𝐁*
+*│* 💙 *${prefix}𝐅𝐁2*
+*│* 💙 *${prefix}𝐈𝐧𝐬𝐭𝐚*
+*│* 💙 *${prefix}𝐈𝐧𝐬𝐭𝐚*
+*│* 💙 *${prefix}𝐓𝐢𝐤𝐓𝐨𝐤*
+*│* 💙 *${prefix}𝐓𝐢𝐤𝐓𝐨𝐤2*
+*│* 💙 *${prefix}𝐓𝐢𝐤𝐬*
+*│* 💙 *${prefix}𝐒𝐧𝐚𝐜𝐤*
+*│* 💙 *${prefix}𝐓𝐰𝐞𝐞𝐓*
+*│* 💙 *${prefix}𝐀𝐩𝐤*
+╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
+          break;
+        case "3":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄: *${realDate}*  
+╰───────────❍
+ ╭───❍「 *𝐀𝐈 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}𝐀𝐈*
+*│* 💙 *${prefix}𝐆𝐏𝐓*
+*│* 💙 *${prefix}𝐁𝐥𝐚𝐜𝐤𝐁𝐨𝐱*
+*│* 💙 *${prefix}𝐈𝐦𝐚𝐠𝐢𝐧𝐞*
+*│* 💙 *${prefix}𝐈𝐦𝐚𝐠𝐢𝐧𝐞2*
+*│* 💙 *${prefix}𝐈𝐦𝐚𝐠𝐢𝐧𝐞3*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*
+`;
+          break;
+        case "4":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
+╰───────────❍
+ ╭───❍「 *𝐆𝐑𝐎𝐔𝐏 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}TagAll*
+*│* 💙 *${prefix}HideTag*
+*│* 💙 *${prefix}Open*
+*│* 💙 *${prefix}Close*
+*│* 💙 *${prefix}Add*
+*│* 💙 *${prefix}Invite*
+*│* 💙 *${prefix}Kick*
+*│* 💙 *${prefix}Dis*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
+          break;
+        case "5":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐖:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
+╰───────────❍
+ ╭───❍「 *𝐋𝐎𝐆𝐎 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}𝐋𝐨𝐆𝐨*
+*│* 💙 *${prefix}𝐆𝐥𝐨𝐬𝐬𝐲𝐒𝐢𝐥𝐯𝐞𝐫*
+*│* 💙 *${prefix}𝐖𝐫𝐢𝐭𝐞𝐓𝐞𝐱𝐭*
+*│* 💙 *${prefix}𝐁𝐥𝐚𝐜𝐤𝐏𝐢𝐧𝐤𝐋𝐨𝐠𝐨*
+*│* 💙 *${prefix}𝐆𝐥𝐢𝐭𝐜𝐡𝐓𝐞𝐱𝐭*
+*│* 💙 *${prefix}𝐀𝐝𝐯𝐚𝐧𝐜𝐞𝐝𝐆𝐥𝐨𝐰*
+*│* 💙 *${prefix}𝐓𝐲𝐩𝐨𝐆𝐫𝐚𝐩𝐡𝐲𝐓𝐞𝐱𝐭*
+*│* 💙 *${prefix}𝐏𝐢𝐱𝐞𝐥𝐆𝐥𝐢𝐭𝐜𝐡*
+*│* 💙 *${prefix}𝐍𝐞𝐨𝐧𝐆𝐥𝐢𝐭𝐜𝐡*
+*│* 💙 *${prefix}𝐃𝐞𝐥𝐞𝐭𝐢𝐧𝐠𝐓𝐞𝐱𝐭*
+*│* 💙 *${prefix}𝐁𝐥𝐚𝐜𝐤𝐏𝐢𝐧𝐤𝐒𝐭𝐲𝐥𝐞*
+*│* 💙 *${prefix}𝐆𝐥𝐨𝐰𝐢𝐧𝐠𝐓𝐞𝐱𝐭*
+*│* 💙 *${prefix}𝐔𝐧𝐝𝐞𝐫𝐖𝐚𝐭𝐞𝐫*
+*│* 💙 *${prefix}𝐋𝐨𝐠𝐨𝐌𝐚𝐤𝐞𝐫*
+*│* 💙 *${prefix}𝐂𝐚𝐫𝐭𝐨𝐨𝐧𝐒𝐭𝐲𝐥𝐞*
+*│* 💙 *${prefix}𝐏𝐚𝐩𝐞𝐫𝐂𝐮𝐭*
+*│* 💙 *${prefix}𝐌𝐮𝐥𝐭𝐢𝐂𝐨𝐥𝐨𝐫𝐞𝐝*
+*│* 💙 *${prefix}𝐄𝐟𝐟𝐞𝐜𝐭𝐂𝐥𝐨𝐮𝐝𝐬*
+*│* 💙 *${prefix}𝐆𝐫𝐚𝐝𝐢𝐞𝐧𝐭𝐓𝐞𝐱𝐭*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
+          break;
+        case "6":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
+╰───────────❍
+ ╭───❍「 *𝐎𝐖𝐍𝐄𝐑 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}𝐀𝐥𝐥𝐯𝐚𝐫*
+*│* 💙 *${prefix}𝐀𝐝𝐝𝐕𝐚𝐫*
+*│* 💙 *${prefix}𝐄𝐝𝐢𝐭𝐕𝐚𝐫*
+*│* 💙 *${prefix}𝐑𝐞𝐬𝐭𝐚𝐫𝐭*
+*│* 💙 *${prefix}Join*
+*│* 💙 *${prefix}Left*
+*│* 💙 *${prefix}Block*
+*│* 💙 *${prefix}UnBlock*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
+          break;
+        case "7":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
+╰───────────❍
+ ╭───❍「 *𝐎𝐓𝐇𝐄𝐑 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}𝐏𝐢𝐧𝐠*
+*│* 💙 *${prefix}𝐀𝐥𝐢𝐯𝐞*
+*│* 💙 *${prefix}𝐔𝐩𝐓𝐢𝐦𝐞*
+*│* 💙 *${prefix}𝐑𝐞𝐩𝐨*
+*│* 💙 *${prefix}𝐀𝐛𝐨𝐮𝐭*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
+          break;
+        case "8":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
+╰───────────❍
+ ╭───❍「 *𝐓𝐎𝐎𝐋𝐒 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}𝐅𝐞𝐭𝐜𝐡*
+*│* 💙 *${prefix}𝐒𝐡𝐨𝐫𝐭𝐞𝐧*
+*│* 💙 *${prefix}𝐓𝐭𝐬*
+*│* 💙 *${prefix}𝐓𝐬𝐭𝐚𝐥𝐤*
+*│* 💙 *${prefix}𝐍𝐩𝐦*
+*│* 💙 *${prefix}𝐆𝐢𝐭𝐒𝐭𝐚𝐥𝐤*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
+          break;
+        case "9":
+          menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
+│ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
+│ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
+│ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
+╰───────────❍
+ ╭───❍「 *𝐒𝐄𝐀𝐑𝐂𝐇 𝐌𝐄𝐍𝐔* 」
+*│* 💙 *${prefix}𝐘𝐓𝐒*
+*│* 💙 *${prefix}𝐒𝐬𝐩𝐨𝐭𝐢𝐟𝐲*
+*│* 💙 *${prefix}𝐋𝐲𝐫𝐢𝐜𝐬*
+*│* 💙 *${prefix}𝐏𝐥𝐚𝐲𝐬𝐭𝐨𝐫𝐞*
+ ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
+          break;
+        default:
+          menuResponse = "*❌ 𝐈𝐍𝐕𝐀𝐋𝐈𝐃 𝐂𝐇𝐎𝐈𝐂𝐄. 𝐏𝐋𝐄𝐀𝐒𝐄 𝐑𝐄𝐏𝐋𝐘 𝐖𝐈𝐓𝐇 1 𝐓𝐎 9.*";
+      }
 
-      await m.react('✅'); // Success icon
-
-      const userJid = m.sender;
-      const mainMsgId = sentMsg.key.id;
-
-      const responseHandler = async (event) => {
-        const msg = event.messages?.[0];
-        if (!msg || !msg.message || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
-
-        const senderJid = msg.key.participant || msg.key.remoteJid;
-        if (senderJid !== userJid) return;
-
-        const quotedMsgId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
-        if (quotedMsgId !== mainMsgId) return;
-
-        const text = msg.message.conversation || msg.message?.extendedTextMessage?.text;
-        if (!text) return;
-
-        const choice = parseInt(text.trim());
-        if (!MENU_SECTIONS[choice]) return;
-
-        const { title, content } = MENU_SECTIONS[choice];
-
-        await sock.sendMessage(m.from, {
-          text: `
-╭━〔 *${title}* 〕━⊷
-┃✦ Prefix: ${prefix}
-┃✦ Commands:
-${content}
-╰━━━━━━━━━━━━━━━⊷`,
-          mentions: [msg.sender || msg.participant]
-        }, { quoted: msg });
-
-        sock.ev.off('messages.upsert', responseHandler);
-        clearTimeout(timeout);
-      };
-
-      sock.ev.on('messages.upsert', responseHandler);
-
-      const timeout = setTimeout(() => {
-        sock.ev.off('messages.upsert', responseHandler);
-      }, 60000);
-
-    } catch (err) {
-      console.error('Menu Error:', err);
-      await sock.sendMessage(m.from, {
-        text: '⚠️ *Error loading menu. Try again later.*'
-      }, { quoted: m });
-    }
+      await sendCommandMessage(menuResponse, receivedMessage);
+    });
   }
 };
 
