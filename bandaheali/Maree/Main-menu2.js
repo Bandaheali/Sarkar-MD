@@ -60,7 +60,7 @@ const MENU_SECTIONS = {
     { name: "𝐅𝐁2", desc: "Facebook Downloader 2" },
     { name: "𝐈𝐧𝐬𝐭𝐚", desc: "Instagram Downloader" },
     { name: "𝐓𝐢𝐤𝐓𝐨𝐤", desc: "TikTok Downloader" },
-    { name: "𝐓𝐢𝐤𝐓𝐨𝐤2", desc: "TikTok Downloader 2" },
+    { name: "𝐓𝐢𝐤𝐓𝐨𝐤2", desc: "TikTok Downloader2" },
     { name: "𝐓𝐢𝐤𝐬", desc: "TikTok Short Video" },
     { name: "𝐒𝐧𝐚𝐜𝐤", desc: "Snack Downloader" },
     { name: "𝐓𝐰𝐞𝐞𝐓", desc: "Twitter Downloader" },
@@ -81,6 +81,7 @@ const MENU_SECTIONS = {
   4: {
   title: "👥 𝗚𝗥𝗢𝗨𝗣 𝗠𝗘𝗡𝗨",
   commands: [
+    { name: "𝐀𝐧𝐭𝐢𝐋𝐢𝐧𝐤" desc: "dlt links remove user" },
     { name: "𝗧𝗮𝗴𝗔𝗹𝗹", desc: "Mention all" },
     { name: "𝗛𝗶𝗱𝗲𝗧𝗮𝗴", desc: "Tag silently " },
     { name: "𝗢𝗽𝗲𝗻", desc: "Open group" },
@@ -128,6 +129,7 @@ const MENU_SECTIONS = {
     { name: "𝗟𝗲𝗳𝘁", desc: "Leave a group" },
     { name: "𝗕𝗹𝗼𝗰𝗸", desc: "Block a user" },
     { name: "𝗨𝗻𝗕𝗹𝗼𝗰𝗸", desc: "Unblock a user" },
+    { name: "𝐃𝐞𝐥𝐞𝐭𝐞", desc: "dlt replied msg" },
     { name: "𝗔𝘂𝘁𝗼𝗿𝗲𝗮𝗰𝘁", desc: "random reacts on users msg" },
     { name: "𝗔𝗻𝘁𝗶𝗖𝗮𝗹𝗹", desc: "Reject calls automatically" },
     { name: "𝗠𝗼𝗱𝗲", desc: "Change mode" },
