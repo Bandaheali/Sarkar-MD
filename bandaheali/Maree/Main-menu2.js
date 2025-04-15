@@ -32,7 +32,7 @@ const getGreeting = () => {
   return '🌌 Good Night';
 };
 
-// Menu Configuration with Image URLs
+// Menu Configuration
 const MENU_SECTIONS = {
   1: {
     title: "📥 Download Menu",
@@ -43,8 +43,7 @@ const MENU_SECTIONS = {
       { name: "play", desc: "Play music" },
       { name: "song", desc: "Download song" },
       { name: "video", desc: "Download video" }
-    ],
-    image: 'https://i.imgur.com/download-image.jpg' // Replace with your download menu image
+    ]
   },
   2: {
     title: "🔄 Converter Menu",
@@ -52,8 +51,7 @@ const MENU_SECTIONS = {
       { name: "attp", desc: "Animated text" },
       { name: "emojimix", desc: "Mix emojis" },
       { name: "mp3", desc: "Convert audio" }
-    ],
-    image: 'https://i.imgur.com/converter-image.jpg' // Replace with your converter menu image
+    ]
   },
   3: {
     title: "🤖 AI Menu",
@@ -61,8 +59,7 @@ const MENU_SECTIONS = {
       { name: "gpt", desc: "ChatGPT" },
       { name: "dalle", desc: "AI Image Generation" },
       { name: "gemini", desc: "Google Gemini" }
-    ],
-    image: 'https://i.imgur.com/ai-image.jpg' // Replace with your AI menu image
+    ]
   }
 };
 
@@ -81,6 +78,11 @@ const menu = async (m, Matrix) => {
   const realDate = moment().tz("Asia/Karachi").format("DD/MM/YYYY");
 
   try {
+    // Get the menu image once
+    const menuImage = await axios.get(config.MENU_IMAGE || 
+      'https://i.imgur.com/example.jpg', 
+      { responseType: 'arraybuffer' });
+
     // Main Menu
     const menuText = `╭───❍ *${config.BOT_NAME}* ❍───╮
 │ 👤 User: ${pushName}
@@ -101,14 +103,13 @@ Reply with a number (1-${Object.keys(MENU_SECTIONS).length}) to select a menu se
 *⚡ Powered by ${config.BOT_NAME} ⚡*`;
 
     const sentMsg = await Matrix.sendMessage(m.from, { 
-      text: menuText,
+      image: menuImage.data,
+      caption: menuText,
       contextInfo: {
         externalAdReply: {
           title: config.BOT_NAME,
           body: pushName,
-          thumbnail: await (await axios.get(config.MENU_IMAGE || 
-            'https://i.imgur.com/example.jpg', 
-            { responseType: 'arraybuffer' })).data,
+          thumbnail: menuImage.data,
           mediaType: 1,
           renderLargerThumbnail: true
         }
@@ -141,23 +142,12 @@ ${section.commands.map(cmd =>
 
 *⚡ Powered by ${config.BOT_NAME} ⚡*`;
 
-      // Get the image for this section
-      const sectionImage = await axios.get(section.image || config.MENU_IMAGE, {
-        responseType: 'arraybuffer'
-      }).catch(() => null);
-
-      if (sectionImage) {
-        await Matrix.sendMessage(m.from, {
-          image: sectionImage.data,
-          caption: sectionText,
-          mentions: [m.sender]
-        }, { quoted: msg });
-      } else {
-        await Matrix.sendMessage(m.from, {
-          text: sectionText,
-          mentions: [m.sender]
-        }, { quoted: msg });
-      }
+      // Send the same image with sub-menu
+      await Matrix.sendMessage(m.from, {
+        image: menuImage.data,
+        caption: sectionText,
+        mentions: [m.sender]
+      }, { quoted: msg });
     };
 
     // Listen for new messages
