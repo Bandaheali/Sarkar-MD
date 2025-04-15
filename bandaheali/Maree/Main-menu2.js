@@ -68,7 +68,7 @@ const MENU_SECTIONS = {
   ]
 },
 3: {
-  title: "🤖 AI Menu",
+  title: "🤖 𝗔𝗜 𝗠𝗘𝗡𝗨",
   commands: [
     { name: "𝐀𝐈", desc: "Chat with AI" },
     { name: "𝐆𝐏𝐓", desc: "ChatGPT Powered AI" },
@@ -79,7 +79,7 @@ const MENU_SECTIONS = {
   ]
 },
   4: {
-  title: "👥 Group Menu",
+  title: "👥 𝗚𝗥𝗢𝗨𝗣 𝗠𝗘𝗡𝗨",
   commands: [
     { name: "𝗧𝗮𝗴𝗔𝗹𝗹", desc: "Mention all group members" },
     { name: "𝗛𝗶𝗱𝗲𝗧𝗮𝗴", desc: "Tag silently without notifications" },
@@ -92,7 +92,7 @@ const MENU_SECTIONS = {
   ]
   },
   5: {
-  title: "🎨 Logo Menu",
+  title: "🎨 𝗟𝗢𝗚𝗢 𝗠𝗘𝗡𝗨",
   commands: [
     { name: "𝐋𝐨𝐆𝐨", desc: "Create a logo" },
     { name: "𝐆𝐥𝐨𝐬𝐬𝐲𝐒𝐢𝐥𝐯𝐞𝐫", desc: "Glossy Silver Text" },
@@ -116,7 +116,7 @@ const MENU_SECTIONS = {
   ]
   },
   6: {
-  title: "🛠️ Owner Menu",
+  title: "🛠️ 𝗢𝗪𝗡𝗘𝗥 𝗠𝗘𝗡𝗨",
   commands: [
     { name: "𝐀𝐥𝐥𝐯𝐚𝐫", desc: "View all environment variables" },
     { name: "𝐀𝐝𝐝𝐕𝐚𝐫", desc: "Add a new variable" },
@@ -129,12 +129,16 @@ const MENU_SECTIONS = {
     { name: "𝗔𝘂𝘁𝗼𝗿𝗲𝗮𝗰𝘁", desc: "random reacts on users msg" },
     { name: "𝗔𝗻𝘁𝗶𝗖𝗮𝗹𝗹", desc: "Reject calls automatically" },
     { name: "𝗠𝗼𝗱𝗲", desc: "Change mode" },
-    { name: "𝗦𝗲𝘁𝗽𝗿𝗲𝗳𝗶𝘅", desc: "change prefix" }
+    { name: "𝗦𝗲𝘁𝗽𝗿𝗲𝗳𝗶𝘅", desc: "change prefix" },
+    { name: "𝗧𝘆𝗽𝗶𝗻𝗴", desc: "Show Fake Typing" },
+    { name: "𝗥𝗲𝗰𝗼𝗱𝗶𝗻𝗴", desc: "Show Fake recording" },
+    { name: "𝗔𝗹𝘄𝗮𝘆𝘀𝗢𝗻𝗹𝗶𝗻𝗲", desc: "Show AlwaysOnline on whatsapp" },
+    { name: "𝗖𝗵𝗮𝘁𝗕𝗼𝘁", desc: " Active auto Reply from chatgpt" }
     
   ]
   },
   7: {
-  title: "📦 Other Menu",
+  title: "📦 𝗢𝗧𝗛𝗘𝗥 𝗠𝗘𝗡𝗨",
   commands: [
     { name: "𝐏𝐢𝐧𝐠", desc: "Check bot speed and latency" },
     { name: "𝐀𝐥𝐢𝐯𝐞", desc: "Show alive message" }, 
@@ -145,7 +149,7 @@ const MENU_SECTIONS = {
   ]
   },
   8: {
-  title: "🧰 Tools Menu",
+  title: "🧰 𝗧𝗢𝗢𝗟𝗦 𝗠𝗘𝗡𝗨",
   commands: [
     { name: "𝐅𝐞𝐭𝐜𝐡", desc: "Fetch webpage data or API" },
     { name: "𝐒𝐡𝐨𝐫𝐭𝐞𝐧", desc: "Shorten a long URL" },
@@ -156,7 +160,7 @@ const MENU_SECTIONS = {
   ]
   },
   9: {
-  title: "🔍 Search Menu",
+  title: "🔍 𝗦𝗘𝗔𝗥𝗖𝗛 𝗠𝗘𝗡𝗨",
   commands: [
     { name: "𝐘𝐓𝐒", desc: "Search YouTube videos" },
     { name: "𝐒𝐬𝐩𝐨𝐭𝐢𝐟𝐲", desc: "Search songs on Spotify" },
