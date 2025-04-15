@@ -60,7 +60,7 @@ const menu = async (m, Matrix) => {
   const prefix = config.PREFIX;
   
   // Check if message starts with prefix and is "menu" command
-  if (!m.body.startsWith(prefix) || m.body.slice(prefix.length).split(' ')[0].toLowerCase() !== 'menu') {
+  if (!m.body.startsWith(prefix) || m.body.slice(prefix.length).split(' ')[0].toLowerCase() !== 'menu2') {
     return; // Ignore if not the menu command
   }
 
