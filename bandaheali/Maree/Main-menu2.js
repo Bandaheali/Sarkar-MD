@@ -35,7 +35,7 @@ const getGreeting = () => {
 // Menu Configuration
 const MENU_SECTIONS = {
   1: {
-  title: "🕌 Islamic Menu",
+  title: "🕌 𝗜𝗦𝗟𝗔𝗠𝗜𝗖 𝗠𝗘𝗡𝗨",
   commands: [
     { name: "𝐒𝐮𝐫𝐚𝐡𝐀𝐮𝐝𝐢𝐨", desc: "Surah Audio (default)" },
     { name: "𝐒𝐮𝐫𝐚𝐡𝐔𝐫𝐝𝐮", desc: "Surah in Urdu" },
@@ -47,9 +47,9 @@ const MENU_SECTIONS = {
   ]
   },
 2: {
-  title: "📥 Download Menu",
+  title: "📥 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗠𝗘𝗡𝗨",
   commands: [
-    { name: "Play", desc: "Play music" },
+    { name: "𝗣𝗹𝗮𝘆", desc: "Play music" },
     { name: "𝐒𝐨𝐧𝐠", desc: "Download Song" },
     { name: "𝐒𝐨𝐧𝐠2", desc: "Download Song 2" },
     { name: "𝐒𝐨𝐧𝐠3", desc: "Download Song 3" },
@@ -81,14 +81,14 @@ const MENU_SECTIONS = {
   4: {
   title: "👥 Group Menu",
   commands: [
-    { name: "TagAll", desc: "Mention all group members" },
-    { name: "HideTag", desc: "Tag silently without notifications" },
-    { name: "Open", desc: "Open group (allow messages)" },
-    { name: "Close", desc: "Close group (admins only messages)" },
-    { name: "Add", desc: "Add member to group" },
-    { name: "Invite", desc: "Generate group invite link" },
-    { name: "Kick", desc: "Remove member from group" },
-    { name: "Dis", desc: "Group info or description" }
+    { name: "𝗧𝗮𝗴𝗔𝗹𝗹", desc: "Mention all group members" },
+    { name: "𝗛𝗶𝗱𝗲𝗧𝗮𝗴", desc: "Tag silently without notifications" },
+    { name: "𝗢𝗽𝗲𝗻", desc: "Open group (allow messages)" },
+    { name: "𝗖𝗹𝗼𝘀𝗲", desc: "Close group (admins only messages)" },
+    { name: "𝗔𝗱𝗱", desc: "Add member to group" },
+    { name: "𝗜𝗻𝘃𝗶𝘁𝗲", desc: "Generate group invite link" },
+    { name: "𝗞𝗶𝗰𝗸", desc: "Remove member from group" },
+    { name: "𝗗𝗶𝘀", desc: "active group disappearing msg" }
   ]
   },
   5: {
@@ -122,20 +122,26 @@ const MENU_SECTIONS = {
     { name: "𝐀𝐝𝐝𝐕𝐚𝐫", desc: "Add a new variable" },
     { name: "𝐄𝐝𝐢𝐭𝐕𝐚𝐫", desc: "Edit an existing variable" },
     { name: "𝐑𝐞𝐬𝐭𝐚𝐫𝐭", desc: "Restart the bot" },
-    { name: "Join", desc: "Join a group using invite link" },
-    { name: "Left", desc: "Leave a group" },
-    { name: "Block", desc: "Block a user" },
-    { name: "UnBlock", desc: "Unblock a user" }
+    { name: "𝗝𝗼𝗶𝗻", desc: "Join a group using invite link" },
+    { name: "𝗟𝗲𝗳𝘁", desc: "Leave a group" },
+    { name: "𝗕𝗹𝗼𝗰𝗸", desc: "Block a user" },
+    { name: "𝗨𝗻𝗕𝗹𝗼𝗰𝗸", desc: "Unblock a user" },
+    { name: "𝗔𝘂𝘁𝗼𝗿𝗲𝗮𝗰𝘁", desc: "random reacts on users msg" },
+    { name: "𝗔𝗻𝘁𝗶𝗖𝗮𝗹𝗹", desc: "Reject calls automatically" },
+    { name: "𝗠𝗼𝗱𝗲", desc: "Change mode" },
+    { name: "𝗦𝗲𝘁𝗽𝗿𝗲𝗳𝗶𝘅", desc: "change prefix" }
+    
   ]
   },
   7: {
   title: "📦 Other Menu",
   commands: [
     { name: "𝐏𝐢𝐧𝐠", desc: "Check bot speed and latency" },
-    { name: "𝐀𝐥𝐢𝐯𝐞", desc: "Show alive message" },
+    { name: "𝐀𝐥𝐢𝐯𝐞", desc: "Show alive message" }, 
     { name: "𝐔𝐩𝐓𝐢𝐦𝐞", desc: "Check bot uptime" },
     { name: "𝐑𝐞𝐩𝐨", desc: "Show bot GitHub repo" },
-    { name: "𝐀𝐛𝐨𝐮𝐭", desc: "Get bot info and credits" }
+    { name: "𝐀𝐛𝐨𝐮𝐭", desc: "Get bot info and credits" },
+    { name: "𝗤𝘂𝗼𝘁𝗲", desc: "Get a random Quote" }
   ]
   },
   8: {
