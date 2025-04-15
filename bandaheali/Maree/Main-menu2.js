@@ -192,16 +192,16 @@ const menu = async (m, Matrix) => {
 
     // Main Menu
     const menuText = `╭───❍ *${config.BOT_NAME}* ❍───╮
-│ 👤 User: ${pushName}
+│ 👤 𝗨𝗦𝗘𝗥: ${pushName}
 │ ${greeting}
-│ 🌐 Mode: ${mode}
-│ ⏰ Time: ${realTime}
-│ 📅 Date: ${realDate}
-│ ⚡ Uptime: ${getUptime()}
-│ 💾 RAM: ${formatBytes(os.freemem())}/${formatBytes(os.totalmem())}
+│ 🌐 𝗠𝗢𝗗𝗘: ${mode}
+│ ⏰ 𝗧𝗜𝗠𝗘: ${realTime}
+│ 📅 𝗗𝗔𝗧𝗘: ${realDate}
+│ ⚡ 𝗨𝗣𝗧𝗜𝗠𝗘: ${getUptime()}
+│ 💾 𝗥𝗔𝗠: ${formatBytes(os.freemem())}/${formatBytes(os.totalmem())}
 ╰───────────────❍
 
-*📌 MAIN MENU OPTIONS:*
+*𝗠𝗔𝗜𝗡 𝗠𝗘𝗡𝗨:*
 ${Object.entries(MENU_SECTIONS).map(([num, section]) => 
   `┃ ${num}. ${section.title}`).join('\n')}
 
@@ -237,17 +237,17 @@ Reply with a number (1-${Object.keys(MENU_SECTIONS).length}) to select a menu se
       if (isNaN(choice) || !MENU_SECTIONS[choice]) return;
 
       const section = MENU_SECTIONS[choice];
-      const sectionText = `╭───❍ *${section.title}* ❍───╮
-│ 👤 User: ${pushName}
+      const sectionText = `╭───❍ *${section.title}*
+│ 👤 𝗨𝗦𝗘𝗥: ${pushName}
 │ ${greeting}
-│ 🌐 Mode: ${mode}
-│ ⏰ Time: ${realTime}
-│ 📅 Date: ${realDate}
-│ ⚡ Uptime: ${getUptime()}
-│ 💾 RAM: ${formatBytes(os.freemem())}/${formatBytes(os.totalmem())}
+│ 🌐 𝗠𝗢𝗗𝗘: ${mode}
+│ ⏰ 𝗧𝗜𝗠𝗘: ${realTime}
+│ 📅 𝗗𝗔𝗧𝗘: ${realDate}
+│ ⚡ 𝗨𝗣𝗧𝗜𝗠𝗘: ${getUptime()}
+│ 💾 𝗥𝗔𝗠: ${formatBytes(os.freemem())}/${formatBytes(os.totalmem())}
 ╰───────────────❍
 
-*Available Commands:*
+*𝗔𝗟𝗟 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦 𝗢𝗙 ${section.title}*
 ${section.commands.map(cmd => 
   `┃ ✦ ${prefix}${cmd.name} - ${cmd.desc}`).join('\n')}
 
