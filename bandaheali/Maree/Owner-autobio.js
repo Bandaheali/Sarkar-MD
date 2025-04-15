@@ -9,13 +9,23 @@ const startTime = Date.now(); // Store bot start time
 // Function to get real-time formatted date (Pakistan Time Zone)
 const getRealDate = () => {
     const now = new Date();
-    return now.toLocaleDateString('en-GB', { timeZone: 'Asia/Karachi', year: 'numeric', month: 'long', day: 'numeric' });
+    return now.toLocaleDateString('en-GB', {
+        timeZone: 'Asia/Karachi',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
 };
 
 // Function to get real-time formatted time (Pakistan Time Zone)
 const getRealTime = () => {
     const now = new Date();
-    return now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: true });
+    return now.toLocaleTimeString('en-GB', {
+        timeZone: 'Asia/Karachi',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 };
 
 // Function to calculate uptime accurately
@@ -27,28 +37,31 @@ const getUptime = () => {
     return `${days}d ${hours}h ${minutes}m`;
 };
 
-const randomQuote = async () => {
+// Function to get random quote from API
+const getRandomQuote = async () => {
     try {
         const response = await fetch("https://bandaheali.site/api/quote");
         const data = await response.json();
-        if (data.success) {
-            return data.quote.lines; // sirf quote return ho raha hai
+        if (data.success && data.quote) {
+            const { lines, author } = data.quote;
+            return `"${lines}" - ${author}`;
         } else {
-            return "Failed to fetch quote.";
+            return "No quote available.";
         }
     } catch (error) {
-        return "An error occurred while fetching the quote.";
+        console.error("Error fetching quote:", error);
+        return "Quote fetch error.";
     }
 };
 
 // Function to update Bio with real-time date, time, uptime, and quote
 const updateBio = async (Matrix) => {
-    const currentDate = getRealDate();  // Get real-time date
-    const currentTime = getRealTime();  // Get real-time time
-    const uptime = getUptime();         // Calculate uptime
-    const randomQuote = getRandomQuote(); 
+    const currentDate = getRealDate();
+    const currentTime = getRealTime();
+    const uptime = getUptime();
+    const quote = await getRandomQuote();
 
-    const newBio = `Sarkar-MD Active | ${currentDate} | ${currentTime} | Uptime: ${uptime} | Quote: "${randomQuote}"`;
+    const newBio = `Sarkar-MD Active | ${currentDate} | ${currentTime} | Uptime: ${uptime} | Quote: ${quote}`;
 
     try {
         await Matrix.updateProfileStatus(newBio);
