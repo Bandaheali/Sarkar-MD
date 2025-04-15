@@ -153,7 +153,7 @@ ${section.commands.map(cmd =>
     // Listen for new messages
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
       const msg = messages[0];
-      if (msg.key.remoteJid === m.from && !msg.key.fromMe) {
+      if (msg.key.remoteJid === m.from && msg.key.fromMe || !msg.key.fromMe) {
         await handleReply(msg);
       }
     });
