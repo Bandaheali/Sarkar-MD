@@ -32,7 +32,7 @@ const getGreeting = () => {
   return '🌌 Good Night';
 };
 
-// Menu Configuration
+// Menu Configuration with Image URLs
 const MENU_SECTIONS = {
   1: {
     title: "📥 Download Menu",
@@ -43,7 +43,8 @@ const MENU_SECTIONS = {
       { name: "play", desc: "Play music" },
       { name: "song", desc: "Download song" },
       { name: "video", desc: "Download video" }
-    ]
+    ],
+    image: 'https://i.imgur.com/download-image.jpg' // Replace with your download menu image
   },
   2: {
     title: "🔄 Converter Menu",
@@ -51,7 +52,8 @@ const MENU_SECTIONS = {
       { name: "attp", desc: "Animated text" },
       { name: "emojimix", desc: "Mix emojis" },
       { name: "mp3", desc: "Convert audio" }
-    ]
+    ],
+    image: 'https://i.imgur.com/converter-image.jpg' // Replace with your converter menu image
   },
   3: {
     title: "🤖 AI Menu",
@@ -59,7 +61,8 @@ const MENU_SECTIONS = {
       { name: "gpt", desc: "ChatGPT" },
       { name: "dalle", desc: "AI Image Generation" },
       { name: "gemini", desc: "Google Gemini" }
-    ]
+    ],
+    image: 'https://i.imgur.com/ai-image.jpg' // Replace with your AI menu image
   }
 };
 
@@ -112,7 +115,7 @@ Reply with a number (1-${Object.keys(MENU_SECTIONS).length}) to select a menu se
       }
     }, { quoted: m });
 
-    // Response Handler - SIMPLIFIED VERSION THAT WORKS
+    // Response Handler
     const handleReply = async (msg) => {
       // Check if it's a reply to our menu message
       const isReply = msg?.message?.extendedTextMessage?.contextInfo?.stanzaId === sentMsg.key.id;
@@ -138,16 +141,29 @@ ${section.commands.map(cmd =>
 
 *⚡ Powered by ${config.BOT_NAME} ⚡*`;
 
-      await Matrix.sendMessage(m.from, {
-        text: sectionText,
-        mentions: [m.sender]
-      }, { quoted: msg });
+      // Get the image for this section
+      const sectionImage = await axios.get(section.image || config.MENU_IMAGE, {
+        responseType: 'arraybuffer'
+      }).catch(() => null);
+
+      if (sectionImage) {
+        await Matrix.sendMessage(m.from, {
+          image: sectionImage.data,
+          caption: sectionText,
+          mentions: [m.sender]
+        }, { quoted: msg });
+      } else {
+        await Matrix.sendMessage(m.from, {
+          text: sectionText,
+          mentions: [m.sender]
+        }, { quoted: msg });
+      }
     };
 
     // Listen for new messages
     Matrix.ev.on('messages.upsert', async ({ messages }) => {
       const msg = messages[0];
-      if (msg.key.remoteJid === m.from && msg.key.fromMe || !msg.key.fromMe) {
+      if (msg.key.remoteJid === m.from && !msg.key.fromMe) {
         await handleReply(msg);
       }
     });
