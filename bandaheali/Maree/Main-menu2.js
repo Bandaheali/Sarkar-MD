@@ -35,6 +35,18 @@ const getGreeting = () => {
 // Menu Configuration
 const MENU_SECTIONS = {
   1: {
+  title: "🕌 Islamic Menu",
+  commands: [
+    { name: "𝐒𝐮𝐫𝐚𝐡𝐀𝐮𝐝𝐢𝐨", desc: "Surah Audio (default)" },
+    { name: "𝐒𝐮𝐫𝐚𝐡𝐔𝐫𝐝𝐮", desc: "Surah in Urdu" },
+    { name: "𝐒𝐮𝐫𝐚𝐡𝐀𝐫𝐛𝐢𝐜", desc: "Surah in Arabic" },
+    { name: "𝐒𝐮𝐫𝐚𝐡𝐄𝐧𝐠", desc: "Surah in English" },
+    { name: "𝐏𝐫𝐚𝐲𝐞𝐫𝐓𝐢𝐦𝐞", desc: "Prayer Timings" },
+    { name: "𝐏𝐓𝐢𝐦𝐞", desc: "Short Prayer Time" },
+    { name: "𝐒𝐁𝐮𝐤𝐡𝐚𝐫𝐢", desc: "Sahih Bukhari Hadith" }
+  ]
+  },
+  2: {
     title: "📥 Download Menu",
     commands: [
       { name: "ytmp3", desc: "YouTube to MP3" },
@@ -45,7 +57,7 @@ const MENU_SECTIONS = {
       { name: "video", desc: "Download video" }
     ]
   },
-  2: {
+  3: {
     title: "🔄 Converter Menu",
     commands: [
       { name: "attp", desc: "Animated text" },
@@ -53,7 +65,7 @@ const MENU_SECTIONS = {
       { name: "mp3", desc: "Convert audio" }
     ]
   },
-  3: {
+  4: {
     title: "🤖 AI Menu",
     commands: [
       { name: "gpt", desc: "ChatGPT" },
