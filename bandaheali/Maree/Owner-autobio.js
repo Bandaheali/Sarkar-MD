@@ -27,20 +27,18 @@ const getUptime = () => {
     return `${days}d ${hours}h ${minutes}m`;
 };
 
-// Function to get a random quote
-const getRandomQuote = () => {
-    const randomQuotes = [
-        "The best way to predict the future is to create it.",
-        "Success is not final, failure is not fatal.",
-        "Believe you can and you're halfway there.",
-        "Hardships prepare people for an extraordinary destiny.",
-        "Your time is limited, don't waste it.",
-        "The only way to do great work is to love what you do.",
-        "Success usually comes to those who are too busy to look for it.",
-        "The only limit to our realization of tomorrow is our doubts of today.",
-        "It always seems impossible until it’s done."
-    ];
-    return randomQuotes[Math.floor(Math.random() * randomQuotes.length)];
+const randomQuote = async () => {
+    try {
+        const response = await fetch("https://bandaheali.site/api/quote");
+        const data = await response.json();
+        if (data.success) {
+            return data.quote.lines; // sirf quote return ho raha hai
+        } else {
+            return "Failed to fetch quote.";
+        }
+    } catch (error) {
+        return "An error occurred while fetching the quote.";
+    }
 };
 
 // Function to update Bio with real-time date, time, uptime, and quote
