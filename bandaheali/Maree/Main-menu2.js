@@ -46,33 +46,118 @@ const MENU_SECTIONS = {
     { name: "𝐒𝐁𝐮𝐤𝐡𝐚𝐫𝐢", desc: "Sahih Bukhari Hadith" }
   ]
   },
-  2: {
-    title: "📥 Download Menu",
-    commands: [
-      { name: "ytmp3", desc: "YouTube to MP3" },
-      { name: "ytmp4", desc: "YouTube to MP4" },
-      { name: "tiktok", desc: "Download TikTok" },
-      { name: "play", desc: "Play music" },
-      { name: "song", desc: "Download song" },
-      { name: "video", desc: "Download video" }
-    ]
-  },
-  3: {
-    title: "🔄 Converter Menu",
-    commands: [
-      { name: "attp", desc: "Animated text" },
-      { name: "emojimix", desc: "Mix emojis" },
-      { name: "mp3", desc: "Convert audio" }
-    ]
-  },
+2: {
+  title: "📥 Download Menu",
+  commands: [
+    { name: "Play", desc: "Play music" },
+    { name: "𝐒𝐨𝐧𝐠", desc: "Download Song" },
+    { name: "𝐒𝐨𝐧𝐠2", desc: "Download Song 2" },
+    { name: "𝐒𝐨𝐧𝐠3", desc: "Download Song 3" },
+    { name: "𝐕𝐢𝐝𝐞𝐨", desc: "Download Video" },
+    { name: "𝐕𝐢𝐝𝐞𝐨2", desc: "Download Video 2" },
+    { name: "𝐕𝐢𝐝𝐞𝐨3", desc: "Download Video 3" },
+    { name: "𝐅𝐁", desc: "Facebook Downloader" },
+    { name: "𝐅𝐁2", desc: "Facebook Downloader 2" },
+    { name: "𝐈𝐧𝐬𝐭𝐚", desc: "Instagram Downloader" },
+    { name: "𝐓𝐢𝐤𝐓𝐨𝐤", desc: "TikTok Downloader" },
+    { name: "𝐓𝐢𝐤𝐓𝐨𝐤2", desc: "TikTok Downloader 2" },
+    { name: "𝐓𝐢𝐤𝐬", desc: "TikTok Short Video" },
+    { name: "𝐒𝐧𝐚𝐜𝐤", desc: "Snack Video Downloader" },
+    { name: "𝐓𝐰𝐞𝐞𝐓", desc: "Twitter Video Downloader" },
+    { name: "𝐀𝐩𝐤", desc: "Download APK file" }
+  ]
+},
+3: {
+  title: "🤖 AI Menu",
+  commands: [
+    { name: "𝐀𝐈", desc: "Chat with AI" },
+    { name: "𝐆𝐏𝐓", desc: "ChatGPT Powered AI" },
+    { name: "𝐁𝐥𝐚𝐜𝐤𝐁𝐨𝐱", desc: "Code Generator AI" },
+    { name: "𝐈𝐦𝐚𝐠𝐢𝐧𝐞", desc: "AI Image Generator 1" },
+    { name: "𝐈𝐦𝐚𝐠𝐢𝐧𝐞2", desc: "AI Image Generator 2" },
+    { name: "𝐈𝐦𝐚𝐠𝐢𝐧𝐞3", desc: "AI Image Generator 3" }
+  ]
+},
   4: {
-    title: "🤖 AI Menu",
-    commands: [
-      { name: "gpt", desc: "ChatGPT" },
-      { name: "dalle", desc: "AI Image Generation" },
-      { name: "gemini", desc: "Google Gemini" }
-    ]
-  }
+  title: "👥 Group Menu",
+  commands: [
+    { name: "TagAll", desc: "Mention all group members" },
+    { name: "HideTag", desc: "Tag silently without notifications" },
+    { name: "Open", desc: "Open group (allow messages)" },
+    { name: "Close", desc: "Close group (admins only messages)" },
+    { name: "Add", desc: "Add member to group" },
+    { name: "Invite", desc: "Generate group invite link" },
+    { name: "Kick", desc: "Remove member from group" },
+    { name: "Dis", desc: "Group info or description" }
+  ]
+  },
+  5: {
+  title: "🎨 Logo Menu",
+  commands: [
+    { name: "𝐋𝐨𝐆𝐨", desc: "Create a logo" },
+    { name: "𝐆𝐥𝐨𝐬𝐬𝐲𝐒𝐢𝐥𝐯𝐞𝐫", desc: "Glossy Silver Text" },
+    { name: "𝐖𝐫𝐢𝐭𝐞𝐓𝐞𝐱𝐭", desc: "Custom Text Writer" },
+    { name: "𝐁𝐥𝐚𝐜𝐤𝐏𝐢𝐧𝐤𝐋𝐨𝐠𝐨", desc: "Blackpink Logo Style" },
+    { name: "𝐆𝐥𝐢𝐭𝐜𝐡𝐓𝐞𝐱𝐭", desc: "Glitch Text Effect" },
+    { name: "𝐀𝐝𝐯𝐚𝐧𝐜𝐞𝐝𝐆𝐥𝐨𝐰", desc: "Advanced Glow Effect" },
+    { name: "𝐓𝐲𝐩𝐨𝐆𝐫𝐚𝐩𝐡𝐲𝐓𝐞𝐱𝐭", desc: "Typography Text" },
+    { name: "𝐏𝐢𝐱𝐞𝐥𝐆𝐥𝐢𝐭𝐜𝐡", desc: "Pixel Glitch Logo" },
+    { name: "𝐍𝐞𝐨𝐧𝐆𝐥𝐢𝐭𝐜𝐡", desc: "Neon Glitch Effect" },
+    { name: "𝐃𝐞𝐥𝐞𝐭𝐢𝐧𝐠𝐓𝐞𝐱𝐭", desc: "Deleting Text Effect" },
+    { name: "𝐁𝐥𝐚𝐜𝐤𝐏𝐢𝐧𝐤𝐒𝐭𝐲𝐥𝐞", desc: "Blackpink Style Text" },
+    { name: "𝐆𝐥𝐨𝐰𝐢𝐧𝐠𝐓𝐞𝐱𝐭", desc: "Glowing Text Generator" },
+    { name: "𝐔𝐧𝐝𝐞𝐫𝐖𝐚𝐭𝐞𝐫", desc: "Underwater Text Effect" },
+    { name: "𝐋𝐨𝐠𝐨𝐌𝐚𝐤𝐞𝐫", desc: "General Logo Maker" },
+    { name: "𝐂𝐚𝐫𝐭𝐨𝐨𝐧𝐒𝐭𝐲𝐥𝐞", desc: "Cartoon Style Logo" },
+    { name: "𝐏𝐚𝐩𝐞𝐫𝐂𝐮𝐭", desc: "Paper Cut Style Text" },
+    { name: "𝐌𝐮𝐥𝐭𝐢𝐂𝐨𝐥𝐨𝐫𝐞𝐝", desc: "Multicolored Text Logo" },
+    { name: "𝐄𝐟𝐟𝐞𝐜𝐭𝐂𝐥𝐨𝐮𝐝𝐬", desc: "Cloud Effects Text" },
+    { name: "𝐆𝐫𝐚𝐝𝐢𝐞𝐧𝐭𝐓𝐞𝐱𝐭", desc: "Gradient Text Style" }
+  ]
+  },
+  6: {
+  title: "🛠️ Owner Menu",
+  commands: [
+    { name: "𝐀𝐥𝐥𝐯𝐚𝐫", desc: "View all environment variables" },
+    { name: "𝐀𝐝𝐝𝐕𝐚𝐫", desc: "Add a new variable" },
+    { name: "𝐄𝐝𝐢𝐭𝐕𝐚𝐫", desc: "Edit an existing variable" },
+    { name: "𝐑𝐞𝐬𝐭𝐚𝐫𝐭", desc: "Restart the bot" },
+    { name: "Join", desc: "Join a group using invite link" },
+    { name: "Left", desc: "Leave a group" },
+    { name: "Block", desc: "Block a user" },
+    { name: "UnBlock", desc: "Unblock a user" }
+  ]
+  },
+  7: {
+  title: "📦 Other Menu",
+  commands: [
+    { name: "𝐏𝐢𝐧𝐠", desc: "Check bot speed and latency" },
+    { name: "𝐀𝐥𝐢𝐯𝐞", desc: "Show alive message" },
+    { name: "𝐔𝐩𝐓𝐢𝐦𝐞", desc: "Check bot uptime" },
+    { name: "𝐑𝐞𝐩𝐨", desc: "Show bot GitHub repo" },
+    { name: "𝐀𝐛𝐨𝐮𝐭", desc: "Get bot info and credits" }
+  ]
+  },
+  8: {
+  title: "🧰 Tools Menu",
+  commands: [
+    { name: "𝐅𝐞𝐭𝐜𝐡", desc: "Fetch webpage data or API" },
+    { name: "𝐒𝐡𝐨𝐫𝐭𝐞𝐧", desc: "Shorten a long URL" },
+    { name: "𝐓𝐭𝐬", desc: "Text to Speech converter" },
+    { name: "𝐓𝐬𝐭𝐚𝐥𝐤", desc: "Text to Talk chatbot" },
+    { name: "𝐍𝐩𝐦", desc: "Get NPM package info" },
+    { name: "𝐆𝐢𝐭𝐒𝐭𝐚𝐥𝐤", desc: "GitHub user info & stats" }
+  ]
+  },
+  9: {
+  title: "🔍 Search Menu",
+  commands: [
+    { name: "𝐘𝐓𝐒", desc: "Search YouTube videos" },
+    { name: "𝐒𝐬𝐩𝐨𝐭𝐢𝐟𝐲", desc: "Search songs on Spotify" },
+    { name: "𝐋𝐲𝐫𝐢𝐜𝐬", desc: "Find lyrics of any song" },
+    { name: "𝐏𝐥𝐚𝐲𝐬𝐭𝐨𝐫𝐞", desc: "Search apps on Play Store" }
+  ]
+    }
 };
 
 const menu = async (m, Matrix) => {
