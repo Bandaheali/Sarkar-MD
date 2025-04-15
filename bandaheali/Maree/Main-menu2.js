@@ -53,13 +53,20 @@ const MENU_SECTIONS = {
       { name: "mp3", desc: "Convert audio" }
     ]
   },
-  // ... other sections similarly
+  3: {
+    title: "🤖 AI Menu",
+    commands: [
+      { name: "gpt", desc: "ChatGPT" },
+      { name: "dalle", desc: "AI Image Generation" },
+      { name: "gemini", desc: "Google Gemini" }
+    ]
+  }
 };
 
 const menu = async (m, Matrix) => {
   const prefix = config.PREFIX;
   
-  // Check if message starts with prefix and is "menu" command
+  // Check if message starts with prefix and is "menu2" command
   if (!m.body.startsWith(prefix) || m.body.slice(prefix.length).split(' ')[0].toLowerCase() !== 'menu2') {
     return; // Ignore if not the menu command
   }
@@ -112,17 +119,20 @@ Reply with a number (1-${Object.keys(MENU_SECTIONS).length}) to select a menu se
       if (!msg || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
 
       // Check if this is a reply to our menu message
-      if (msg.message?.extendedTextMessage?.contextInfo?.stanzaId !== sentMsg.key.id) {
-        return;
-      }
+      const isReply = msg.message?.extendedTextMessage?.contextInfo?.stanzaId === sentMsg.key.id;
+      const isMention = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.includes(Matrix.user.id);
+      
+      if (!isReply && !isMention) return;
 
       const text = msg.message?.conversation || 
                    msg.message?.extendedTextMessage?.text || '';
       
       const choice = parseInt(text.trim());
-      if (!MENU_SECTIONS[choice]) return;
+      if (isNaN(choice) return;
 
       const section = MENU_SECTIONS[choice];
+      if (!section) return;
+
       const sectionText = `╭───❍ *${section.title}* ❍───╮
 │ 👤 User: ${pushName}
 │ ${greeting}
