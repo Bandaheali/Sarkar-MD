@@ -37,13 +37,13 @@ const MENU_SECTIONS = {
   1: {
   title: "🕌 𝗜𝗦𝗟𝗔𝗠𝗜𝗖 𝗠𝗘𝗡𝗨",
   commands: [
-    { name: "𝐒𝐮𝐫𝐚𝐡𝐀𝐮𝐝𝐢𝐨", desc: "Surah Audio (default)" },
-    { name: "𝐒𝐮𝐫𝐚𝐡𝐔𝐫𝐝𝐮", desc: "Surah in Urdu" },
-    { name: "𝐒𝐮𝐫𝐚𝐡𝐀𝐫𝐛𝐢𝐜", desc: "Surah in Arabic" },
-    { name: "𝐒𝐮𝐫𝐚𝐡𝐄𝐧𝐠", desc: "Surah in English" },
+    { name: "𝐒𝐮𝐫𝐚𝐡𝐀𝐮𝐝𝐢𝐨", desc: "Surah Audio" },
+    { name: "𝐒𝐮𝐫𝐚𝐡𝐔𝐫𝐝𝐮", desc: "Surah Urdu" },
+    { name: "𝐒𝐮𝐫𝐚𝐡𝐀𝐫𝐛𝐢𝐜", desc: "Surah Arabic" },
+    { name: "𝐒𝐮𝐫𝐚𝐡𝐄𝐧𝐠", desc: "Surah English" },
     { name: "𝐏𝐫𝐚𝐲𝐞𝐫𝐓𝐢𝐦𝐞", desc: "Prayer Timings" },
-    { name: "𝐏𝐓𝐢𝐦𝐞", desc: "Short Prayer Time" },
-    { name: "𝐒𝐁𝐮𝐤𝐡𝐚𝐫𝐢", desc: "Sahih Bukhari Hadith" }
+    { name: "𝐏𝐓𝐢𝐦𝐞", desc: "Prayer Time" },
+    { name: "𝐒𝐁𝐮𝐤𝐡𝐚𝐫𝐢", desc: "SBukhari Hadith" }
   ]
   },
 2: {
@@ -62,9 +62,9 @@ const MENU_SECTIONS = {
     { name: "𝐓𝐢𝐤𝐓𝐨𝐤", desc: "TikTok Downloader" },
     { name: "𝐓𝐢𝐤𝐓𝐨𝐤2", desc: "TikTok Downloader 2" },
     { name: "𝐓𝐢𝐤𝐬", desc: "TikTok Short Video" },
-    { name: "𝐒𝐧𝐚𝐜𝐤", desc: "Snack Video Downloader" },
-    { name: "𝐓𝐰𝐞𝐞𝐓", desc: "Twitter Video Downloader" },
-    { name: "𝐀𝐩𝐤", desc: "Download APK file" }
+    { name: "𝐒𝐧𝐚𝐜𝐤", desc: "Snack Downloader" },
+    { name: "𝐓𝐰𝐞𝐞𝐓", desc: "Twitter Downloader" },
+    { name: "𝐀𝐩𝐤", desc: "Download APK" }
   ]
 },
 3: {
@@ -81,14 +81,16 @@ const MENU_SECTIONS = {
   4: {
   title: "👥 𝗚𝗥𝗢𝗨𝗣 𝗠𝗘𝗡𝗨",
   commands: [
-    { name: "𝗧𝗮𝗴𝗔𝗹𝗹", desc: "Mention all group members" },
-    { name: "𝗛𝗶𝗱𝗲𝗧𝗮𝗴", desc: "Tag silently without notifications" },
-    { name: "𝗢𝗽𝗲𝗻", desc: "Open group (allow messages)" },
-    { name: "𝗖𝗹𝗼𝘀𝗲", desc: "Close group (admins only messages)" },
+    { name: "𝗧𝗮𝗴𝗔𝗹𝗹", desc: "Mention all" },
+    { name: "𝗛𝗶𝗱𝗲𝗧𝗮𝗴", desc: "Tag silently " },
+    { name: "𝗢𝗽𝗲𝗻", desc: "Open group" },
+    { name: "𝗖𝗹𝗼𝘀𝗲", desc: "Close group" },
     { name: "𝗔𝗱𝗱", desc: "Add member to group" },
     { name: "𝗜𝗻𝘃𝗶𝘁𝗲", desc: "Generate group invite link" },
     { name: "𝗞𝗶𝗰𝗸", desc: "Remove member from group" },
-    { name: "𝗗𝗶𝘀", desc: "active group disappearing msg" }
+    { name: "𝗗𝗶𝘀", desc: "active group disappearing msg" },
+    { name: "𝐆𝐜𝐋𝐢𝐧𝐤", desc: "get group link" },
+    { name: "𝐑𝐨𝐚𝐬𝐭", desc: "roast any member" }
   ]
   },
   5: {
@@ -145,7 +147,8 @@ const MENU_SECTIONS = {
     { name: "𝐔𝐩𝐓𝐢𝐦𝐞", desc: "Check bot uptime" },
     { name: "𝐑𝐞𝐩𝐨", desc: "Show bot GitHub repo" },
     { name: "𝐀𝐛𝐨𝐮𝐭", desc: "Get bot info and credits" },
-    { name: "𝗤𝘂𝗼𝘁𝗲", desc: "Get a random Quote" }
+    { name: "𝗤𝘂𝗼𝘁𝗲", desc: "Get a random Quote" },
+    { name: "𝐀𝐝𝐯𝐢𝐜𝐞", desc: "get an advice" }
   ]
   },
   8: {
@@ -156,7 +159,8 @@ const MENU_SECTIONS = {
     { name: "𝐓𝐭𝐬", desc: "Text to Speech converter" },
     { name: "𝐓𝐬𝐭𝐚𝐥𝐤", desc: "Text to Talk chatbot" },
     { name: "𝐍𝐩𝐦", desc: "Get NPM package info" },
-    { name: "𝐆𝐢𝐭𝐒𝐭𝐚𝐥𝐤", desc: "GitHub user info & stats" }
+    { name: "𝐆𝐢𝐭𝐒𝐭𝐚𝐥𝐤", desc: "GitHub user info & stats" },
+    { name: "𝐏𝐚𝐢𝐫", desc: "get pair code" },
   ]
   },
   9: {
