@@ -67,8 +67,10 @@ const menu = async (m, Matrix) => {
   const prefix = config.PREFIX;
   
   // Check if message starts with prefix and is "menu2" command
-  if (!m.body.startsWith(prefix) || m.body.slice(prefix.length).split(' ')[0].toLowerCase() !== 'menu2') {
-    return; // Ignore if not the menu command
+  const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+  if (cmd !== 'menu2') {
+    console.log('Not a menu command, ignoring...');
+    return;
   }
 
   const mode = config.MODE === 'public' ? 'Public' : 'Private';
@@ -79,7 +81,7 @@ const menu = async (m, Matrix) => {
   const realDate = moment().tz("Asia/Karachi").format("DD/MM/YYYY");
 
   try {
-    // Main Menu
+    console.log('Sending main menu...');
     const menuText = `╭───❍ *${config.BOT_NAME}* ❍───╮
 │ 👤 User: ${pushName}
 │ ${greeting}
@@ -113,25 +115,56 @@ Reply with a number (1-${Object.keys(MENU_SECTIONS).length}) to select a menu se
       }
     }, { quoted: m });
 
+    console.log('Menu sent, setting up reply handler...');
+
     // Response Handler
     const responseHandler = async (event) => {
+      console.log('New message event received');
       const msg = event.messages?.[0];
-      if (!msg || msg.key.remoteJid !== m.from || msg.key.fromMe) return;
+      
+      if (!msg) {
+        console.log('No message in event');
+        return;
+      }
+
+      console.log('Processing message from:', msg.key.remoteJid);
+      console.log('Message content:', JSON.stringify(msg.message, null, 2));
+
+      // Check if message is from the same chat and not from bot
+      if (msg.key.remoteJid !== m.from || msg.key.fromMe) {
+        console.log('Message not from correct chat or is from bot');
+        return;
+      }
 
       // Check if this is a reply to our menu message
       const isReply = msg.message?.extendedTextMessage?.contextInfo?.stanzaId === sentMsg.key.id;
       const isMention = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.includes(Matrix.user.id);
       
-      if (!isReply && !isMention) return;
+      console.log(`Is reply: ${isReply}, Is mention: ${isMention}`);
+
+      if (!isReply && !isMention) {
+        console.log('Message is not a reply or mention');
+        return;
+      }
 
       const text = msg.message?.conversation || 
                    msg.message?.extendedTextMessage?.text || '';
       
+      console.log('Received text:', text);
+
       const choice = parseInt(text.trim());
-      if (isNaN(choice) return;
+      if (isNaN(choice)) {
+        console.log('Not a number, ignoring');
+        return;
+      }
+
+      console.log('User selected option:', choice);
 
       const section = MENU_SECTIONS[choice];
-      if (!section) return;
+      if (!section) {
+        console.log('Invalid menu selection');
+        return;
+      }
 
       const sectionText = `╭───❍ *${section.title}* ❍───╮
 │ 👤 User: ${pushName}
@@ -145,20 +178,24 @@ ${section.commands.map(cmd =>
 
 *⚡ Powered by ${config.BOT_NAME} ⚡*`;
 
+      console.log('Sending submenu response...');
       await Matrix.sendMessage(m.from, {
         text: sectionText,
         mentions: [m.sender]
       }, { quoted: msg });
 
       // Clean up
+      console.log('Cleaning up handler...');
       Matrix.ev.off('messages.upsert', responseHandler);
     };
 
     // Set timeout for cleanup
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
+      console.log('Timeout reached, cleaning up handler');
       Matrix.ev.off('messages.upsert', responseHandler);
     }, 60000); // 1 minute timeout
 
+    console.log('Adding message event listener...');
     Matrix.ev.on('messages.upsert', responseHandler);
 
   } catch (error) {
