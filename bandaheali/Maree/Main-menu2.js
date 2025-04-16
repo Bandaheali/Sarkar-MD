@@ -1,11 +1,7 @@
 import moment from 'moment-timezone';
-import fs from 'fs';
 import os from 'os';
 import axios from 'axios';
 import config from '../../config.cjs';
-
-// --- Global Session Tracker (Prevents Memory Leaks) ---
-const activeMenuSessions = new Map();
 
 // Utility Functions
 const formatBytes = (bytes) => {
@@ -44,7 +40,8 @@ const MENU_SECTIONS = {
       { name: "play", desc: "Play music" },
       { name: "song", desc: "Download song" },
       { name: "video", desc: "Download video" }
-    ]
+    ],
+    image: config.DOWNLOAD_MENU_IMAGE || 'https://i.imgur.com/download.jpg'
   },
   2: {
     title: "🔄 Converter Menu",
@@ -52,7 +49,8 @@ const MENU_SECTIONS = {
       { name: "attp", desc: "Animated text" },
       { name: "emojimix", desc: "Mix emojis" },
       { name: "mp3", desc: "Convert audio" }
-    ]
+    ],
+    image: config.CONVERTER_MENU_IMAGE || 'https://i.imgur.com/converter.jpg'
   },
   3: {
     title: "🤖 AI Menu",
@@ -60,7 +58,18 @@ const MENU_SECTIONS = {
       { name: "gpt", desc: "ChatGPT" },
       { name: "dalle", desc: "AI Image Generation" },
       { name: "gemini", desc: "Google Gemini" }
-    ]
+    ],
+    image: config.AI_MENU_IMAGE || 'https://i.imgur.com/ai.jpg'
+  }
+};
+
+const fetchImage = async (url) => {
+  try {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    return Buffer.from(response.data);
+  } catch (error) {
+    console.error("Image fetch failed:", error);
+    return null;
   }
 };
 
@@ -78,19 +87,8 @@ const menu = async (m, Matrix) => {
   const realDate = moment().tz(timezone).format("DD/MM/YYYY");
 
   try {
-    // --- Fetch Menu Thumbnail (Fallback to Text if Fails) ---
-    let thumbnail;
-    try {
-      const imageRes = await axios.get(config.MENU_IMAGE || 'https://i.imgur.com/example.jpg', {
-        responseType: 'arraybuffer'
-      });
-      thumbnail = Buffer.from(imageRes.data);
-    } catch (err) {
-      console.error("Menu image failed:", err);
-      thumbnail = null;
-    }
-
-    // --- Main Menu Text ---
+    // --- Send Main Menu ---
+    const mainMenuImage = await fetchImage(config.MENU_IMAGE || 'https://i.imgur.com/main.jpg');
     const menuText = `╭───❍ *${config.BOT_NAME}* ❍───╮
 │ 👤 User: ${pushName}
 │ ${greeting}
@@ -109,39 +107,27 @@ Reply with a number (1-${Object.keys(MENU_SECTIONS).length}) to select a menu se
 
 *⚡ Powered by ${config.BOT_NAME} ⚡*`;
 
-    // --- Send Menu ---
-    const messageOptions = {
+    const sentMsg = await Matrix.sendMessage(m.from, {
       text: menuText,
-      mentions: [m.sender]
-    };
-
-    if (thumbnail) {
-      messageOptions.contextInfo = {
-        externalAdReply: {
-          title: config.BOT_NAME,
-          body: pushName,
-          thumbnail: thumbnail,
-          mediaType: 1,
-          renderLargerThumbnail: true
+      ...(mainMenuImage && {
+        contextInfo: {
+          externalAdReply: {
+            title: config.BOT_NAME,
+            body: pushName,
+            thumbnail: mainMenuImage,
+            mediaType: 1,
+            renderLargerThumbnail: true
+          }
         }
-      };
-    }
+      })
+    }, { quoted: m });
 
-    const sentMsg = await Matrix.sendMessage(m.from, messageOptions, { quoted: m });
-
-    // --- Clean Previous Session (If Any) ---
-    const existingHandler = activeMenuSessions.get(m.sender);
-    if (existingHandler) {
-      Matrix.ev.off('messages.upsert', existingHandler.handler);
-      clearTimeout(existingHandler.timeout);
-    }
-
-    // --- Reply Handler ---
+    // --- Reply Handler (Persistent) ---
     const handler = async ({ messages }) => {
       const msg = messages[0];
       if (msg.key.remoteJid !== m.from || msg.key.fromMe) return;
 
-      // Check if it's a reply to the menu
+      // Check if it's a reply to the main menu or sub-menu
       const isReply = msg?.message?.extendedTextMessage?.contextInfo?.stanzaId === sentMsg.key.id;
       if (!isReply) return;
 
@@ -157,8 +143,9 @@ Reply with a number (1-${Object.keys(MENU_SECTIONS).length}) to select a menu se
         return;
       }
 
-      // --- Send Selected Menu Section ---
+      // --- Send Sub-Menu ---
       const section = MENU_SECTIONS[choice];
+      const sectionImage = await fetchImage(section.image);
       const sectionText = `╭───❍ *${section.title}* ❍───╮
 │ 👤 User: ${pushName}
 │ ${greeting}
@@ -173,32 +160,30 @@ ${section.commands.map(cmd =>
 
       await Matrix.sendMessage(m.from, {
         text: sectionText,
-        mentions: [m.sender]
+        mentions: [m.sender],
+        ...(sectionImage && {
+          contextInfo: {
+            externalAdReply: {
+              title: section.title,
+              body: `Prefix: ${prefix}`,
+              thumbnail: sectionImage,
+              mediaType: 1,
+              renderLargerThumbnail: true
+            }
+          }
+        })
       }, { quoted: msg });
-
-      // --- Cleanup ---
-      Matrix.ev.off('messages.upsert', handler);
-      activeMenuSessions.delete(m.sender);
     };
 
-    // --- Attach Listener + Timeout ---
-    const timeout = setTimeout(() => {
-      Matrix.ev.off('messages.upsert', handler);
-      activeMenuSessions.delete(m.sender);
-    }, 120_000); // 2 minutes timeout
-
-    activeMenuSessions.set(m.sender, { handler, timeout });
+    // Attach persistent listener
     Matrix.ev.on('messages.upsert', handler);
 
   } catch (error) {
     console.error('Menu Error:', error);
     await Matrix.sendMessage(m.from, {
-      text: '⚠️ An error occurred while loading the menu. Please try again later.'
+      text: '⚠️ An error occurred. Please try again later.'
     }, { quoted: m });
   }
 };
-
-// Reset sessions on bot restart
-activeMenuSessions.clear();
 
 export default menu;
