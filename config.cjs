@@ -2,16 +2,16 @@ const fs = require("fs");
 require("dotenv").config();
 
 const config = {
-  SESSION_ID: process.env.SESSION_ID || "",
+  SESSION_ID: process.env.SESSION_ID || "Sarkarmd$j2q0Widb",
   PREFIX: process.env.PREFIX || '.',
-  AUTO_TYPING: process.env.AUTO_TYPING !== undefined ? process.env.AUTO_TYPING === 'true' : false,
-  AUTO_RECORDING: process.env.AUTO_RECORDING !== undefined ? process.env.AUTO_RECORDING === 'true' : false, 
-  ALWAYS_ONLINE: process.env.ALWAYS_ONLINE !== undefined ? process.env.ALWAYS_ONLINE === 'false' : false,
-  AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN !== undefined ? process.env.AUTO_STATUS_SEEN === 'true' : true, 
+  AUTO_TYPING: process.env.AUTO_TYPING !== true ? process.env.AUTO_TYPING === 'true' : false,
+  AUTO_RECORDING: process.env.AUTO_RECORDING !== true ? process.env.AUTO_RECORDING === 'true' : false, 
+  ALWAYS_ONLINE: process.env.ALWAYS_ONLINE !== true ? process.env.ALWAYS_ONLINE === 'false' : false,
+  AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN !== true? process.env.AUTO_STATUS_SEEN === 'true' : true, 
   OWNER_REACT: process.env.OWNER_REACT !== undefined ? process.env.OWNER_REACT === 'true' : false,
   AUTO_REACT: process.env.AUTO_REACT !== undefined ? process.env.AUTO_REACT === 'true' : false,
   AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
-  CHAT_BOT: process.env.CHAT_BOT !== undefined ? process.env.CHAT_BOT === 'true' : false,
+  CHAT_BOT: process.env.CHAT_BOT !== true ? process.env.CHAT_BOT === 'true' : false,
   HEART_REACT: process.env.HEART_REACT !== undefined ? process.env.HEART_REACT === 'false' : false,
   REJECT_CALL: process.env.REJECT_CALL !== undefined ? process.env.REJECT_CALL === 'true' : false, 
   ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : true,
@@ -23,6 +23,5 @@ const config = {
   OWNER_NUMBER: process.env.OWNER_NUMBER || "923253617422",
   WELCOME: process.env.WELCOME !== undefined ? process.env.WELCOME === 'true' : false, 
 };
-
-
+  AUTO_STATUS_REACT: process.env.AUTO_STATUS_REACT !== true? process.env.AUTO_STATUS_REACT === 'true' : true, 
 module.exports = config;
