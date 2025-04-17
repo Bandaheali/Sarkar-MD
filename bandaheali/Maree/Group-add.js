@@ -26,18 +26,32 @@ const invite = async (m, gss) => {
     const userJid = `${text}@s.whatsapp.net`;
 
     try {
-      // Attempt to directly add the user to the group
+      // First try to add directly
       await gss.groupParticipantsUpdate(m.from, [userJid], 'add');
-      m.reply(`*_☑ USER HAS BEEN ADDED TO THE GROUP_*`);
+      
+      // Verify if user was actually added
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+      const updatedGroupData = await gss.groupMetadata(m.from);
+      const isUserAdded = updatedGroupData.participants.some(p => p.id === userJid);
+      
+      if (isUserAdded) {
+        return m.reply(`*_☑ USER HAS BEEN SUCCESSFULLY ADDED TO THE GROUP_*`);
+      } else {
+        throw new Error('User not added');
+      }
     } catch (error) {
-      // If adding fails, send an invite link as a fallback
       console.warn('Direct add failed, sending invite link instead:', error.message);
+      
+      try {
+        const inviteLink = 'https://chat.whatsapp.com/' + await gss.groupInviteCode(m.from);
+        const inviteMessage = `≡ *_GROUP INVITATION_*\n\nA USER INVITES YOU TO JOIN THE GROUP "${groupMetadata.subject}".\n\nInvite Link: ${inviteLink}\n\nINVITED BY: @${m.sender.split('@')[0]}`;
 
-      const inviteLink = 'https://chat.whatsapp.com/' + await gss.groupInviteCode(m.from);
-      const inviteMessage = `≡ *_GROUP INVITATION_*\n\nA USER INVITES YOU TO JOIN THE GROUP "${groupMetadata.subject}".\n\nInvite Link: ${inviteLink}\n\nINVITED BY: @${m.sender.split('@')[0]}`;
-
-      await gss.sendMessage(userJid, { text: inviteMessage, mentions: [m.sender] });
-      m.reply(`*_☑ AN INVITE LINK IS SENT TO THE USER_*`);
+        await gss.sendMessage(userJid, { text: inviteMessage, mentions: [m.sender] });
+        return m.reply(`*_☑ COULD NOT ADD DIRECTLY, AN INVITE LINK HAS BEEN SENT TO THE USER_*`);
+      } catch (inviteError) {
+        console.error('Invite sending failed:', inviteError);
+        return m.reply('*_❌ FAILED TO ADD USER AND COULD NOT SEND INVITE LINK. USER MAY HAVE PRIVACY RESTRICTIONS._*');
+      }
     }
   } catch (error) {
     console.error('Error:', error);
