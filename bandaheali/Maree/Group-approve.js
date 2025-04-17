@@ -17,58 +17,44 @@ const approveall = async (m, gss) => {
     if (!senderAdmin) return m.reply('*📛 You must be admin to use this command*');
 
     try {
-      // Get pending requests
-      const pendingRequests = await gss.getGroupPendingInvites(m.from);
-      
-      if (!pendingRequests || pendingRequests.length === 0) {
+      // Alternative method to get pending requests
+      const groupInvites = await gss.fetchGroupMetadataFromWA(m.from);
+      if (!groupInvites.pendingRequests || groupInvites.pendingRequests.length === 0) {
         return m.reply('*ℹ No pending join requests found*');
       }
 
       // Approve all requests
-      const approvePromises = pendingRequests.map(async request => {
+      const results = [];
+      for (const request of groupInvites.pendingRequests) {
         try {
-          await gss.approveGroupJoinRequest(m.from, request.jid);
-          return { success: true, jid: request.jid };
+          await gss.groupRequestParticipantsUpdate(
+            m.from,
+            [request.jid],
+            'approve'
+          );
+          results.push({ success: true, jid: request.jid });
         } catch (e) {
-          return { success: false, jid: request.jid, error: e.message };
+          results.push({ success: false, jid: request.jid, error: e.message });
         }
-      });
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Delay to avoid rate limiting
+      }
 
-      const results = await Promise.all(approvePromises);
       const successful = results.filter(r => r.success).length;
       const failed = results.filter(r => !r.success).length;
 
       // Send report
-      let report = `*✅ Approved ${successful} requests*\n`;
-      if (failed > 0) {
-        report += `*❌ Failed to approve ${failed} requests*\n`;
-        report += `Possible reasons:\n`;
-        report += `- User already joined\n`;
-        report += `- Privacy restrictions\n`;
-        report += `- Invalid request\n`;
-      }
+      let report = `*📊 Approval Results:*\n`;
+      report += `✅ Approved: ${successful}\n`;
+      report += `❌ Failed: ${failed}\n\n`;
+      report += `_Note: Some approvals may fail due to privacy settings or if users already joined._`;
 
       await m.reply(report);
 
-      // Alternative detailed report
-      if (failed > 0) {
-        const failedList = results.filter(r => !r.success)
-          .map(r => `• ${r.jid.split('@')[0]}: ${r.error}`)
-          .join('\n');
-        
-        await gss.sendMessage(m.from, {
-          text: `*Failed Approvals Details:*\n${failedList}`,
-          mentions: [m.sender]
-        }, { quoted: m });
-      }
-
     } catch (error) {
       console.error('Approveall error:', error);
-      if (error.message.includes('not authorized')) {
-        await m.reply('*❌ Bot needs admin privileges to approve requests*');
-      } else {
-        await m.reply(`*❌ Error: ${error.message}*`);
-      }
+      await m.reply(`*❌ Error: ${error.message.includes('401') ? 
+        'Bot needs admin privileges' : 
+        'Failed to process approvals'}*`);
     }
   } catch (error) {
     console.error('Command error:', error);
