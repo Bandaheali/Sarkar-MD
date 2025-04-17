@@ -6,7 +6,7 @@ const invite = async (m, gss) => {
     const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
     const text = m.body.slice(prefix.length + cmd.length).trim();
 
-    const validCommands = ['invite', 'add'];
+    const validCommands = ['aja', 'add'];
 
     if (!validCommands.includes(cmd)) return;
     if (!m.isGroup) return m.reply("*🚫 THIS COMMAND CAN ONLY BE USED IN GROUPS*");
