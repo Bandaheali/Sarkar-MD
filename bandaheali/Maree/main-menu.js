@@ -4,6 +4,7 @@ import moment from 'moment-timezone';
 const menu = async (m, sock) => {
   const prefix = config.PREFIX;
   const mode = config.MODE;
+  const img = config.MENU_IMAGE || 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp';
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
   const pushName = m.pushName || '𝐔𝐒𝐄𝐑';
 
@@ -40,7 +41,7 @@ const menu = async (m, sock) => {
           externalAdReply: {
             title: "✨𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨",
             body: pushName,
-            thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
+            thumbnailUrl: img,
             sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
             mediaType: 1,
             renderLargerThumbnail: true,
@@ -116,6 +117,7 @@ const menu = async (m, sock) => {
 │ 📅 *𝐃𝐀𝐓𝐄*: *${realDate}* 
 ╰───────────❍
  ╭───❍「 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃 𝐌𝐄𝐍𝐔 」
+ *│* 💙 *${prefix}𝐏𝐥𝐚𝐲*
 *│* 💙 *${prefix}𝐒𝐨𝐧𝐠*
 *│* 💙 *${prefix}𝐒𝐨𝐧𝐠2*
 *│* 💙 *${prefix}𝐒𝐨𝐧𝐠3*
@@ -159,21 +161,27 @@ const menu = async (m, sock) => {
 │ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
 ╰───────────❍
  ╭───❍「 *𝐆𝐑𝐎𝐔𝐏 𝐌𝐄𝐍𝐔* 」
-*│* 💙 *${prefix}TagAll*
-*│* 💙 *${prefix}HideTag*
-*│* 💙 *${prefix}Open*
-*│* 💙 *${prefix}Close*
-*│* 💙 *${prefix}Add*
-*│* 💙 *${prefix}Invite*
-*│* 💙 *${prefix}Kick*
-*│* 💙 *${prefix}Dis*
+*│* 💙 *${prefix}𝐀𝐧𝐭𝐢𝐋𝐢𝐧𝐤*
+*│* 💙 *${prefix}𝐀𝐧𝐭𝐢𝐌𝐞𝐝𝐢𝐚*
+*│* 💙 *${prefix}𝐀𝐧𝐭𝐢𝐕𝐨𝐢𝐜𝐞*
+*│* 💙 *${prefix}𝐓𝐚𝐠𝐀𝐥𝐥*
+*│* 💙 *${prefix}𝐇𝐢𝐝𝐞𝐓𝐚𝐠*
+*│* 💙 *${prefix}𝐎𝐩𝐞𝐧*
+*│* 💙 *${prefix}𝐂𝐥𝐨𝐬𝐞*
+*│* 💙 *${prefix}𝐀𝐝𝐝*
+*│* 💙 *${prefix}𝐈𝐧𝐯𝐢𝐭𝐞*
+*│* 💙 *${prefix}𝐊𝐢𝐜𝐤*
+*│* 💙 *${prefix}𝐃𝐢𝐬*
+*│* 💙 *${prefix}𝐑𝐞𝐬𝐞𝐭𝐋𝐢𝐧𝐤*
+*│* 💙 *${prefix}𝐆𝐜𝐋𝐢𝐧𝐤* 
+*│* 💙 *${prefix}𝐎𝐮𝐓*
  ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
           break;
         case "5":
           menuResponse = `╭───❍「 *✨ 𝚂𝚊𝚛𝚔𝚊𝚛-𝙼𝙳✨* 」
 │ 🧑‍💻 *𝐔𝐒𝐄𝐑:* *${pushName} ${pushwish}*
 │ 🌐 *𝐌𝐎𝐃𝐄:* *${mode}*
-│ ⏰ *𝐓𝐈𝐌𝐖:* *${realTime}*
+│ ⏰ *𝐓𝐈𝐌𝐄:* *${realTime}*
 │ 📅 *𝐃𝐀𝐓𝐄:* *${realDate}*  
 ╰───────────❍
  ╭───❍「 *𝐋𝐎𝐆𝐎 𝐌𝐄𝐍𝐔* 」
