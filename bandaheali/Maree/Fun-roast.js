@@ -124,16 +124,16 @@ const roast = async (m, sock) => {
     // Get user name
     const user = await sock.onWhatsApp(targetJid);
     const username = user[0]?.name || user[0]?.pushname || "User";
-    if(isCreater.includes(targetJid) {
-      await sock.sendMessage(
-        m.from,
-        { text: `I CANT ROAST MY OWNER SOORY` },
-        { quoted: m }
-        );
+    
+    if (isCreater.includes(targetJid)) {
+  await sock.sendMessage(
+    m.from,
+    { text: `❌ I can't roast my creator! Show some respect!` },
+    { quoted: m }
+  );
+  await m.react('🙏');
+  return;
     }
-    await m.react('✋️');
-    return;
-  }
 
     // Get random roast
     const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
