@@ -72,4 +72,8 @@ const approveall = async (m, gss) => {
     }
   } catch (error) {
     console.error('Command error:', error);
-    m.reply('*⚠️ An
+    m.reply('*⚠️ An error occurred while processing*');
+  }
+};
+
+export default approveall;
