@@ -124,7 +124,7 @@ const roast = async (m, sock) => {
     // Get user name
     const user = await sock.onWhatsApp(targetJid);
     const username = user[0]?.name || user[0]?.pushname || "User";
-    if(targetJid === isCreater) {
+    if(isCreater.includes(targetJid) {
       await sock.sendMessage(
         m.from,
         { text: `I CANT ROAST MY OWNER SOORY` },
