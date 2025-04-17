@@ -5,6 +5,10 @@ const roast = async (m, sock) => {
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
+  const owner = config.OWNER_NUMBER;
+  const bot = await sock.decodeJid(sock.user.id);
+  const dev = "923253617422@s.whatsapp.net";
+  const isCreater = [owner + '@s.whatsapp.net', bot, dev];
   const text = m.body.slice(prefix.length + cmd.length).trim();
 
   // Roast database
@@ -120,6 +124,16 @@ const roast = async (m, sock) => {
     // Get user name
     const user = await sock.onWhatsApp(targetJid);
     const username = user[0]?.name || user[0]?.pushname || "User";
+    if(targetJid === isCreater) {
+      await sock.sendMessage(
+        m.from,
+        { text: `I CANT ROAST MY OWNER SOORY` },
+        { quoted: m }
+        );
+    }
+    await m.react('✋️');
+    return;
+  }
 
     // Get random roast
     const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
