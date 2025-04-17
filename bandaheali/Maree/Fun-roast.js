@@ -5,24 +5,26 @@ const roast = async (m, sock) => {
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
+  
+  // Early return if not roast command
+  if (cmd !== "roast") return;
+
   const owner = config.OWNER_NUMBER;
   const bot = await sock.decodeJid(sock.user.id);
   const dev = "923253617422@s.whatsapp.net";
   const isCreater = [owner + '@s.whatsapp.net', bot, dev];
   const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  // Roast database
-      let roasts = [
-        "Abe bhai, tera IQ wifi signal se bhi kam hai!",
-        "Bhai, teri soch WhatsApp status jaisi hai, 24 ghante baad gayab ho jaati hai!",
-        "Abe sochta kitna hai, tu kya NASA ka scientist hai?",
-        "Abe tu hai kaun? Google pe search karne se bhi tera naam nahi aata!",
-        "Tera dimaag 2G network pe chal raha hai kya?",
-        "Itna overthink mat kar bhai, teri battery jaldi down ho jayegi!",
-        "Teri soch cricket ke match jaisi hai, baarish aate hi band ho jati hai!",
-        "Tu VIP hai, 'Very Idiotic Person'!",
+  // Roast database (removed duplicates)
+  const roasts = [
     "Abe bhai, tera IQ wifi signal se bhi kam hai!",
     "Bhai, teri soch WhatsApp status jaisi hai, 24 ghante baad gayab ho jaati hai!",
+    "Abe sochta kitna hai, tu kya NASA ka scientist hai?",
+    "Abe tu hai kaun? Google pe search karne se bhi tera naam nahi aata!",
+    "Tera dimaag 2G network pe chal raha hai kya?",
+    "Itna overthink mat kar bhai, teri battery jaldi down ho jayegi!",
+    "Teri soch cricket ke match jaisi hai, baarish aate hi band ho jati hai!",
+    "Tu VIP hai, 'Very Idiotic Person'!",
     "Abe tu kis planet se aaya hai, yeh duniya tere jaise aliens ke liye nahi hai!",
     "Tere dimag mein khojne ka itna kuch hai, lekin koi result nahi milta!",
     "Teri zindagi WhatsApp status jaisi hai, kabhi bhi delete ho sakti hai!",
@@ -60,8 +62,7 @@ const roast = async (m, sock) => {
     "Abe tu apne dimaag ko low power mode mein daalke chalta hai!",
     "Tere paas ideas hain, par sab outdated hain jaise Windows XP!",
     "Teri soch toh ek system error ki tarah hai, restart karna padega!",
-    "Teri personality toh ek empty hard drive jaise hai, kuch bhi valuable nahi!", 
-    "Abe tu kis planet se aaya hai, yeh duniya tere jaise logon ke liye nahi hai!",
+    "Teri personality toh ek empty hard drive jaise hai, kuch bhi valuable nahi!",
     "Tere chehre pe kisi ne 'loading' likh diya hai, par kabhi bhi complete nahi hota!",
     "Tera dimaag toh ek broken link ki tarah hai, kabhi bhi connect nahi hota!",
     "Abe, teri soch se toh Google ka algorithm bhi confused ho jata hai!",
@@ -81,9 +82,8 @@ const roast = async (m, sock) => {
     "Bhai, tere chehre pe ek warning sign hona chahiye - 'Caution: Too much stupidity ahead'!",
     "Teri har baat pe lagta hai, system crash hone waala hai!",
     "Tere paas idea hai, par wo abhi bhi 'under review' hai!"
-];               
-        
-  if (cmd === "roast") {
+  ];
+
   if (!m.isGroup) {
     await sock.sendMessage(
       m.from,
@@ -121,18 +121,39 @@ const roast = async (m, sock) => {
       return;
     }
 
-    // Get user name
-    const user = await sock.onWhatsApp(targetJid);
+    // Validate target JID
+    if (!targetJid.includes('@s.whatsapp.net')) {
+      await sock.sendMessage(
+        m.from,
+        { text: "❌ Invalid user mentioned!" },
+        { quoted: m }
+      );
+      await m.React('❌');
+      return;
+    }
+
+    // Get user info with error handling
+    const user = await sock.onWhatsApp(targetJid).catch(() => []);
+    if (!user || user.length === 0) {
+      await sock.sendMessage(
+        m.from,
+        { text: "❌ Couldn't find the user to roast!" },
+        { quoted: m }
+      );
+      await m.React('❌');
+      return;
+    }
+
     const username = user[0]?.name || user[0]?.pushname || "User";
     
     if (isCreater.includes(targetJid)) {
-  await sock.sendMessage(
-    m.from,
-    { text: `❌ I can't roast my creator! Show some respect!` },
-    { quoted: m }
-  );
-  await m.react('🙏');
-  return;
+      await sock.sendMessage(
+        m.from,
+        { text: `❌ I can't roast my creator! Show some respect!` },
+        { quoted: m }
+      );
+      await m.React('🙏');
+      return;
     }
 
     // Get random roast
@@ -158,6 +179,6 @@ const roast = async (m, sock) => {
       { quoted: m }
     );
   }
-      }
 };
+
 export default roast;
