@@ -12,19 +12,24 @@ const out = async (m, gss) => {
         if (!countryCode || isNaN(countryCode)) return m.reply("*⚠️ Please provide a valid country code*\nExample: .out 92");
 
         const botNumber = await gss.decodeJid(gss.user.id);
+        const senderId = m.sender;
         const groupMetadata = await gss.groupMetadata(m.from);
         const isBotAdmin = groupMetadata.participants.find(p => p.id === botNumber)?.admin;
-        const senderAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin;
+        const senderAdmin = groupMetadata.participants.find(p => p.id === senderId)?.admin;
 
         if (!isBotAdmin) return m.reply('*📛 Bot must be admin to remove members*');
         if (!senderAdmin) return m.reply('*📛 You must be admin to use this command*');
 
         const membersToRemove = groupMetadata.participants
             .map(p => p.id)
-            .filter(id => id.startsWith(`${countryCode}`) || id.startsWith(`${countryCode}@`));
+            .filter(id =>
+                (id.startsWith(`${countryCode}`) || id.startsWith(`${countryCode}@`)) &&
+                id !== botNumber &&
+                id !== senderId
+            );
 
         if (membersToRemove.length === 0) {
-            return m.reply(`*✅ No members found with country code +${countryCode}*`);
+            return m.reply(`*✅ No members found with country code +${countryCode} (excluding you and the bot)*`);
         }
 
         let success = 0;
@@ -34,7 +39,7 @@ const out = async (m, gss) => {
             try {
                 await gss.groupParticipantsUpdate(m.from, [id], 'remove');
                 success++;
-                await new Promise(res => setTimeout(res, 2000)); // avoid rate limit
+                await new Promise(res => setTimeout(res, 2000)); // Rate limiting
             } catch (err) {
                 fail++;
                 console.log(`Failed to remove ${id}:`, err.message);
