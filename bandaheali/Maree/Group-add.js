@@ -1,122 +1,48 @@
-import config from '../../config.cjs'; // Ensure this matches your project setup
+import config from '../../config.cjs';
 
-const add = async (m, sock) => {
-  const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix)
-    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
-    : '';
-  const text = m.body.slice(prefix.length + cmd.length).trim();
+const invite = async (m, gss) => {
+  try {
+    const prefix = config.PREFIX;
+    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+    const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd === "add" || cmd === "aja") {
+    const validCommands = ['invite', 'add'];
+
+    if (!validCommands.includes(cmd)) return;
+    if (!m.isGroup) return m.reply("*_🚫 THIS COMMAND CAN ONLY BE USED IN GROUPS_*");
+
+    if (!text) return m.reply(`*_📛 ENTER THE NUMBER YOU WANT TO INVITE TO THE GROUP_*\n\nExample:\n*${prefix + cmd}* 923253617422`);
+    if (text.includes('+')) return m.reply(`*_📛 ENTER THE NUMBER WITHOUT_* *+* `);
+    if (isNaN(text)) return m.reply(`*_📛 ENTER ONLY THE NUMBERS PLUS YOUR COUNTRY CODE WITHOUT SPACES_*`);
+
+    const botNumber = await gss.decodeJid(gss.user.id);
+    const groupMetadata = await gss.groupMetadata(m.from);
+    const isBotAdmin = groupMetadata.participants.find(p => p.id === botNumber)?.admin;
+    const senderAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin;
+
+    if (!isBotAdmin) return m.reply('*_📛 BOT MUST BE AN ADMIN TO USE THIS COMMAND_*');
+    if (!senderAdmin) return m.reply('*_📛 YOU MUST BE AN ADMIN TO USE THIS COMMAND_*');
+
+    const userJid = `${text}@s.whatsapp.net`;
+
     try {
-      if (!m.isGroup) {
-        await m.React('❌'); // React with an error icon
-        return sock.sendMessage(
-          m.from,
-          {
-            text: "❌ This command can only be used in groups.",
-          },
-          { quoted: m }
-        );
-      }
+      // Attempt to directly add the user to the group
+      await gss.groupParticipantsUpdate(m.from, [userJid], 'add');
+      m.reply(`*_☑ USER HAS BEEN ADDED TO THE GROUP_*`);
+    } catch (error) {
+      // If adding fails, send an invite link as a fallback
+      console.warn('Direct add failed, sending invite link instead:', error.message);
 
-      // Extract bot owner's number
-      const botOwner = sock.user.id.split(":")[0];
+      const inviteLink = 'https://chat.whatsapp.com/' + await gss.groupInviteCode(m.from);
+      const inviteMessage = `≡ *_GROUP INVITATION_*\n\nA USER INVITES YOU TO JOIN THE GROUP "${groupMetadata.subject}".\n\nInvite Link: ${inviteLink}\n\nINVITED BY: @${m.sender.split('@')[0]}`;
 
-      // Restrict command usage to the bot owner only
-      if (m.senderNumber !== botOwner) {
-        await m.React('❌'); // React with an error icon
-        return sock.sendMessage(
-          m.from,
-          {
-            text: "❌ Only the bot owner can use this command.",
-          },
-          { quoted: m }
-        );
-      }
-
-      // Ensure the bot is an admin
-      const isBotAdmins = (await sock.groupMetadata(m.from)).participants.find(
-        (participant) => participant.id === sock.user.id
-      )?.admin;
-
-      if (!isBotAdmins) {
-        await m.React('❌'); // React with an error icon
-        return sock.sendMessage(
-          m.from,
-          {
-            text: "❌ I need to be an admin to add users.",
-          },
-          { quoted: m }
-        );
-      }
-
-      // Validate user input
-      if (!text || isNaN(text)) {
-        await m.React('❌'); // React with an error icon
-        return sock.sendMessage(
-          m.from,
-          {
-            text: "❌ Please provide a valid phone number to add.",
-          },
-          { quoted: m }
-        );
-      }
-
-      const userToAdd = `${text}@s.whatsapp.net`;
-
-      // Attempt to add the user to the group
-      const response = await sock.groupParticipantsUpdate(m.from, [userToAdd], "add");
-
-      // Check if the user was successfully added
-      if (response[0].status === 200) {
-        await m.React('✅'); // React with a success icon
-        await sock.sendMessage(
-          m.from,
-          {
-            text: `✅ User *${text}* has been added to the group.`,
-            contextInfo: {
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: '120363315182578784@newsletter',
-                newsletterName: "Sarkar-MD",
-                serverMessageId: -1,
-              },
-              forwardingScore: 999, // Score to indicate it has been forwarded
-              externalAdReply: {
-                title: "✨ Sarkar-MD ✨",
-                body: "User Added Successfully",
-                thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
-                sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD/fork',
-                mediaType: 1,
-                renderLargerThumbnail: false,
-              },
-            },
-          },
-          { quoted: m }
-        );
-      } else {
-        await m.React('❌'); // React with an error icon
-        await sock.sendMessage(
-          m.from,
-          {
-            text: "❌ Failed to add user. Make sure the number is correct and they are not already in the group.",
-          },
-          { quoted: m }
-        );
-      }
-    } catch (e) {
-      console.error("Error adding user:", e);
-      await m.React('❌'); // React with an error icon
-      await sock.sendMessage(
-        m.from,
-        {
-          text: "❌ An error occurred while adding the user. Please try again.",
-        },
-        { quoted: m }
-      );
+      await gss.sendMessage(userJid, { text: inviteMessage, mentions: [m.sender] });
+      m.reply(`*_☑ AN INVITE LINK IS SENT TO THE USER_*`);
     }
+  } catch (error) {
+    console.error('Error:', error);
+    m.reply('*_An error occurred while processing the command._*');
   }
 };
 
-export default add;
+export default invite;
