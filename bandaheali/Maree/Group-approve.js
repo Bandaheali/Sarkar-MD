@@ -17,7 +17,7 @@ const approveall = async (m, gss) => {
 
         let pendingRequests = [];
 
-        // Only use Deep Inspection
+        // Deep inspection method
         try {
             const query = await gss.query({
                 tag: 'iq',
@@ -40,7 +40,7 @@ const approveall = async (m, gss) => {
             }
         } catch (e) {
             console.log("Deep inspection failed:", e);
-            return m.reply("*❌ Couldn't fetch pending requests. Try manually approving.*");
+            return m.reply("*❌ Couldn't fetch pending requests. Try manual approval via Group Info*");
         }
 
         if (pendingRequests.length === 0) {
@@ -52,29 +52,45 @@ const approveall = async (m, gss) => {
 
         for (const req of pendingRequests) {
             if (processed.has(req.id)) continue;
+            console.log(`Trying to approve: ${req.id}`);
 
             try {
+                // First try standard method
                 await gss.groupParticipantsUpdate(m.from, [req.id], 'approve');
                 success++;
                 processed.add(req.id);
                 await new Promise(res => setTimeout(res, 1500));
-            } catch (err) {
-                fail++;
-                console.log(`Failed to approve ${req.id}:`, err.message);
-                await new Promise(res => setTimeout(res, 3000));
+            } catch (error) {
+                console.log(`Standard approve failed for ${req.id}:`, error.message);
+
+                // Try fallback method
+                try {
+                    if (typeof gss.approveGroupInviteRequest === 'function') {
+                        await gss.approveGroupInviteRequest(m.from, req.id);
+                        success++;
+                        processed.add(req.id);
+                        await new Promise(res => setTimeout(res, 1500));
+                    } else {
+                        throw new Error("Fallback method not supported.");
+                    }
+                } catch (fallbackError) {
+                    fail++;
+                    console.log(`Fallback also failed for ${req.id}:`, fallbackError.message);
+                    await new Promise(res => setTimeout(res, 3000));
+                }
             }
         }
 
         let report = `*📊 Approval Results:*\n✅ Approved: ${success}\n❌ Failed: ${fail}`;
         if (fail > 0) {
-            report += `\n\n*Troubleshooting:*\n1. Check bot permissions\n2. Try again later\n3. Use manual approval if needed`;
+            report += `\n\n*Troubleshooting:*\n1. Check bot permissions\n2. Try again later\n3. Approve manually if needed`;
         }
 
         await m.reply(report);
 
     } catch (err) {
         console.error('Command Error:', err);
-        m.reply('*⚠️ An unexpected error occurred*');
+        m.reply('*⚠️ System error while processing command*');
     }
 };
 
