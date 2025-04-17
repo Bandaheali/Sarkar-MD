@@ -18,26 +18,57 @@ const approveall = async (m, gss) => {
         if (!senderAdmin) return m.reply('*📛 You must be admin to use this command*');
 
         try {
-            // Get pending requests - method varies by WhatsApp version
+            // Method 1: Standard API check
             let pendingRequests = [];
+            
+            // Method 2: Alternative check for newer WhatsApp versions
             try {
-                pendingRequests = await gss.groupFetchAllParticipating();
-                pendingRequests = pendingRequests[m.from]?.pendingRequests || [];
+                const groupData = await gss.groupMetadata(m.from);
+                pendingRequests = groupData.pendingRequests || [];
             } catch (e) {
-                console.log("Alternative method failed:", e);
-                return m.reply("*❌ Couldn't fetch pending requests. Try manual approval.*");
+                console.log("Standard method failed:", e);
+            }
+
+            // Method 3: Deep inspection fallback
+            if (pendingRequests.length === 0) {
+                try {
+                    const inviteCode = await gss.groupInviteCode(m.from);
+                    const query = await gss.query({
+                        tag: 'iq',
+                        attrs: {
+                            to: m.from,
+                            type: 'get',
+                            xmlns: 'w:g2',
+                        },
+                        content: [{
+                            tag: 'membership_approval_requests',
+                            attrs: {},
+                        }]
+                    });
+                    
+                    if (query.content?.[0]?.content) {
+                        pendingRequests = query.content[0].content.map(item => ({
+                            id: item.attrs.jid,
+                            added_by: item.attrs.added_by
+                        }));
+                    }
+                } catch (e) {
+                    console.log("Deep inspection failed:", e);
+                }
             }
 
             if (pendingRequests.length === 0) {
-                return m.reply('*ℹ No pending join requests found*');
+                return m.reply(`*⚠️ No pending requests found*\n\nNote: Some requests may not be visible to bots due to:\n1. WhatsApp privacy settings\n2. Recent API changes\n3. Group settings\n\nTry approving manually via Group Info > Pending Requests`);
             }
 
-            // Process approvals with rate limiting
+            // Process approvals with careful rate limiting
             let successCount = 0;
             let failCount = 0;
-            const failReasons = [];
+            const processed = new Set();
 
             for (const request of pendingRequests) {
+                if (processed.has(request.id)) continue;
+                
                 try {
                     await gss.groupParticipantsUpdate(
                         m.from,
@@ -45,44 +76,38 @@ const approveall = async (m, gss) => {
                         'approve'
                     );
                     successCount++;
+                    processed.add(request.id);
                     
-                    // Critical delay to avoid rate limiting
-                    await new Promise(resolve => setTimeout(resolve, 2500));
+                    // Dynamic delay based on success rate
+                    const delay = failCount > successCount ? 4000 : 2000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
                     
                 } catch (error) {
                     failCount++;
-                    const reason = error.message.includes('401') ? 'No permission' :
-                                 error.message.includes('404') ? 'User not found' :
-                                 error.message.includes('500') ? 'Server error' :
-                                 'Unknown error';
-                    failReasons.push(`${request.id.split('@')[0]}: ${reason}`);
+                    console.log(`Failed to approve ${request.id}:`, error.message);
                     
                     // Longer delay after failures
-                    await new Promise(resolve => setTimeout(resolve, 4000));
+                    await new Promise(resolve => setTimeout(resolve, 5000));
                 }
             }
 
-            // Prepare report
+            // Detailed report
             let report = `*📊 Approval Results:*\n`;
-            report += `✅ Success: ${successCount}\n`;
+            report += `✅ Approved: ${successCount}\n`;
             report += `❌ Failed: ${failCount}\n`;
             
             if (failCount > 0) {
-                report += `\n*Common Reasons:*\n`;
-                report += `- User privacy settings\n`;
-                report += `- Already in group\n`;
-                report += `- WhatsApp API limits\n\n`;
-                report += `*Failed IDs:*\n${failReasons.slice(0, 5).join('\n')}`;
-                if (failReasons.length > 5) report += `\n...and ${failReasons.length-5} more`;
+                report += `\n*Possible Solutions:*\n`;
+                report += `1. Try again later\n`;
+                report += `2. Approve manually in group settings\n`;
+                report += `3. Check bot admin permissions\n`;
             }
 
             await m.reply(report);
 
         } catch (error) {
-            console.error('Main approval error:', error);
-            await m.reply(`*❌ Critical error: ${error.message.includes('timed out') ? 
-                          'Operation timed out' : 
-                          'API request failed'}*\nTry again later or approve manually.`);
+            console.error('Approval error:', error);
+            await m.reply(`*❌ Critical error: ${error.message}*\nTry manual approval via Group Info > Pending Requests`);
         }
     } catch (error) {
         console.error('Command error:', error);
