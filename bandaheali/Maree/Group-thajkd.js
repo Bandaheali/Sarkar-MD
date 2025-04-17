@@ -8,7 +8,7 @@ const args = m.body.slice(prefix.length).trim().split(/\s+/);
 const cmd = args.shift().toLowerCase();
 const text = args.join(' ');
 
-const validCommands = ['tagall', 'hidetag', 'open', 'close', 'disappearingmsg', 'kick', 'add', 'invite'];
+const validCommands = ['tagall', 'hidetag', 'open', 'close', 'disappearingmsg', 'kick', 'invite'];
 if (!validCommands.includes(cmd)) return;
 
 const groupMetadata = m.isGroup ? await gss.groupMetadata(m.from) : null;
@@ -95,22 +95,22 @@ else if (cmd === 'kick') {
   }
 }
 
-else if (cmd === 'add') {
-  if (args.length === 0) return await m.reply("⚠️ *Please provide a phone number!*");
+//else if (cmd === 'add') {
+//  if (args.length === 0) return await m.reply("⚠️ *Please provide a phone number!*");
+//
+//  let target = args[0].replace(/[^0-9]/g, '') + "@s.whatsapp.net";
 
-  let target = args[0].replace(/[^0-9]/g, '') + "@s.whatsapp.net";
-
-  if (participants.find(p => p.id === target)) {
-    return await m.reply("⚠️ *User is already in this group!*");
-  }
-
-  try {
-    await gss.groupParticipantsUpdate(m.from, [target], 'add');
-    await m.reply(`✅ *@${target.split('@')[0]} has been added to the group!*`, { mentions: [target] });
-  } catch (error) {
-    await m.reply("❌ *Failed to add the user! Make sure the number is correct and can be added to the group.*");
-  }
-}
+//  if (participants.find(p => p.id === target)) {
+ //   return await m.reply("⚠️ *User is already in this group!*");
+//  }
+//
+//  try {
+//    await gss.groupParticipantsUpdate(m.from, [target], 'add');
+//    await m.reply(`✅ *@${target.split('@')[0]} has been added to the group!*`, { mentions: [target] });
+//  } catch (error) {
+//    await m.reply("❌ *Failed to add the user! Make sure the number is correct and can be added to the group.*");
+//  }
+//}
 
 else if (cmd === 'invite') {
   let target;
