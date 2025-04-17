@@ -1,65 +1,93 @@
 import config from '../../config.cjs';
 
 const approveall = async (m, gss) => {
-  try {
-    const prefix = config.PREFIX;
-    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-    
-    if (cmd !== 'approveall') return;
-    if (!m.isGroup) return m.reply("*🚫 This command only works in groups*");
-
-    const botNumber = await gss.decodeJid(gss.user.id);
-    const groupMetadata = await gss.groupMetadata(m.from);
-    const isBotAdmin = groupMetadata.participants.find(p => p.id === botNumber)?.admin;
-    const senderAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin;
-
-    if (!isBotAdmin) return m.reply('*📛 Bot must be admin to approve requests*');
-    if (!senderAdmin) return m.reply('*📛 You must be admin to use this command*');
-
     try {
-      // Alternative method to get pending requests
-      const groupInvites = await gss.fetchGroupMetadataFromWA(m.from);
-      if (!groupInvites.pendingRequests || groupInvites.pendingRequests.length === 0) {
-        return m.reply('*ℹ No pending join requests found*');
-      }
+        const prefix = config.PREFIX;
+        const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+        
+        if (cmd !== 'approveall') return;
+        if (!m.isGroup) return m.reply("*🚫 This command only works in groups*");
 
-      // Approve all requests
-      const results = [];
-      for (const request of groupInvites.pendingRequests) {
+        // Admin verification
+        const botNumber = await gss.decodeJid(gss.user.id);
+        const groupMetadata = await gss.groupMetadata(m.from);
+        const isBotAdmin = groupMetadata.participants.find(p => p.id === botNumber)?.admin;
+        const senderAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin;
+
+        if (!isBotAdmin) return m.reply('*📛 Bot must be admin with "Invite" permission*');
+        if (!senderAdmin) return m.reply('*📛 You must be admin to use this command*');
+
         try {
-          await gss.groupRequestParticipantsUpdate(
-            m.from,
-            [request.jid],
-            'approve'
-          );
-          results.push({ success: true, jid: request.jid });
-        } catch (e) {
-          results.push({ success: false, jid: request.jid, error: e.message });
+            // Get pending requests - method varies by WhatsApp version
+            let pendingRequests = [];
+            try {
+                pendingRequests = await gss.groupFetchAllParticipating();
+                pendingRequests = pendingRequests[m.from]?.pendingRequests || [];
+            } catch (e) {
+                console.log("Alternative method failed:", e);
+                return m.reply("*❌ Couldn't fetch pending requests. Try manual approval.*");
+            }
+
+            if (pendingRequests.length === 0) {
+                return m.reply('*ℹ No pending join requests found*');
+            }
+
+            // Process approvals with rate limiting
+            let successCount = 0;
+            let failCount = 0;
+            const failReasons = [];
+
+            for (const request of pendingRequests) {
+                try {
+                    await gss.groupParticipantsUpdate(
+                        m.from,
+                        [request.id],
+                        'approve'
+                    );
+                    successCount++;
+                    
+                    // Critical delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 2500));
+                    
+                } catch (error) {
+                    failCount++;
+                    const reason = error.message.includes('401') ? 'No permission' :
+                                 error.message.includes('404') ? 'User not found' :
+                                 error.message.includes('500') ? 'Server error' :
+                                 'Unknown error';
+                    failReasons.push(`${request.id.split('@')[0]}: ${reason}`);
+                    
+                    // Longer delay after failures
+                    await new Promise(resolve => setTimeout(resolve, 4000));
+                }
+            }
+
+            // Prepare report
+            let report = `*📊 Approval Results:*\n`;
+            report += `✅ Success: ${successCount}\n`;
+            report += `❌ Failed: ${failCount}\n`;
+            
+            if (failCount > 0) {
+                report += `\n*Common Reasons:*\n`;
+                report += `- User privacy settings\n`;
+                report += `- Already in group\n`;
+                report += `- WhatsApp API limits\n\n`;
+                report += `*Failed IDs:*\n${failReasons.slice(0, 5).join('\n')}`;
+                if (failReasons.length > 5) report += `\n...and ${failReasons.length-5} more`;
+            }
+
+            await m.reply(report);
+
+        } catch (error) {
+            console.error('Main approval error:', error);
+            await m.reply(`*❌ Critical error: ${error.message.includes('timed out') ? 
+                          'Operation timed out' : 
+                          'API request failed'}*\nTry again later or approve manually.`);
         }
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Delay to avoid rate limiting
-      }
-
-      const successful = results.filter(r => r.success).length;
-      const failed = results.filter(r => !r.success).length;
-
-      // Send report
-      let report = `*📊 Approval Results:*\n`;
-      report += `✅ Approved: ${successful}\n`;
-      report += `❌ Failed: ${failed}\n\n`;
-      report += `_Note: Some approvals may fail due to privacy settings or if users already joined._`;
-
-      await m.reply(report);
-
     } catch (error) {
-      console.error('Approveall error:', error);
-      await m.reply(`*❌ Error: ${error.message.includes('401') ? 
-        'Bot needs admin privileges' : 
-        'Failed to process approvals'}*`);
+        console.error('Command error:', error);
+        m.reply('*⚠️ System error processing command*');
     }
-  } catch (error) {
-    console.error('Command error:', error);
-    m.reply('*⚠️ An error occurred while processing*');
-  }
 };
 
 export default approveall;
