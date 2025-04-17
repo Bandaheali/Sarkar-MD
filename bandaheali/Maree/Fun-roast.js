@@ -80,62 +80,70 @@ const roast = async (m, sock) => {
 ];               
         
   if (cmd === "roast") {
-    // Check if it's a group message
-    if (!m.isGroup) {
+  if (!m.isGroup) {
+    await sock.sendMessage(
+      m.from,
+      { text: "❌ This command only works in groups!" },
+      { quoted: m }
+    );
+    return;
+  }
+
+  try {
+    await m.React('🔥');
+
+    const quoted = m.message?.extendedTextMessage?.contextInfo;
+    const mentionedIds = quoted?.mentionedJid || [];
+
+    let targetJid;
+
+    // Priority 1: If user replied to someone
+    if (quoted?.participant) {
+      targetJid = quoted.participant;
+    }
+    // Priority 2: If user mentioned someone
+    else if (mentionedIds.length > 0) {
+      targetJid = mentionedIds[0];
+    }
+
+    // No target found
+    if (!targetJid) {
       await sock.sendMessage(
         m.from,
-        { text: "❌ This command only works in groups!" },
+        { text: `⚠️ Please mention or reply to someone to roast!\nExample: *${prefix}roast @user* or reply with *${prefix}roast*` },
         { quoted: m }
       );
+      await m.React('❌');
       return;
     }
 
-    try {
-      await m.React('🔥'); // React with fire icon
+    // Get user name
+    const user = await sock.onWhatsApp(targetJid);
+    const username = user[0]?.name || user[0]?.pushname || "User";
 
-      // Improved mention detection
-      const mentionedIds = m.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-      
-      if (mentionedIds.length === 0) {
-        await sock.sendMessage(
-          m.from,
-          { text: `⚠️ Please mention someone to roast!\nExample: *${prefix}roast @user*` },
-          { quoted: m }
-        );
-        await m.React('❌');
-        return;
-      }
+    // Get random roast
+    const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
+    const responseText = `@${targetJid.split('@')[0]} ${randomRoast}`;
 
-      // Get random roast
-      const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
-      
-      // Get the first mentioned user
-      const mentionedUser = mentionedIds[0];
-      const user = await sock.onWhatsApp(mentionedUser);
-      const username = user[0]?.name || user[0]?.pushname || "Unknown User";
-      
-      const responseText = `@${mentionedUser.split('@')[0]} ${randomRoast}`;
+    await sock.sendMessage(
+      m.from,
+      {
+        text: responseText,
+        mentions: [targetJid]
+      },
+      { quoted: m }
+    );
 
-      await sock.sendMessage(
-        m.from,
-        {
-          text: responseText,
-          mentions: [mentionedUser]
-        },
-        { quoted: m }
-      );
-
-      await m.React('😂'); // React with laughing icon
-    } catch (error) {
-      console.error('Error in roast command:', error);
-      await m.React('❌');
-      await sock.sendMessage(
-        m.from,
-        { text: "⚠️ Failed to roast. Try again later!" },
-        { quoted: m }
-      );
-    }
+    await m.React('😂');
+  } catch (error) {
+    console.error('Error in roast command:', error);
+    await m.React('❌');
+    await sock.sendMessage(
+      m.from,
+      { text: "⚠️ Failed to roast. Try again later!" },
+      { quoted: m }
+    );
   }
+      }
 };
-
 export default roast;
