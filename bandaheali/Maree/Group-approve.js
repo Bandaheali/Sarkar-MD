@@ -5,7 +5,7 @@ const approveall = async (m, gss) => {
     const prefix = config.PREFIX;
     const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
     
-    if (cmd !== 'approveall' || cmd !== 'approve') return;
+    if (cmd !== 'approveall') return;
     if (!m.isGroup) return m.reply("*🚫 This command only works in groups*");
 
     const botNumber = await gss.decodeJid(gss.user.id);
