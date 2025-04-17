@@ -9,53 +9,58 @@ const invite = async (m, gss) => {
     const validCommands = ['invite', 'add'];
 
     if (!validCommands.includes(cmd)) return;
-    if (!m.isGroup) return m.reply("*_🚫 THIS COMMAND CAN ONLY BE USED IN GROUPS_*");
+    if (!m.isGroup) return m.reply("*🚫 THIS COMMAND CAN ONLY BE USED IN GROUPS*");
 
-    if (!text) return m.reply(`*_📛 ENTER THE NUMBER YOU WANT TO INVITE TO THE GROUP_*\n\nExample:\n*${prefix + cmd}* 923253617422`);
-    if (text.includes('+')) return m.reply(`*_📛 ENTER THE NUMBER WITHOUT_* *+* `);
-    if (isNaN(text)) return m.reply(`*_📛 ENTER ONLY THE NUMBERS PLUS YOUR COUNTRY CODE WITHOUT SPACES_*`);
+    if (!text) return m.reply(`*📛 ENTER THE NUMBER YOU WANT TO ADD*\n\nExample:\n*${prefix + cmd}* 923253617422`);
+    if (text.includes('+')) return m.reply(`*📛 ENTER NUMBER WITHOUT +*`);
+    if (isNaN(text)) return m.reply(`*📛 ENTER ONLY NUMBERS WITH COUNTRY CODE*`);
 
     const botNumber = await gss.decodeJid(gss.user.id);
     const groupMetadata = await gss.groupMetadata(m.from);
     const isBotAdmin = groupMetadata.participants.find(p => p.id === botNumber)?.admin;
     const senderAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin;
 
-    if (!isBotAdmin) return m.reply('*_📛 BOT MUST BE AN ADMIN TO USE THIS COMMAND_*');
-    if (!senderAdmin) return m.reply('*_📛 YOU MUST BE AN ADMIN TO USE THIS COMMAND_*');
+    if (!isBotAdmin) return m.reply('*📛 BOT MUST BE ADMIN*');
+    if (!senderAdmin) return m.reply('*📛 YOU MUST BE ADMIN*');
 
     const userJid = `${text}@s.whatsapp.net`;
 
-    try {
-      // First try to add directly
-      await gss.groupParticipantsUpdate(m.from, [userJid], 'add');
-      
-      // Verify if user was actually added
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-      const updatedGroupData = await gss.groupMetadata(m.from);
-      const isUserAdded = updatedGroupData.participants.some(p => p.id === userJid);
-      
-      if (isUserAdded) {
-        return m.reply(`*_☑ USER HAS BEEN SUCCESSFULLY ADDED TO THE GROUP_*`);
-      } else {
-        throw new Error('User not added');
-      }
-    } catch (error) {
-      console.warn('Direct add failed, sending invite link instead:', error.message);
-      
+    // First try direct add with multiple attempts
+    let added = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        const inviteLink = 'https://chat.whatsapp.com/' + await gss.groupInviteCode(m.from);
-        const inviteMessage = `≡ *_GROUP INVITATION_*\n\nA USER INVITES YOU TO JOIN THE GROUP "${groupMetadata.subject}".\n\nInvite Link: ${inviteLink}\n\nINVITED BY: @${m.sender.split('@')[0]}`;
-
-        await gss.sendMessage(userJid, { text: inviteMessage, mentions: [m.sender] });
-        return m.reply(`*_☑ COULD NOT ADD DIRECTLY, AN INVITE LINK HAS BEEN SENT TO THE USER_*`);
-      } catch (inviteError) {
-        console.error('Invite sending failed:', inviteError);
-        return m.reply('*_❌ FAILED TO ADD USER AND COULD NOT SEND INVITE LINK. USER MAY HAVE PRIVACY RESTRICTIONS._*');
+        await gss.groupParticipantsUpdate(m.from, [userJid], 'add');
+        
+        // Wait and verify
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        const updatedGroup = await gss.groupMetadata(m.from);
+        if (updatedGroup.participants.some(p => p.id === userJid)) {
+          added = true;
+          return m.reply(`*✅ USER ADDED SUCCESSFULLY*`);
+        }
+      } catch (error) {
+        console.log(`Add attempt ${attempt} failed:`, error.message);
+        if (attempt === 3) {
+          await m.reply(`*⚠ Failed to add user directly. Trying alternative method...*`);
+        }
       }
+    }
+
+    // Alternative method - invite via link
+    try {
+      const inviteLink = 'https://chat.whatsapp.com/' + await gss.groupInviteCode(m.from);
+      await gss.sendMessage(userJid, {
+        text: `*GROUP INVITATION*\n\nYou've been invited to join "${groupMetadata.subject}"\n\nLink: ${inviteLink}\n\nInvited by: @${m.sender.split('@')[0]}`,
+        mentions: [m.sender]
+      });
+      return m.reply(`*📩 INVITE LINK SENT TO USER*`);
+    } catch (error) {
+      console.error('Invite sending failed:', error);
+      return m.reply(`*❌ FAILED TO ADD USER. THEY MAY HAVE PRIVACY RESTRICTIONS.*`);
     }
   } catch (error) {
     console.error('Error:', error);
-    m.reply('*_An error occurred while processing the command._*');
+    m.reply('*❌ AN ERROR OCCURRED*');
   }
 };
 
