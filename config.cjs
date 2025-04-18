@@ -5,7 +5,7 @@ const config = {
   SESSION_ID: process.env.SESSION_ID || "Sarkarmd$uKyTN3M0",
   PREFIX: process.env.PREFIX || '.',
   ALLOWED_NUMBER: process.env.ALLOWED_NUMBER || ["923143200187", "923403037285"],
-  PM_BLOCK: process.env.PM_BLOCK !== undefined ? process.env.PM_BLOCK === 'false' : false,
+  PM_BLOCK: process.env.PM_BLOCK !== undefined ? process.env.PM_BLOCK === 'false' : true,
   AUTO_TYPING: process.env.AUTO_TYPING !== undefined ? process.env.AUTO_TYPING === 'true' : false,
   AUTO_RECORDING: process.env.AUTO_RECORDING !== undefined ? process.env.AUTO_RECORDING === 'true' : false, 
   ALWAYS_ONLINE: process.env.ALWAYS_ONLINE !== undefined ? process.env.ALWAYS_ONLINE === 'false' : false,
