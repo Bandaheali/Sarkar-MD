@@ -7,30 +7,33 @@ const VoiceBotCmd = async (m, Matrix) => {
     const isAuthorized = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net', dev].includes(m.sender);
 
     const prefix = config.PREFIX;
-    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-    const text = m.body.slice(prefix.length + cmd.length).trim();
+    const body = m.body || '';
+    const cmd = body.startsWith(prefix) ? body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+    const text = body.slice(prefix.length + cmd.length).trim();
 
     if (cmd === 'voicebot' || cmd === 'vbot') {
-      if (!isAuthorized) return m.reply('*_This command is only for the bot and owner_*');
+      if (!isAuthorized) {
+        return await m.reply('*_This command is only for the bot and owner_*');
+      }
 
       let responseMessage;
 
       if (text === 'on') {
         config.VOICE_BOT = true;
-        responseMessage = '*✅ Voice BOT HAS BEEN ENABLED NOW BOT WILL REACT ON USERS MSG*';
+        responseMessage = '*✅ Voice BOT HAS BEEN ENABLED NOW BOT WILL REPLY WITH VOICE MESSAGES*';
       } else if (text === 'off') {
         config.VOICE_BOT = false;
-        responseMessage = '*❌ Voice BOT HAS BEEN DISABLED NOW BOT WILL NOT REACT ON USERS MSG*';
+        responseMessage = '*❌ Voice BOT HAS BEEN DISABLED NOW BOT WILL NOT REPLY WITH VOICE MESSAGES*';
       } else {
-        responseMessage = `*VOICE BOT Usage:*\n\n- \`voicebot on\`  ➜ Enable VOICE BOT\n- \`voicebot off\` ➜ Disable VOICE BOT`;
+        responseMessage = `*VOICE BOT Usage:*\n\n• \`${prefix}voicebot on\`  ➜ Enable VOICE BOT\n• \`${prefix}voicebot off\` ➜ Disable VOICE BOT`;
       }
 
       await Matrix.sendMessage(m.from, { text: responseMessage }, { quoted: m });
     }
   } catch (error) {
-    console.error("heartreact Command Error:", error);
+    console.error("VoiceBot Command Error:", error);
     await Matrix.sendMessage(m.from, { text: '*An error occurred while processing your request.*' }, { quoted: m });
   }
 };
 
-export default voiceBotCmd;
+export default VoiceBotCmd; // Fixed export name to match the function
