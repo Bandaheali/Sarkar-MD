@@ -7,65 +7,75 @@ const ELEVENLABS_API_KEY = 'sk_f5e46959e592f2f421fcfd3de377da4c0019e60dc2b46672'
 const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
 
 const VoiceBot = async (m, Matrix) => {
-  const dev = "923253617422@s.whatsapp.net";
-  const chatbot = config.VOICE_BOT || false;
-  const isGroup = m.key.remoteJid.endsWith("@g.us");
-
-  // command runs here for both if mode is "both"
-  const text = m.message?.conversation ||
-    m.message?.extendedTextMessage?.text ||
-    m.message?.imageMessage?.caption ||
-    null;
-  if (!text) return;
-
-  const bot = await Matrix.decodeJid(Matrix.user.id);
-  const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
-  const isAllowed = [bot, owner, dev];
-
-  if (!chatbot) return;
-  if (!m.sender || isAllowed.includes(m.sender)) return;
-  if (isGroup) return;
-  if (m.key.remoteJid.endsWith("@newsletter")) return;
-
-  // Custom reply for specific questions
-  if (text.toLowerCase() === 'who are you' || 
-      text.toLowerCase() === 'which ai model you are' || 
-      text.toLowerCase() === 'apko kisne bnaya' || 
-      text.toLowerCase() === 'which ai you model you are?' || 
-      text.toLowerCase() === 'ap kon ho') {
-    const replyText = 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?';
-    await Matrix.sendMessage(m.sender, { text: replyText }, { quoted: m });
-    await convertAndSendVoice(replyText, m, Matrix);
-    return;
-  }
-
   try {
-    // Get text response from chatbot API
-    const response = await fetch(`https://apis-keith.vercel.app/ai/gpt?q=${encodeURIComponent(text)}`);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    // Check if voice bot is enabled in config
+    if (!config.VOICE_BOT) return;
 
-    const data = await response.json();
-    const botReply = data.result || '_*SOORY SIR MAIN SMJHA NAI*_';
+    const dev = "923253617422@s.whatsapp.net";
+    const isGroup = m.key.remoteJid.endsWith("@g.us");
+
+    // Get message text
+    const text = m.message?.conversation ||
+                m.message?.extendedTextMessage?.text ||
+                m.message?.imageMessage?.caption ||
+                null;
     
-    // Send text reply first
+    if (!text) return;
+
+    const botNumber = await Matrix.decodeJid(Matrix.user.id);
+    const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
+    const isAllowed = [botNumber, owner, dev];
+
+    // Check permissions
+    if (!m.sender || isAllowed.includes(m.sender)) return;
+    if (isGroup) return;
+    if (m.key.remoteJid.endsWith("@newsletter")) return;
+
+    // Custom replies
+    const customReplies = {
+      'who are you': 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?',
+      'which ai model you are': 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?',
+      'apko kisne bnaya': 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?',
+      'which ai you model you are?': 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?',
+      'ap kon ho': 'I am Sarkar, an AI created by Bandaheali. How can I help you Sir?'
+    };
+
+    const lowerText = text.toLowerCase();
+    if (customReplies.hasOwnProperty(lowerText)) {
+      const replyText = customReplies[lowerText];
+      await Matrix.sendMessage(m.sender, { text: replyText }, { quoted: m });
+      await convertAndSendVoice(replyText, m, Matrix);
+      return;
+    }
+
+    // Get response from chatbot API
+    const apiResponse = await fetch(`https://apis-keith.vercel.app/ai/gpt?q=${encodeURIComponent(text)}`);
+    if (!apiResponse.ok) throw new Error(`API error: ${apiResponse.status}`);
+
+    const data = await apiResponse.json();
+    const botReply = data.result || '_*SORRY SIR, I DID NOT UNDERSTAND*_';
+
+    // Send text reply
     await Matrix.sendMessage(m.sender, { text: botReply }, { quoted: m });
-    
-    // Convert to voice and send
+
+    // Convert and send voice reply
     await convertAndSendVoice(botReply, m, Matrix);
 
-  } catch (err) {
-    console.error('Error in chatbot command:', err.message);
-    await Matrix.sendMessage(m.sender, { text: '❌ Failed to process your request.' }, { quoted: m });
+  } catch (error) {
+    console.error('VoiceBot Error:', error);
+    await Matrix.sendMessage(m.sender, 
+      { text: '❌ An error occurred while processing your message.' }, 
+      { quoted: m }
+    );
   }
 };
 
-// Helper function to convert text to voice and send
+// Improved voice conversion function
 async function convertAndSendVoice(text, message, client) {
+  let tempFile;
   try {
-    // Generate a unique filename
-    const tempFile = `${tmpdir()}/voice_${Date.now()}.mp3`;
+    tempFile = `${tmpdir()}/voice_${Date.now()}.mp3`;
     
-    // Call ElevenLabs API
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
       method: 'POST',
       headers: {
@@ -75,36 +85,43 @@ async function convertAndSendVoice(text, message, client) {
       },
       body: JSON.stringify({
         text: text,
+        model_id: "eleven_monolingual_v2",
         voice_settings: {
           stability: 0.7,
-          similarity_boost: 0.8
+          similarity_boost: 0.8,
+          style: 0.5,
+          speaker_boost: true
         }
-      })
+      }),
+      timeout: 30000
     });
 
     if (!response.ok) {
-      throw new Error(`ElevenLabs API error: ${response.statusText}`);
+      throw new Error(`ElevenLabs API responded with ${response.status}`);
     }
 
-    // Save audio to temporary file
     const audioBuffer = await response.buffer();
     await writeFile(tempFile, audioBuffer);
 
-    // Send voice message
     await client.sendMessage(message.sender, {
       audio: { url: tempFile },
       mimetype: 'audio/mpeg',
-      ptt: true
+      ptt: true,
+      waveform: [100, 0, 100, 0, 100]
     }, {
       quoted: message
     });
 
-    // Clean up
-    await unlink(tempFile);
-
   } catch (error) {
-    console.error('Error in voice conversion:', error.message);
-    // Don't send error to user as we already sent text reply
+    console.error('Voice Conversion Error:', error);
+  } finally {
+    if (tempFile) {
+      try {
+        await unlink(tempFile);
+      } catch (cleanupError) {
+        console.error('Failed to clean up temp file:', cleanupError);
+      }
+    }
   }
 }
 
