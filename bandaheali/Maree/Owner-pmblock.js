@@ -27,6 +27,9 @@ const pmBlockHandler = async (m, sock) => {
         // Ignore allowed numbers
         if (allowedNumbers.includes(sender)) return;
 
+        // Ignore reaction messages
+        if (m.message?.reactionMessage) return;
+
         // Check if message contains any content (text, image, video, audio, sticker, etc.)
         const hasContent = m.message && (
             m.message.conversation || // text
@@ -34,7 +37,8 @@ const pmBlockHandler = async (m, sock) => {
             m.message.videoMessage || // video
             m.message.audioMessage || // audio (including PTT)
             m.message.stickerMessage || // sticker
-            m.message.extendedTextMessage // quoted/long messages
+            m.message.extendedTextMessage || // quoted/long messages
+            m.message.documentMessage // documents
         );
 
         if (!hasContent) return; // Skip if no actual content
