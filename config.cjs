@@ -17,7 +17,7 @@ const config = {
   VOICE_BOT: process.env.VOICE_BOT !== undefined ? process.env.VOICE_BOT === 'true' : false,
   HEART_REACT: process.env.HEART_REACT !== undefined ? process.env.HEART_REACT === 'false' : false,
   REJECT_CALL: process.env.REJECT_CALL !== undefined ? process.env.REJECT_CALL === 'true' : false, 
-  ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : true,
+  ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : false,
   MENU_IMAGE: process.env.MENU_IMAGE || "https://files.catbox.moe/htnkaq.jpg",
   BOT_NAME: process.env.BOT_NAME || "Sarkar",
   DELETE_PATH: process.env.DELETE_PATH || "pm",
