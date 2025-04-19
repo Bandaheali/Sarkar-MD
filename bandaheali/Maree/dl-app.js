@@ -22,14 +22,14 @@ const apkDownloader = async (m, Matrix) => {
     const app = data.datalist.list[0];
     const appSize = (app.size / 1048576).toFixed(2); // Convert bytes to MB
 
-    const caption = `╭━━━〔 *APK Downloader* 〕━━━┈⊷
+    const caption = `╭━━━〔 *_SARKAR-MD APK DL_* 〕━━━┈⊷
 ┃ 📦 *Name:* ${app.name}
 ┃ 🏋 *Size:* ${appSize} MB
 ┃ 📦 *Package:* ${app.package}
 ┃ 📅 *Updated On:* ${app.updated}
 ┃ 👨‍💻 *Developer:* ${app.developer.name}
 ╰━━━━━━━━━━━━━━━┈⊷
-🔗 *Powered By JawadTechX ✅*`;
+🔗 *_Powered By SARKAR-MD _*`;
 
     await Matrix.sendMessage(m.from, { react: { text: "⬆️", key: m.key } });
 
@@ -43,8 +43,8 @@ const apkDownloader = async (m, Matrix) => {
         forwardingScore: 999,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
-          newsletterJid: "120363398040175935@newsletter",
-          newsletterName: "JawadTechX",
+          newsletterJid: "120363315182578784@newsletter",
+          newsletterName: "𝗦𝗮𝗿𝗸𝗮𝗿-𝗠𝗗",
           serverMessageId: 143,
         },
       },
