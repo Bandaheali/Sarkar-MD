@@ -1,5 +1,5 @@
 import axios from "axios";
-import config from "../config.cjs";
+import config from "../../config.cjs";
 
 const apkDownloader = async (m, Matrix) => {
   const prefix = config.PREFIX;
