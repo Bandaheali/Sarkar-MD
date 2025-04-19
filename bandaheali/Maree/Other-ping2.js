@@ -8,7 +8,7 @@ const ping2 = async (m, sock) => {
 
   if (["ping2", "speed2", "pong2"].includes(cmd)) {
     const start = new Date().getTime();
-    await m.React('⏳'); // Loading reaction
+    await m.React('⏳');
 
     const reactionEmojis = ['🔥', '⚡', '🚀', '💨', '🎯', '🎉', '🌟', '💥', '🕐', '🔹'];
     const textEmojis = ['💎', '🏆', '⚡️', '🚀', '🎶', '🌠', '🌀', '🔱', '🛡️', '✨'];
@@ -26,20 +26,20 @@ const ping2 = async (m, sock) => {
     const responseTime = (end - start).toFixed(2);
     const responseText = `> *SARKAR-MD SPEED: ${responseTime}ms ${textEmoji}*`;
 
-    // Smart reply JID handler
-    const replyJid = m.key.remoteJid || m.chat || m.from;
+    // Newsletter fix: Ensure accurate origin JID
+    const originJid = m.msg?.contextInfo?.remoteJid || m.key?.remoteJid || m.chat || m.from;
 
     await sock.sendMessage(
-      replyJid,
+      originJid,
       {
         text: responseText,
         contextInfo: {
           mentionedJid: [m.sender],
           isForwarded: true,
           forwardingScore: 999,
-          ...(replyJid.endsWith('@newsletter') && {
+          ...(originJid.endsWith('@newsletter') && {
             forwardedNewsletterMessageInfo: {
-              newsletterJid: replyJid,
+              newsletterJid: originJid,
               newsletterName: "Sarkar-MD",
               serverMessageId: -1,
             }
