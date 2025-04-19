@@ -1,10 +1,10 @@
-import config from '../config.cjs';
+import Sarkar from '../../config.cjs';
 
 const modeCommand = async (m, Matrix) => {
   const dev = '923253617422@s.whatsapp.net';
     const botNumber = await Matrix.decodeJid(Matrix.user.id);
-    const isCreator = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net', dev].includes(m.sender);
-    const prefix = config.PREFIX;
+    const isCreator = [botNumber, Sarkar.OWNER_NUMBER + '@s.whatsapp.net', dev].includes(m.sender);
+    const prefix = Sarkar.PREFIX;
 const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
 const text = m.body.slice(prefix.length + cmd.length).trim();
 
@@ -18,11 +18,11 @@ const text = m.body.slice(prefix.length + cmd.length).trim();
         if (['public', 'private'].includes(text)) {
             if (text === 'public') {
                 Matrix.public = true;
-               config.MODE = "public";
+               Sarkar.MODE = "public";
                 m.reply(`*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${text} MODE_*`);
             } else if (text === 'private') {
                 Matrix.public = false;
-                config.MODE = "private";
+                Sarkar.MODE = "private";
             m.reply(`*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${text} MODE_*`);
             } else {
                 m.reply("Usage:\n.Mode public/private");
