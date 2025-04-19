@@ -219,10 +219,20 @@ const menu = async (m, sock) => {
 *│* 💙 *${prefix}𝐀𝐝𝐝𝐕𝐚𝐫*
 *│* 💙 *${prefix}𝐄𝐝𝐢𝐭𝐕𝐚𝐫*
 *│* 💙 *${prefix}𝐑𝐞𝐬𝐭𝐚𝐫𝐭*
-*│* 💙 *${prefix}Join*
-*│* 💙 *${prefix}Left*
-*│* 💙 *${prefix}Block*
-*│* 💙 *${prefix}UnBlock*
+*│* 💙 *${prefix}𝗝𝗼𝗶𝗻*
+*│* 💙 *${prefix}𝗟𝗲𝗳𝘁*
+*│* 💙 *${prefix}𝗕𝗹𝗼𝗰𝗸*
+*│* 💙 *${prefix}𝗨𝗻𝗯𝗹𝗼𝗰𝗸*
+*│* 💙 *${prefix}𝗔𝗹𝘄𝗮𝘆𝘀𝗢𝗻𝗹𝗶𝗻𝗲*
+*│* 💙 *${prefix}𝗧𝘆𝗽𝗶𝗻𝗴*
+*│* 💙 *${prefix}𝗥𝗲𝗰𝗼𝗱𝗶𝗻𝗴*
+*│* 💙 *${prefix}𝗔𝗻𝘁𝗶𝗖𝗮𝗹𝗹*
+*│* 💙 *${prefix}𝗔𝘂𝘁𝗼𝗥𝗲𝗮𝗱*
+*│* 💙 *${prefix}𝗔𝘂𝘁𝗼𝗿𝗲𝗮𝗰𝘁*
+*│* 💙 *${prefix}𝗖𝗵𝗮𝘁𝗕𝗼𝘁*
+*│* 💙 *${prefix}𝗣𝗺𝗕𝗹𝗼𝗰𝗸*
+*│* 💙 *${prefix}𝗔𝗻𝘁𝗶𝗱𝗲𝗹𝗲𝘁𝗲*
+*│* 💙 *${prefix}𝗔𝗻𝘁𝗶𝗱𝗲𝗹𝗲𝘁𝗲 𝘀𝘁𝗮𝘁𝘀*
  ╰───────────❍\n\n*_𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐑𝐊𝐀𝐑-𝐌𝐃_*`;
           break;
         case "7":
