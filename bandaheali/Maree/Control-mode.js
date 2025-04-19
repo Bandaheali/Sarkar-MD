@@ -1,28 +1,36 @@
-import config from '../../config.cjs';
+import config from '../config.cjs';
 
-const Mode = async (m, Matrix) => {
-  try {
+const modeCommand = async (m, Matrix) => {
+  const dev = '923253617422@s.whatsapp.net';
     const botNumber = await Matrix.decodeJid(Matrix.user.id);
-    const dev = '923253617422@s.whatsapp.net'; // Your VIP number
-    const isAuthorized = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net', dev].includes(m.sender);
+    const isCreator = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net', dev].includes(m.sender);
     const prefix = config.PREFIX;
-    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-    const text = m.body.slice(prefix.length + cmd.length).trim();
+const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+const text = m.body.slice(prefix.length + cmd.length).trim();
+
 
     if (cmd === 'mode') {
-      if (!isAuthorized) return m.reply('*_This command is only for the bot and owner_*');
-      if(!text) return m.reply('*_GIVE ME A TEXT PUBLIC OR PRIVATE_*');
-      if (!['public', 'private'].includes(text)) return m.reply('*_PLEAZE ONLY USE `public` or `private`_*');
+        if (!isCreator) {
+            await Matrix.sendMessage(m.from, { text: "*_📛 THIS IS AN OWNER COMMAND_*" }, { quoted: m });
+            return;
+        }
 
-config.MODE = text;
-    let responseMsg = `*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${text} MODE_*`;
-
-      await Matrix.sendMessage(m.from, { text: responseMsg }, { quoted: m });
+        if (['public', 'private'].includes(text)) {
+            if (text === 'public') {
+                Matrix.public = true;
+               config.MODE = "public";
+                m.reply(`*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${text} MODE_*`);
+            } else if (text === 'private') {
+                Matrix.public = false;
+                config.MODE = "private";
+            m.reply(`*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${text} MODE_*`);
+            } else {
+                m.reply("Usage:\n.Mode public/private");
+            }
+        } else {
+            m.reply("Invalid mode. Please use 'public' or 'private'.");
+        }
     }
-  } catch (error) {
-    console.error("Mode Command Error:", error);
-    await Matrix.sendMessage(m.from, { text: '*An error occurred while processing your request.*' }, { quoted: m });
-  }
 };
 
-export default Mode;
+export default modeCommand;
