@@ -68,7 +68,7 @@ async function start() {
         'level': 'silent'
       }),
       'printQRInTerminal': useQR,
-      'browser': ['Ethix-MD', 'safari', '3.3'],
+      'browser': ['Sarkar-MD', 'safari', '3.3'],
       'auth': _0x1fda07,
       'getMessage': async _0x53ca5a => {
         if (store) {
@@ -91,7 +91,7 @@ async function start() {
         }
       } else if (_0x237ed1 === 'open') {
         if (initialConnection) {
-          console.log(_0x4b0fc4.green("Sarkar-MD MD CONNECTED SUCCESSFULLY ✅"));
+          console.log(_0x4b0fc4.green("Sarkar-MD CONNECTED SUCCESSFULLY ✅"));
           _0x76bf4.sendMessage(_0x76bf4.user.id, {
             'text': "╭─────────────━┈⊷\n│ *sarkar ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*\n╰─────────────━┈⊷\n\n╭─────────────━┈⊷\n│🤖 ʙᴏᴛ ɴᴀᴍᴇ: *Sarkar-ᴍᴅ*\n│👨‍💻 ᴏᴡɴᴇʀ : *Sarkar Bandaheali*\n╰─────────────━┈⊷\n\n*Message Me on whatsapp 😈*\n_https://wa.me/923253617422_"
           });
