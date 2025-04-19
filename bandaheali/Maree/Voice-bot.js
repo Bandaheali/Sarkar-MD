@@ -43,7 +43,6 @@ const VoiceBot = async (m, Matrix) => {
     const lowerText = text.toLowerCase();
     if (customReplies.hasOwnProperty(lowerText)) {
       const replyText = customReplies[lowerText];
-      await Matrix.sendMessage(m.sender, { text: replyText }, { quoted: m });
       await convertAndSendVoice(replyText, m, Matrix);
       return;
     }
@@ -53,24 +52,18 @@ const VoiceBot = async (m, Matrix) => {
     if (!apiResponse.ok) throw new Error(`API error: ${apiResponse.status}`);
 
     const data = await apiResponse.json();
-    const botReply = data.result || '_*SORRY SIR, I DID NOT UNDERSTAND*_';
+    const botReply = data.result || 'Sorry, I did not understand that.';
 
-    // Send text reply
-    await Matrix.sendMessage(m.sender, { text: botReply }, { quoted: m });
-
-    // Convert and send voice reply
+    // Convert and send voice reply only (no text reply)
     await convertAndSendVoice(botReply, m, Matrix);
 
   } catch (error) {
     console.error('VoiceBot Error:', error);
-    await Matrix.sendMessage(m.sender, 
-      { text: '❌ An error occurred while processing your message.' }, 
-      { quoted: m }
-    );
+    await convertAndSendVoice('An error occurred while processing your message.', m, Matrix);
   }
 };
 
-// Improved voice conversion function
+// Voice conversion function
 async function convertAndSendVoice(text, message, client) {
   let tempFile;
   try {
@@ -114,6 +107,11 @@ async function convertAndSendVoice(text, message, client) {
 
   } catch (error) {
     console.error('Voice Conversion Error:', error);
+    // Fallback to text if voice conversion fails
+    await client.sendMessage(message.sender, 
+      { text: 'Error: Could not generate voice response. Please try again later.' }, 
+      { quoted: message }
+    );
   } finally {
     if (tempFile) {
       try {
