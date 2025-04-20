@@ -2,7 +2,7 @@ const fs = require("fs");
 require("dotenv").config();
 
 const config = {
-  SESSION_ID: process.env.SESSION_ID || "Sarkarmd$uKyTN3M0",
+  SESSION_ID: process.env.SESSION_ID || "",
   PREFIX: process.env.PREFIX || '.',
   ALLOWED_NUMBER: process.env.ALLOWED_NUMBER || ["923143200187", "923403037285"],
   PM_BLOCK: process.env.PM_BLOCK !== undefined ? process.env.PM_BLOCK === 'true' : false,
