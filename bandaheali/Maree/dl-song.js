@@ -33,6 +33,7 @@ const dlSong = async (m, sock) => {
 
     const downloadUrl = response.result.download_url;
       const thumbnail = response.result.thumbnail;
+      const title = response.result.title;
 
       await m.React('✅'); // React with a success icon
 
