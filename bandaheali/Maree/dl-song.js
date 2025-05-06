@@ -1,10 +1,10 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
+import pkg from 'gifted-dls';
+const GIFTED_DLS = pkg;
+const gifted = new GIFTED_DLS();
 
 const dlSong = async (m, sock) => {
-  const GIFTED_DLS = (await import('gifted-dls')).default; // ✅ Dynamic import for ESM
-  const gifted = new GIFTED_DLS();
-
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
@@ -16,34 +16,34 @@ const dlSong = async (m, sock) => {
       return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
     }
 
-    await m.React('⏳'); // Loading
+    await m.React('⏳'); // React with a loading icon
 
     try {
-      // Search for YouTube video
+      // Search for the video using yt-search
       const searchResults = await yts(text);
       if (!searchResults.videos.length) {
         return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
       }
 
-      const video = searchResults.videos[0];
-      const dlData = await gifted.ytmp3(video.url);
+      const video = searchResults.videos[0]; // Get the first result
+      const videoUrl = video.url;
 
-      if (!dlData?.result?.download_url) {
-        return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
-      }
+      // Fetch audio download link from API
+      const response = await gifted.ytmp3(videoUrl);
 
-      const { title, thumbnail, duration, download_url } = dlData.result;
+    const downloadUrl = response.result.download_url;
+      const thumbnail = response.result.thumbnail;
 
-      await m.React('✅'); // Success
+      await m.React('✅'); // React with a success icon
 
-      await sock.sendMessage(
+      sock.sendMessage(
         m.from,
         {
-          audio: { url: download_url },
-          mimetype: "audio/mpeg",
-          ptt: false,
-          fileName: `${title}.mp3`,
-          caption: `🎵 *Title:* ${title}\n⏱️ *Duration:* ${duration}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY BANDAHEALI`,
+          audio: { url: downloadUrl },
+          mimetype: "audio/mpeg", // ✅ Correct mimetype for MP3 files
+          ptt: false, // ✅ Set to true for voice note format
+          fileName: `${title}.mp3`, // ✅ Proper filename
+          caption: `🎵 *Title:* ${title}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY BANDAHEALI`,
           contextInfo: {
             isForwarded: false,
             forwardingScore: 999,
@@ -51,7 +51,7 @@ const dlSong = async (m, sock) => {
               title: "✨ Sarkar-MD ✨",
               body: "YouTube Audio Downloader",
               thumbnailUrl: thumbnail,
-              sourceUrl: video.url,
+              sourceUrl: videoUrl,
               mediaType: 1,
               renderLargerThumbnail: true,
             },
