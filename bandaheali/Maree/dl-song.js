@@ -1,8 +1,4 @@
-import yts from 'yt-search';
 import config from '../../config.cjs';
-import pkg from 'gifted-dls';
-const GIFTED_DLS = pkg;
-const gifted = new GIFTED_DLS();
 
 const dlSong = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -16,34 +12,28 @@ const dlSong = async (m, sock) => {
       return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
     }
 
-    await m.React('⏳'); // React with a loading icon
+    await m.React('⏳'); // Loading reaction
 
     try {
-      // Search for the video using yt-search
-      const searchResults = await yts(text);
-      if (!searchResults.videos.length) {
-        return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
+      const apiUrl = `https://common-evangelina-mrshabankha-b7051a83.koyeb.app/yta?q=${encodeURIComponent(text)}`;
+      const response = await fetch(apiUrl);
+      const result = await response.json();
+
+      if (!result || !result.download_url) {
+        return sock.sendMessage(m.from, { text: "❌ Failed to fetch song!" }, { quoted: m });
       }
 
-      const video = searchResults.videos[0]; // Get the first result
-      const videoUrl = video.url;
+      const { title, download_url, thumbnail } = result;
 
-      // Fetch audio download link from API
-      const response = await gifted.ytmp3(videoUrl);
+      await m.React('✅'); // Success reaction
 
-    const downloadUrl = response.result.download_url;
-      const thumbnail = response.result.thumbnail;
-      const title = response.result.title;
-
-      await m.React('✅'); // React with a success icon
-
-      sock.sendMessage(
+      await sock.sendMessage(
         m.from,
         {
-          audio: { url: downloadUrl },
-          mimetype: "audio/mpeg", // ✅ Correct mimetype for MP3 files
-          ptt: false, // ✅ Set to true for voice note format
-          fileName: `${title}.mp3`, // ✅ Proper filename
+          audio: { url: download_url },
+          mimetype: "audio/mpeg",
+          ptt: false,
+          fileName: `${title}.mp3`,
           caption: `🎵 *Title:* ${title}\n📥 *Downloaded from:* Sarkar-MD\n\nPOWERED BY BANDAHEALI`,
           contextInfo: {
             isForwarded: false,
@@ -52,7 +42,7 @@ const dlSong = async (m, sock) => {
               title: "✨ Sarkar-MD ✨",
               body: "YouTube Audio Downloader",
               thumbnailUrl: thumbnail,
-              sourceUrl: videoUrl,
+              sourceUrl: apiUrl,
               mediaType: 1,
               renderLargerThumbnail: true,
             },
