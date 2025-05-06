@@ -1,10 +1,10 @@
 import yts from 'yt-search';
 import config from '../../config.cjs';
-import GIFTED_DLS from 'gifted-dls';
-
-const gifted = new GIFTED_DLS();
 
 const dlSong = async (m, sock) => {
+  const GIFTED_DLS = (await import('gifted-dls')).default; // ✅ Dynamic import for ESM
+  const gifted = new GIFTED_DLS();
+
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
@@ -16,17 +16,17 @@ const dlSong = async (m, sock) => {
       return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
     }
 
-    await m.React('⏳'); // Loading icon
+    await m.React('⏳'); // Loading
 
     try {
-      // Search for the video using yt-search
+      // Search for YouTube video
       const searchResults = await yts(text);
       if (!searchResults.videos.length) {
         return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
       }
 
       const video = searchResults.videos[0];
-      const dlData = await gifted.ytmp3(video.url); // Gifted-DLS
+      const dlData = await gifted.ytmp3(video.url);
 
       if (!dlData?.result?.download_url) {
         return sock.sendMessage(m.from, { text: "❌ Failed to fetch download link!" }, { quoted: m });
@@ -34,9 +34,9 @@ const dlSong = async (m, sock) => {
 
       const { title, thumbnail, duration, download_url } = dlData.result;
 
-      await m.React('✅'); // Success icon
+      await m.React('✅'); // Success
 
-      sock.sendMessage(
+      await sock.sendMessage(
         m.from,
         {
           audio: { url: download_url },
