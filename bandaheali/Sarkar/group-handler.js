@@ -6,26 +6,36 @@ export default async function GroupParticipants(sock, { id, participants, action
     const metadata = await sock.groupMetadata(id);
 
     for (const jid of participants) {
+      // Get profile picture
       let profile;
       try {
         profile = await sock.profilePictureUrl(jid, "image");
       } catch {
-        profile = "https://i.ibb.co/S5B1k8Z/default.jpg"; // fallback image
+        profile = "https://lh3.googleusercontent.com/proxy/esjjzRYoXlhgNYXqU8Gf_3lu6V-eONTnymkLzdwQ6F6z0MWAqIwIpqgq_lk4caRIZF_0Uqb5U8NWNrJcaeTuCjp7xZlpL48JDx-qzAXSTh00AVVqBoT7MJ0259pik9mnQ1LldFLfHZUGDGY=w1200-h630-p-k-no-nu";
       }
 
-      const userName = jid.split('@')[0];
+      const userName = jid.split("@")[0];
       const time = moment.tz('Asia/Karachi').format('HH:mm:ss');
       const date = moment.tz('Asia/Karachi').format('DD/MM/YYYY');
       const membersCount = metadata.participants.length;
 
       if (action === "add" && config.WELCOME) {
         await sock.sendMessage(id, {
-          text: `🎉 *Welcome @${userName}!* 🎉\n\n👤 Name: @${userName}\n📛 Group: *${metadata.subject}*\n🔢 Member No: *${membersCount}*\n⏰ Joined at: *${time}* on *${date}*\n\n_*Enjoy your stay!*_`,
+          text:
+            `╭─────「 ✦ 𝙒𝙀𝙇𝘾𝙊𝙈𝙀 ✦ 」─────╮\n` +
+            `│ 🎉 Hello @${userName}, welcome to *${metadata.subject}*!\n` +
+            `│\n` +
+            `├➤ Joined: ${time} on ${date}\n` +
+            `├➤ Member #: ${membersCount}\n` +
+            `├➤ Created By: Bandaheali\n` +
+            `└➤ Bot: *Sarkar-MD*\n\n` +
+            `_Feel free to introduce yourself and enjoy your stay!_\n\n` +
+            `*~ Powered by Sarkar-MD*`,
           contextInfo: {
             mentionedJid: [jid],
             externalAdReply: {
-              title: `✨ Welcome to ${metadata.subject}!`,
-              body: `@${userName} joined the party!`,
+              title: `✨ Welcome to ${metadata.subject}`,
+              body: `@${userName} just joined the group!`,
               mediaType: 1,
               previewType: 0,
               renderLargerThumbnail: true,
@@ -36,13 +46,20 @@ export default async function GroupParticipants(sock, { id, participants, action
         });
       }
 
-      else if (action === "remove" && config.WELCOME) {
+      if (action === "remove" && config.WELCOME) {
         await sock.sendMessage(id, {
-          text: `👋 *Goodbye @${userName}!* 👋\n\n📛 Group: *${metadata.subject}*\n👥 Members Left: *${membersCount}*\n⏰ Left at: *${time}* on *${date}*\n\n_*We’ll miss you!*_`,
+          text:
+            `╭─────「 ❌ 𝙇𝙀𝘼𝙑𝙀 𝘼𝙇𝙀𝙍𝙏 」─────╮\n` +
+            `│ Goodbye @${userName}, you left *${metadata.subject}*.\n` +
+            `│\n` +
+            `├➤ Time: ${time}\n` +
+            `├➤ Date: ${date}\n` +
+            `└➤ Remaining Members: ${membersCount}\n\n` +
+            `*~ Powered by Sarkar-MD*`,
           contextInfo: {
             mentionedJid: [jid],
             externalAdReply: {
-              title: `👋 Left ${metadata.subject}`,
+              title: `👋 Member Left`,
               body: `@${userName} has left the group.`,
               mediaType: 1,
               previewType: 0,
@@ -55,6 +72,6 @@ export default async function GroupParticipants(sock, { id, participants, action
       }
     }
   } catch (e) {
-    console.error("Error in GroupParticipants handler:", e);
+    console.error('GroupParticipants Error:', e);
   }
-}
+              }
