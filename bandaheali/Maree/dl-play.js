@@ -62,8 +62,8 @@ const play = async (m, sock) => {
             forwardingScore: 999,
             externalAdReply: {
               title: `✨ ${config.BOT_NAME} ✨`,
-              body: "NOW PLAYING ${title}",
-              thumbnailUrl: ${config.MENU_IMAGE},
+              body: `NOW PLAYING ${title}`,
+              thumbnailUrl: config.MENU_IMAGE,
               sourceUrl: videoUrl,
               mediaType: 1,
               renderLargerThumbnail: true,
