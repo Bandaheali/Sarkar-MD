@@ -25,13 +25,14 @@ const play = async (m, sock) => {
       const videoUrl = video.url;
       const title = video.title;
       const thumbnail = video.thumbnail;
+      const ago = video.ago;
 
       // Inform user that download is in progress
       await sock.sendMessage(
         m.from,
         {
           image: { url: thumbnail },
-          caption: `🎵 *Title:* ${title}\n⌛ Please wait, downloading your query...\n\nPOWERED BY ${config.BOT_NAME}`,
+          caption: `🎵 *Title:* ${title}\n *ago:* ${ago}\n *URl:* ${videoUrl}\n⌛ Please wait, downloading your query...\n\n_*POWERED BY ${config.BOT_NAME}*_`,
         },
         { quoted: m }
       );
