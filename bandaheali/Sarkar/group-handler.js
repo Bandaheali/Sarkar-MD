@@ -4,6 +4,8 @@ import config from '../../config.cjs';
 export default async function GroupParticipants(sock, { id, participants, action }) {
   try {
     const metadata = await sock.groupMetadata(id);
+    const ownerJid = metadata.owner || metadata.participants.find(p => p.admin === 'superadmin')?.id;
+    const ownerName = ownerJid ? `@${ownerJid.split("@")[0]}` : 'Unknown';
 
     for (const jid of participants) {
       // Get profile picture
@@ -27,12 +29,13 @@ export default async function GroupParticipants(sock, { id, participants, action
             `│\n` +
             `├➤ Joined: ${time} on ${date}\n` +
             `├➤ Member #: ${membersCount}\n` +
-            `├➤ Created By: Bandaheali\n` +
+            `├➤ Group Creator: ${ownerName}\n` +
+            `├➤ Handler: Bandaheali\n` +
             `└➤ Bot: *Sarkar-MD*\n\n` +
             `_Feel free to introduce yourself and enjoy your stay!_\n\n` +
             `*~ Powered by Sarkar-MD*`,
           contextInfo: {
-            mentionedJid: [jid],
+            mentionedJid: [jid, ownerJid],
             externalAdReply: {
               title: `✨ Welcome to ${metadata.subject}`,
               body: `@${userName} just joined the group!`,
@@ -54,10 +57,11 @@ export default async function GroupParticipants(sock, { id, participants, action
             `│\n` +
             `├➤ Time: ${time}\n` +
             `├➤ Date: ${date}\n` +
-            `└➤ Remaining Members: ${membersCount}\n\n` +
+            `├➤ Remaining Members: ${membersCount}\n` +
+            `└➤ Group Creator: ${ownerName}\n\n` +
             `*~ Powered by Sarkar-MD*`,
           contextInfo: {
-            mentionedJid: [jid],
+            mentionedJid: [jid, ownerJid],
             externalAdReply: {
               title: `👋 Member Left`,
               body: `@${userName} has left the group.`,
@@ -74,4 +78,4 @@ export default async function GroupParticipants(sock, { id, participants, action
   } catch (e) {
     console.error('GroupParticipants Error:', e);
   }
-              }
+          }
