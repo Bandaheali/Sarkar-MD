@@ -27,12 +27,11 @@ const play = async (m, sock) => {
       const thumbnail = video.thumbnail;
       const ago = video.ago;
 
-      // Inform user that download is in progress
       await sock.sendMessage(
         m.from,
         {
           image: { url: thumbnail },
-          caption: `🎵 *Title:* ${title}\n *ago:* ${ago}\n *URl:* ${videoUrl}\n⌛ Please wait, downloading your query...\n\n_*POWERED BY ${config.BOT_NAME}*_`,
+          caption: `🎵 *Title:* ${title}\n🕒 *Published:* ${ago}\n🔗 *URL:* ${videoUrl}\n⌛ Please wait, downloading your query...\n\n_*POWERED BY ${config.BOT_NAME}*_`,
         },
         { quoted: m }
       );
@@ -57,16 +56,6 @@ const play = async (m, sock) => {
           ptt: false,
           fileName: `${title}.mp3`,
           caption: `🎶 *Title:* ${title}\n📥 *Downloaded from:* ${config.BOT_NAME}\n\nPOWERED BY ${config.BOT_NAME}`,
-          contextInfo: {
-            isForwarded: false,
-            forwardingScore: 999,
-            externalAdReply: {
-              title: `✨ ${config.BOT_NAME} ✨`,
-              body: `NOW PLAYING ${title}`,
-              sourceUrl: videoUrl,
-              mediaType: 1,
-            },
-          },
         },
         { quoted: m }
       );
