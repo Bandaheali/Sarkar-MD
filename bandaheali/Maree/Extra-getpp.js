@@ -1,53 +1,68 @@
-import pkg from '@whiskeysockets/baileys';
-const { generateWAMessageFromContent, proto } = pkg;
 import config from '../../config.cjs';
+import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 
-const allMenus = async (m, sock) => {
-    const prefix = config.PREFIX;
-    const mode = config.MODE;
-    const name = config.BOT_NAME;
-    const owner = config.OWNER_NAME;
-    const pushName = m.pushName || 'User';
-    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-    // Command: getpp (get profile picture)
-    if (cmd === "getpp") {
-        await m.React('⏳');
-        
-        if (!m.quoted) {
-            await sock.sendMessage(m.from, { text: "Please reply to a user's message to get their profile picture." }, { quoted: m });
-            await m.React('❌');
-            return;
-        }
+const getpp = async (m, sock) => {
+  const prefix = config.PREFIX;
+  const cmd = m.body.startsWith(prefix) 
+    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
+    : '';
 
-        const quotedUser = m.quoted.sender;
-        const user = await sock.onWhatsApp(quotedUser);
-        
-        if (!user || !user[0] || !user[0].exists) {
-            await sock.sendMessage(m.from, { text: "User not found." }, { quoted: m });
-            await m.React('❌');
-            return;
-        }
+  if (cmd === 'getpp') {
+    try {
+      // Get the target user (either quoted/mentioned or sender)
+      let targetUser = m.sender;
+      if (m.quoted) {
+        targetUser = m.quoted.sender;
+      } else if (m.mentionedJid && m.mentionedJid[0]) {
+        targetUser = m.mentionedJid[0];
+      }
 
-        try {
-            const ppUrl = await sock.profilePictureUrl(quotedUser, 'image');
-            const userName = m.quoted.pushName || "User";
-            
-            await sock.sendMessage(
-                m.from,
-                {
-                    image: { url: ppUrl },
-                    caption: `Here is the profile picture of @${quotedUser.split('@')[0]}`,
-                    mentions: [quotedUser]
-                },
-                { quoted: m }
-            );
-            await m.React('✅');
-        } catch (error) {
-            console.error(error);
-            await sock.sendMessage(m.from, { text: "Failed to get profile picture. The user may not have one set." }, { quoted: m });
-            await m.React('❌');
-        }
+      // Remove @ from JID if present
+      targetUser = targetUser.replace(/@.+/, '');
+
+      // Get user's profile picture and info
+      const [profilePicture, userInfo] = await Promise.all([
+        sock.profilePictureUrl(targetUser, 'image').catch(() => null),
+        sock.onWhatsApp(targetUser).catch(() => null)
+      ]);
+
+      if (!profilePicture) {
+        return m.reply('❌ Could not fetch profile picture!');
+      }
+
+      // Download the profile picture
+      const ppBuffer = await (await fetch(profilePicture)).buffer();
+
+      // Get user's name and status (bio)
+      const contact = await sock.contact.getContact(targetUser, {
+        force: true
+      });
+      const userName = contact.notify || contact.name || 'Unknown';
+      const userBio = contact.status || 'No bio';
+
+      // Format the caption
+      const caption = `
+👤 *Name:* ${userName}
+📝 *Bio:* ${userBio}
+📞 *Number:* ${targetUser.split('@')[0]}
+      `.trim();
+
+      // Send the profile picture with caption
+      await sock.sendMessage(
+        m.from,
+        {
+          image: ppBuffer,
+          caption: caption,
+          mentions: [targetUser]
+        },
+        { quoted: m }
+      );
+
+    } catch (error) {
+      console.error('Error in getpp command:', error);
+      m.reply('❌ Error fetching profile picture!');
     }
+  }
 };
 
-export default allMenus;
+export default getpp;
