@@ -62,8 +62,8 @@ const play = async (m, sock) => {
             forwardingScore: 999,
             externalAdReply: {
               title: `✨ ${config.BOT_NAME} ✨`,
-              body: "YouTube Audio Downloader",
-              thumbnailUrl: thumbnail,
+              body: "NOW PLAYING ${title}",
+              thumbnailUrl: ${config.MENU_IMAGE},
               sourceUrl: videoUrl,
               mediaType: 1,
               renderLargerThumbnail: true,
