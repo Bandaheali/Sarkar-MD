@@ -10,10 +10,9 @@ const getpp = async (m, sock) => {
   if (cmd !== 'getpp') return;
 
   try {
-    // Target JID
-    let targetUser = m.sender;
-    if (m.quoted?.sender) targetUser = m.quoted.sender;
-    else if (m.mentionedJid?.length) targetUser = m.mentionedJid[0];
+    // Determine target user with proper priority: reply > mention > self
+    let targetUser = m.quoted?.sender
+      || (m.mentionedJid?.length ? m.mentionedJid[0] : m.sender);
 
     // Normalize JID
     targetUser = targetUser.replace(/@.+/, '') + '@s.whatsapp.net';
@@ -24,7 +23,7 @@ const getpp = async (m, sock) => {
       return m.reply('❌ *This number is not on WhatsApp!*');
     }
 
-    // Try to fetch profile picture
+    // Fetch profile picture
     let ppUrl;
     try {
       ppUrl = await sock.profilePictureUrl(targetUser, 'image');
@@ -32,7 +31,6 @@ const getpp = async (m, sock) => {
       ppUrl = null;
     }
 
-    // If no profile pic
     if (!ppUrl) {
       return m.reply('❌ *Profile picture not found or is private!*');
     }
@@ -55,7 +53,7 @@ const getpp = async (m, sock) => {
       bio = status?.status || bio;
     } catch {}
 
-    // Send message
+    // Send VIP-style message
     const caption = `
 ╭━━〔 *𝐕𝐈𝐏 𝐏𝐑𝐎𝐅𝐈𝐋𝐄 𝐋𝐎𝐎𝐊𝐔𝐏* 〕━━⬣
 ┃
