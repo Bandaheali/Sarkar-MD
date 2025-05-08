@@ -10,12 +10,20 @@ const getpp = async (m, sock) => {
   if (cmd !== 'getpp') return;
 
   try {
-    // Determine target user with proper priority: reply > mention > self
-    let targetUser = m.quoted?.sender
-      || (m.mentionedJid?.length ? m.mentionedJid[0] : m.sender);
+    // Determine target user with proper priority: reply > mention > command sender
+    let targetUser = m.quoted?.sender 
+      || (m.mentionedJid?.length ? m.mentionedJid[0] 
+      : m.sender);
 
-    // Normalize JID
-    targetUser = targetUser.replace(/@.+/, '') + '@s.whatsapp.net';
+    // If someone is mentioned in the command (not just replied to)
+    if (m.mentionedJid?.length && !m.quoted) {
+      targetUser = m.mentionedJid[0];
+    }
+
+    // Normalize JID (ensure it's in correct format)
+    targetUser = targetUser.includes('@') 
+      ? targetUser.split('@')[0] + '@s.whatsapp.net' 
+      : targetUser + '@s.whatsapp.net';
 
     // Check if user exists
     const check = await sock.onWhatsApp(targetUser);
