@@ -1,5 +1,5 @@
 import config from '../../config.cjs';
-import { downloadContentFromMessage } from '@whiskeysockets/baileys';
+import { default as fetch } from 'node-fetch';
 
 const getpp = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -10,59 +10,74 @@ const getpp = async (m, sock) => {
   if (cmd !== 'getpp') return;
 
   try {
-    // Get target user (sender, mentioned, or quoted)
+    // Target JID
     let targetUser = m.sender;
     if (m.quoted?.sender) targetUser = m.quoted.sender;
     else if (m.mentionedJid?.length) targetUser = m.mentionedJid[0];
 
-    // Remove @ suffix from JID if it exists
+    // Normalize JID
     targetUser = targetUser.replace(/@.+/, '') + '@s.whatsapp.net';
 
-    // Fetch profile picture and user data
-    const [ppUrl, userInfo] = await Promise.all([
-      sock.profilePictureUrl(targetUser, 'image').catch(() => null),
-      sock.onWhatsApp(targetUser).catch(() => null)
-    ]);
-
-    if (!userInfo || !userInfo.length) {
-      return m.reply('❌ User not found on WhatsApp!');
+    // Check if user exists
+    const check = await sock.onWhatsApp(targetUser);
+    if (!check?.[0]?.exists) {
+      return m.reply('❌ *This number is not on WhatsApp!*');
     }
 
+    // Try to fetch profile picture
+    let ppUrl;
+    try {
+      ppUrl = await sock.profilePictureUrl(targetUser, 'image');
+    } catch {
+      ppUrl = null;
+    }
+
+    // If no profile pic
     if (!ppUrl) {
-      return m.reply('❌ Profile picture not available!');
+      return m.reply('❌ *Profile picture not found or is private!*');
     }
 
-    // Download profile picture buffer
-    const ppBuffer = await (await fetch(ppUrl)).arrayBuffer();
+    // Download image
+    let ppBuffer;
+    try {
+      const res = await fetch(ppUrl);
+      if (!res.ok) throw new Error('Image fetch failed');
+      ppBuffer = await res.buffer();
+    } catch (err) {
+      return m.reply('❌ *Failed to download profile picture!*');
+    }
 
-    // Get contact details
-    const contact = await sock.contact.getContact(targetUser, { force: true });
-    const name = contact.notify || contact.name || 'Unknown';
-    const bio = contact.status || 'No bio';
+    // Get name and bio
+    const name = (await sock.getName(targetUser)) || 'Unknown';
+    let bio = 'No bio available';
+    try {
+      const status = await sock.fetchStatus(targetUser);
+      bio = status?.status || bio;
+    } catch {}
 
-    // VIP-style caption
+    // Send message
     const caption = `
-╭───「 *PROFILE INFO* 」───
-│ 👤 *Name:* ${name}
-│ 📝 *Bio:* ${bio}
-│ ☎️ *Number:* wa.me/${targetUser.replace(/@.+/, '')}
-╰───────────────────────
-    `.trim();
+╭━━〔 *𝐕𝐈𝐏 𝐏𝐑𝐎𝐅𝐈𝐋𝐄 𝐋𝐎𝐎𝐊𝐔𝐏* 〕━━⬣
+┃
+┃ ✦ *Name:* ${name}
+┃ ✦ *Bio:* ${bio}
+┃ ✦ *Number:* wa.me/${targetUser.replace(/@.+/, '')}
+┃
+╰━━━━━━━━━━━━━━━━━━⬣
+`.trim();
 
-    // Send profile picture with caption
     await sock.sendMessage(
       m.from,
       {
-        image: Buffer.from(ppBuffer),
+        image: ppBuffer,
         caption,
         mentions: [targetUser]
       },
       { quoted: m }
     );
-
-  } catch (err) {
-    console.error('GETPP ERROR:', err);
-    await m.reply('❌ An error occurred while fetching the profile picture.');
+  } catch (e) {
+    console.error('getpp error:', e);
+    await m.reply('❌ *Internal error occurred while fetching profile picture.*');
   }
 };
 
