@@ -48,7 +48,7 @@ const tempmail = async (m, sock) => {
       await m.React('✅');
     } catch (err) {
       console.error(err.response?.data || err);
-      await sock.sendMessage(m.from, { text: '*❌ Failed to generate tempmail.*' }, { quoted: m });
+      await sock.sendMessage(m.from, { text: err}, { quoted: m });
       await m.React('❌');
     }
   }
