@@ -1,6 +1,6 @@
 import axios from "axios";
 import config from '../../config.cjs';
-import fs from 'fs/promises'; // For saving token (optional)
+import fs from 'fs/promises';
 
 const tempmail = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -9,19 +9,25 @@ const tempmail = async (m, sock) => {
   if (cmd === 'tempmail') {
     await m.React('⏳');
     try {
-      // Step 1: Generate random credentials
+      // Step 1: Get valid domain
+      const domainRes = await axios.get("https://api.mail.tm/domains");
+      const domain = domainRes.data?.hydra:member?.[0]?.domain;
+
+      if (!domain) throw new Error("No valid domains found.");
+
+      // Step 2: Generate random credentials
       const random = Math.random().toString(36).substring(2, 10);
-      const email = `${random}@mail.tm`;
+      const email = `${random}@${domain}`;
       const password = `Sarkar@${random}`;
 
-      // Step 2: Register
+      // Step 3: Register
       await axios.post("https://api.mail.tm/accounts", { address: email, password });
 
-      // Step 3: Login to get token
+      // Step 4: Login to get token
       const loginRes = await axios.post("https://api.mail.tm/token", { address: email, password });
       const token = loginRes.data.token;
 
-      // Optional: save token locally (in memory, db or file)
+      // Step 5: Save to file
       await fs.writeFile('./temp_mail.json', JSON.stringify({ email, password, token }));
 
       await sock.sendMessage(
@@ -47,24 +53,23 @@ const tempmail = async (m, sock) => {
 
       await m.React('✅');
     } catch (err) {
-  console.error(err.response?.data || err);
+      console.error(err.response?.data || err);
 
-  const errorMessage =
-    err.response?.data?.message || // Mail.tm error messages
-    err.response?.data?.detail || // Some APIs use 'detail'
-    err.message || // Fallback error
-    '❌ Unknown error occurred.';
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        err.message || '❌ Unknown error occurred.';
 
-  await sock.sendMessage(
-    m.from,
-    {
-      text: `*❌ TempMail Error:*\n${errorMessage}`,
-    },
-    { quoted: m }
-  );
+      await sock.sendMessage(
+        m.from,
+        {
+          text: `*❌ TempMail Error:*\n${errorMessage}`,
+        },
+        { quoted: m }
+      );
 
-  await m.React('❌');
-                       }
+      await m.React('❌');
+    }
   }
 };
 
