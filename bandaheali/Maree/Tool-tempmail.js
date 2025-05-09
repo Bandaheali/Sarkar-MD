@@ -47,10 +47,24 @@ const tempmail = async (m, sock) => {
 
       await m.React('✅');
     } catch (err) {
-      console.error(err.response?.data || err);
-      await sock.sendMessage(m.from, { text: err}, { quoted: m });
-      await m.React('❌');
-    }
+  console.error(err.response?.data || err);
+
+  const errorMessage =
+    err.response?.data?.message || // Mail.tm error messages
+    err.response?.data?.detail || // Some APIs use 'detail'
+    err.message || // Fallback error
+    '❌ Unknown error occurred.';
+
+  await sock.sendMessage(
+    m.from,
+    {
+      text: `*❌ TempMail Error:*\n${errorMessage}`,
+    },
+    { quoted: m }
+  );
+
+  await m.React('❌');
+                       }
   }
 };
 
