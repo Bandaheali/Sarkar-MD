@@ -56,31 +56,24 @@ async function downloadSessionData() {
         return false;
     }
 
-    const sessdata = config.SESSION_ID.split("JOEL-XMD~")[1];
-
-    if (!sessdata || !sessdata.includes("#")) {
-        console.error('Invalid SESSION_ID format! It must contain both file ID and decryption key.');
+    const sessdata = config.SESSION_ID.split("Sarkar-MD~")[1];
+    if (!sessdata) {
+        console.error('❌ Please set DROPBOX_SESSION_URL in your environment variables or config!');
         return false;
     }
-
-    const [fileID, decryptKey] = sessdata.split("#");
+    const dropboxUrl = "https://www.dropbox.com/" + sessdata;
 
     try {
-        console.log("🔄 Downloading Session...");
-        const file = File.fromURL(`https://mega.nz/file/${fileID}#${decryptKey}`);
-
-        const data = await new Promise((resolve, reject) => {
-            file.download((err, data) => {
-                if (err) reject(err);
-                else resolve(data);
-            });
+        console.log("🔄 Downloading session from Dropbox...");
+        const response = await axios.get(dropboxUrl, {
+            responseType: 'arraybuffer'
         });
 
-        await fs.promises.writeFile(credsPath, data);
-        console.log("🔒 Session Successfully Loaded !!");
+        await fs.promises.writeFile(credsPath, response.data);
+        console.log("🔒 Session successfully loaded from Dropbox!");
         return true;
     } catch (error) {
-        console.error('❌ Failed to download session data:', error);
+        console.error('❌ Failed to download session from Dropbox:', error.message);
         return false;
     }
 }
