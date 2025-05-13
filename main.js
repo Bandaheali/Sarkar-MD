@@ -116,17 +116,33 @@ Matrix.ev.on('connection.update', (update) => {
         if (initialConnection) {
             console.log(chalk.green("Connected Successfull"));
             Matrix.sendMessage(Matrix.user.id, { 
-                image: { url: "https://files.catbox.moe/ytb8lg.jpg" }, 
-                caption: `╭─────────────━┈⊷
-│ *ᴊᴏᴇʟ-xᴍᴅ-ᴠ¹⁰ ɴᴏᴛɪғɪᴄᴀᴛɪᴏɴs*
-╰─────────────━┈⊷
+                image: { url: "https://files.catbox.moe/qc3td7.jpg" }, 
+                caption: `╭──────────────◆
+│     *SARKAR-MD IS ACTIVE AND READY*
+├───────────────────────────────
+│ ✅ *STATUS      : ONLINE*
+│ ⚙️ *MODE        : ${config.MODE}*
+│ 🏷️ *PREFIX      : ${config.PREFIX}*
+│ 👀 *AUTO STATUS : ${config.AUTO_STATUS_SEEN}*
+│ 👑 *OWNER       : ${config.OWNER_NAME}*
+│ ☎️ *CONTACT     : wa.me/${dev}*
+╰──────────────◆
 
-╭─────────────━┈⊷
-│ᴊᴏᴇʟ xᴍᴅ ɪs ᴏɴʟɪɴᴇ
-│ᴏᴡɴᴇʀ: ʟᴏʀᴅ ᴊᴏᴇʟ
-╰─────────────━┈⊷
+╭──────────────◆
+│ 🔗 *OFFICIAL GROUP:* 
+│ https://chat.whatsapp.com/C5js5lDia5Y8dcAoXj4mpq
+│
+│ 📢 *OFFICIAL CHANNEL:* 
+│ https://whatsapp.com/channel/0029VajGHyh2phHOH5zJl73P
+╰──────────────◆
 
-*ʀᴇᴘᴏʀᴛ ᴀɴʏ ᴇʀʀᴏʀ ᴛᴏ ᴍʏ ᴏᴡɴᴇʀ*`
+⚠️ *REPORT ANY BUGS OR ISSUES TO THE OWNER*
+
+╭──────────────◆
+│   ✨ THANK YOU FOR USING
+│       *SARKAR-MD*
+│   YOUR TRUST, OUR POWER ⚡
+╰──────────────◆`
             });
             initialConnection = false;
         } else {
@@ -216,7 +232,7 @@ async function init() {
 init();
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'main.html'));
 });
 
 app.listen(PORT, () => {
