@@ -34,7 +34,7 @@ const stickerCommandHandler = async (m, gss) => {
       ? `${sender} is ${cmd}ing @${mentionedUser.split('@')[0]}`
       : isGroup
       ? `${sender} is ${cmd}ing!`
-      : `> ⚡ Powered By 𝗠𝗔𝗦𝗧𝗘𝗥-𝗠𝗗`;
+      : `> ⚡ Powered By ${config.BOT_NAME}`;
 
     const apiUrl = `https://api.waifu.pics/sfw/${cmd}`;
     const res = await axios.get(apiUrl);
