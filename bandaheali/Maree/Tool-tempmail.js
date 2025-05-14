@@ -34,14 +34,11 @@ const tempmail = async (m, sock) => {
         m.from,
         {
           text: `📧 *Your Temp Email*\n\n${email}\n\nCheck messages with:\n*${prefix}inbox* (for your email)\n*${prefix}inbox email@domain.com* (for any email)\n\n⚠️ Expires after 1 hour`,
-          buttons: [
-            { buttonId: `${prefix}inbox`, buttonText: { displayText: '📬 Check My Inbox' }, type: 1 }
-          ],
           contextInfo: {
             mentionedJid: [m.sender],
             externalAdReply: {
               title: "TempMail Ready",
-              body: "Click button to check inbox",
+              body: "Use commands to check inbox",
               thumbnailUrl: 'https://i.imgur.com/6Qf9Z3A.png'
             }
           }
@@ -77,10 +74,7 @@ const tempmail = async (m, sock) => {
         const userEmail = tempEmails.get(m.sender);
         if (!userEmail) {
           return await sock.sendMessage(m.from, { 
-            text: `❌ No temp email found\n\nCreate one with *${prefix}tempmail* first or specify email like:\n*${prefix}inbox username@domain.com*`,
-            buttons: [
-              { buttonId: `${prefix}tempmail`, buttonText: { displayText: '📧 Create Temp Email' }, type: 1 }
-            ]
+            text: `❌ No temp email found\n\nCreate one with *${prefix}tempmail* first or specify email like:\n*${prefix}inbox username@domain.com*` 
           }, { quoted: m });
         }
         
@@ -88,10 +82,7 @@ const tempmail = async (m, sock) => {
         if (Date.now() - userEmail.createdAt > 3600000) {
           tempEmails.delete(m.sender);
           return await sock.sendMessage(m.from, { 
-            text: `❌ Your temp email has expired\n\nCreate a new one with *${prefix}tempmail*`,
-            buttons: [
-              { buttonId: `${prefix}tempmail`, buttonText: { displayText: '📧 Create New Email' }, type: 1 }
-            ]
+            text: `❌ Your temp email has expired\n\nCreate a new one with *${prefix}tempmail*`
           }, { quoted: m });
         }
         
@@ -107,10 +98,7 @@ const tempmail = async (m, sock) => {
 
       if (!messages || !messages.length) {
         return await sock.sendMessage(m.from, { 
-          text: `📭 *Inbox Empty*\n\n${email || `${username}@${domain}`}\n\nNo messages received yet`,
-          buttons: [
-            { buttonId: `${prefix}inbox ${email || `${username}@${domain}`}`, buttonText: { displayText: '🔄 Refresh Inbox' }, type: 1 }
-          ]
+          text: `📭 *Inbox Empty*\n\n${email || `${username}@${domain}`}\n\nNo messages received yet\n\nTo refresh, use: *${prefix}inbox ${email || `${username}@${domain}`}*`
         }, { quoted: m });
       }
 
@@ -129,17 +117,13 @@ const tempmail = async (m, sock) => {
         msgText += `ℹ️ Showing 10 of ${messages.length} messages\n`;
       }
       
-      msgText += `\nTo view a specific message, reply with:\n*${prefix}view ${email || `${username}@${domain}`} message_number*\n\n`;
-      msgText += `To refresh inbox, click button or use:\n*${prefix}inbox ${email || `${username}@${domain}`}*`;
+      msgText += `\nTo view a specific message, use:\n*${prefix}view ${email || `${username}@${domain}`} message_number*\n\n`;
+      msgText += `To refresh inbox, use:\n*${prefix}inbox ${email || `${username}@${domain}`}*`;
 
       await sock.sendMessage(
         m.from,
         { 
           text: msgText,
-          buttons: [
-            { buttonId: `${prefix}view ${email || `${username}@${domain}`} 1`, buttonText: { displayText: '👁️ View Message 1' }, type: 1 },
-            { buttonId: `${prefix}inbox ${email || `${username}@${domain}`}`, buttonText: { displayText: '🔄 Refresh Inbox' }, type: 1 }
-          ],
           contextInfo: {
             mentionedJid: [m.sender],
             externalAdReply: {
@@ -229,16 +213,13 @@ const tempmail = async (m, sock) => {
         messageBody = messageBody.substring(0, 1500) + '...\n\n[Message truncated]';
       }
       
-      msgText += `📝 *Message Body:*\n${messageBody || 'No message content'}`;
-      
+      msgText += `📝 *Message Body:*\n${messageBody || 'No message content'}\n\n`;
+      msgText += `To go back to inbox, use:\n*${prefix}inbox ${email}*`;
+
       await sock.sendMessage(
         m.from,
         { 
           text: msgText,
-          buttons: [
-            { buttonId: `${prefix}inbox ${email}`, buttonText: { displayText: '📬 Back to Inbox' }, type: 1 },
-            { buttonId: `${prefix}view ${email} ${messageNum}`, buttonText: { displayText: '🔄 Refresh Message' }, type: 1 }
-          ],
           contextInfo: {
             mentionedJid: [m.sender],
             externalAdReply: {
