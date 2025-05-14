@@ -1,6 +1,6 @@
 import moment from 'moment-timezone';
 import config from '../../config.cjs';
-
+import { getSetting } from '../../lib/settingsHandler.js';
 export default async function GroupParticipants(sock, { id, participants, action }) {
   try {
     const metadata = await sock.groupMetadata(id);
@@ -20,7 +20,7 @@ export default async function GroupParticipants(sock, { id, participants, action
       const date = moment.tz('Asia/Karachi').format('DD/MM/YYYY');
       const membersCount = metadata.participants.length;
 
-      if (action === "add" && config.WELCOME) {
+      if (action === "add" && getSetting('welcome')) {
         await sock.sendMessage(id, {
           text:
             `╭───〔 ✨ *WELCOME* ✨ 〕───╮\n` +
@@ -42,13 +42,13 @@ export default async function GroupParticipants(sock, { id, participants, action
               previewType: 0,
               renderLargerThumbnail: true,
               thumbnailUrl: profile,
-              sourceUrl: 'https://techbybandali.blogspot.com'
+              sourceUrl: 'https://www.Bandaheali.site'
             }
           }
         });
       }
 
-      if (action === "remove" && config.WELCOME) {
+      if (action === "remove" && getSetting('welcome')) {
         await sock.sendMessage(id, {
           text:
             `╭──〔 😢 *GOODBYE ALERT* 😢 〕──╮\n` +
@@ -68,7 +68,7 @@ export default async function GroupParticipants(sock, { id, participants, action
               previewType: 0,
               renderLargerThumbnail: true,
               thumbnailUrl: profile,
-              sourceUrl: 'https://techbybandali.blogspot.com'
+              sourceUrl: 'https://www.Bandaheali.site'
             }
           }
         });
