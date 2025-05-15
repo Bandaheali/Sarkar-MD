@@ -1,4 +1,5 @@
 import config from '../../config.cjs';
+import {getSetting, setSetting} from '../../lib/settings.js';
 
 const ChatBotCmd = async (m, Matrix) => {
   try {
@@ -16,10 +17,10 @@ const ChatBotCmd = async (m, Matrix) => {
       let responseMessage;
 
       if (text === 'on') {
-        config.CHAT_BOT = true;
+        setSetting('chatbot', true);
         responseMessage = '*_✅ CHAT BOT HAS BEEN ENABLED NOW BOT WILL REPLY ON USERS MSG_*';
       } else if (text === 'off') {
-        config.CHAT_BOT = false;
+        setSetting('chatbot', false;
         responseMessage = '*_❌ CHAT BOT HAS BEEN DISABLED NOW BOT WILL NOT REPLY ON USERS MSG_*';
       } else {
         responseMessage = `*CHAT BOT Usage:*\n\n- \`chatbot on\`  ➜ Enable CHAT BOT\n- \`chatbot off\` ➜ Disable CHAT BOT`;
