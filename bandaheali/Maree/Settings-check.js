@@ -4,9 +4,14 @@ import config from '../../config.cjs';
 const checkCmd = async (m, Matrix) => {
   try {
     const prefix = config.PREFIX;
+    const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
+    const dev = '923253617422@s.whatsapp.net';
+    const bot = await Matrix.decodeJid(Matrix.user.id);
+    const isCreater = [bot, dev, owner].includes(m.sender);
     const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
 
     if (cmd === 'check') {
+      if(!isCreater) return m.reply("*_THIS IS AN OWNER COMMAND_*");
       await m.React('⏳'); // Loading reaction
 
       // Get all settings keys
