@@ -7,20 +7,54 @@ const checkCmd = async (m, Matrix) => {
     const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
 
     if (cmd === 'check') {
-      // Get all settings keys you want to check
+      await m.React('⏳'); // Loading reaction
+
+      // Get all settings keys
       const keys = ['welcome', 'chatbot', 'ping']; // add your keys here
 
-      let response = '*Current Settings Status:*\n\n';
+      // Prepare response
+      let response = '> *⚙️ CURRENT SETTINGS STATUS ⚙️*\n\n';
       keys.forEach(key => {
         const val = getSetting(key) ?? false;
-        response += `- *${key}*: ${val ? '✅ Enabled' : '❌ Disabled'}\n`;
+        response += `▢ *${key.toUpperCase()}*: ${val ? '✅ Enabled' : '❌ Disabled'}\n`;
       });
 
-      await Matrix.sendMessage(m.from, { text: response }, { quoted: m });
+      // Random emojis
+      const emojis = ['✨', '⚡', '🔧', '⚙️', '🎛️', '🔌', '💡', '🔦', '🛠️', '📊'];
+      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+
+      await Matrix.sendMessage(
+        m.from,
+        {
+          text: response + `\n${randomEmoji} *Bot Settings* ${randomEmoji}`,
+          contextInfo: {
+            mentionedJid: [m.sender],
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363315182578784@newsletter',
+              newsletterName: "Sarkar-MD",
+              serverMessageId: -1,
+            },
+            forwardingScore: 999,
+            externalAdReply: {
+              title: "⚙️ SARKAR-MD SETTINGS ⚙️",
+              body: "Current Configuration Status",
+              thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/main/Pairing/1733805817658.webp',
+              sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
+              mediaType: 1,
+              renderLargerThumbnail: false,
+            },
+          },
+        },
+        { quoted: m }
+      );
+
+      await m.React('✅'); // Success reaction
     }
   } catch (error) {
     console.error('Check Command Error:', error);
-    await Matrix.sendMessage(m.from, { text: '*An error occurred while processing your request.*' }, { quoted: m });
+    await m.React('❌'); // Error reaction
+    await Matrix.sendMessage(m.from, { text: '*An error occurred while checking settings.*' }, { quoted: m });
   }
 };
 
