@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 
 const chatbotCommand = async (m, Matrix) => {
   const dev = "923253617422@s.whatsapp.net";
-  const chatbot = config.CHAT_BOT || false; 
+  const chatbot = getSetting('chatbot')??false; 
 const isGroup = m.key.remoteJid.endsWith("@g.us");
 
 
