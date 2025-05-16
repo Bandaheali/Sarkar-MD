@@ -1,31 +1,52 @@
-const fs = require("fs");
-require("dotenv").config();
+import dotenv from 'dotenv';
+import { getSetting } from './lib/settings.js';
+
+dotenv.config();
 
 const config = {
   SESSION_ID: process.env.SESSION_ID || "",
-  PREFIX: process.env.PREFIX || '.',
-  ALLOWED_NUMBER: process.env.ALLOWED_NUMBER || ["923143200187", "923403037285"],
-  PM_BLOCK: process.env.PM_BLOCK !== undefined ? process.env.PM_BLOCK === 'true' : false,
-  AUTO_TYPING: process.env.AUTO_TYPING !== undefined ? process.env.AUTO_TYPING === 'true' : false,
-  AUTO_RECORDING: process.env.AUTO_RECORDING !== undefined ? process.env.AUTO_RECORDING === 'true' : false, 
-  ALWAYS_ONLINE: process.env.ALWAYS_ONLINE !== undefined ? process.env.ALWAYS_ONLINE === 'false' : false,
-  AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN !== undefined ? process.env.AUTO_STATUS_SEEN === 'true' : true, 
-  OWNER_REACT: process.env.OWNER_REACT !== undefined ? process.env.OWNER_REACT === 'true' : false,
-  AUTO_REACT: process.env.AUTO_REACT !== undefined ? process.env.AUTO_REACT === 'true' : false,
-  AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
-  CHAT_BOT: process.env.CHAT_BOT !== undefined ? process.env.CHAT_BOT === 'true' : false,
-  VOICE_BOT: process.env.VOICE_BOT !== undefined ? process.env.VOICE_BOT === 'true' : false,
-  HEART_REACT: process.env.HEART_REACT !== undefined ? process.env.HEART_REACT === 'false' : false,
-  REJECT_CALL: process.env.REJECT_CALL !== undefined ? process.env.REJECT_CALL === 'true' : false, 
-  ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : false,
-  MENU_IMAGE: process.env.MENU_IMAGE || "https://files.catbox.moe/htnkaq.jpg",
-  BOT_NAME: process.env.BOT_NAME || "Sarkar",
-  DELETE_PATH: process.env.DELETE_PATH || "pm",
-  MODE: process.env.MODE || "public",
-  OWNER_NAME: process.env.OWNER_NAME || "©Bandaheali",
-  OWNER_NUMBER: process.env.OWNER_NUMBER || "923253617422",
-  WELCOME: process.env.WELCOME !== undefined ? process.env.WELCOME === 'true' : false, 
+
+  PREFIX:
+    getSetting('prefix') ||
+    process.env.PREFIX ||
+    '.', // default fallback
+
+  OWNER_NUMBER:
+    getSetting('owner_number') ||
+    process.env.OWNER_NUMBER ||
+    '923253617422', // default fallback
+
+  OWNER_NAME: getSetting('ownerName') || process.env.OWNER_NAME || "©Bandaheali",
+
+  WELCOME: getSetting('welcome') || process.env.WELCOME || false,
+  
+  CHAT_BOT: getSetting('chatbot') || process.env.CHAT_BOT || false,
+  
+  VOICE_BOT: getSetting('voicebot') || process.env.VOICE_BOT || false,
+  
+  ANTI_DELETE: getSetting('antidelete') || process.env.ANTI_DELETE || false,
+  
+ DELETE_PATH: getSetting('deletepath') || process.env.DELETE_PATH || "same",
+ 
+AUTO_REACT: getSetting('autoreact') || process.env.AUTO_REACT || false,
+
+AUTO_TYPING: getSetting('typing') || process.env.AUTO_TYPING || false,
+
+AUTO_RECORDING: getSetting('recoding') || process.env.AUTO_RECORDING || false,
+
+ALWAYS_ONLINE: getSetting('alwaysonline') || process.env.ALWAYS_ONLINE || false,
+
+AUTO_BIO: getSetting('autobio') || process.env.AUTO_BIO || false,
+
+AUTO_STATUS_SEEN: getSetting('statusView') || process.env.AUTO_STATUS_SEEN || true,
+
+PM_BLOCK: getSetting('pmblock') || process.env.PM_BLOCK || false,
+
+REJECT_CALL: getSetting('rejectCall') || process.env.REJECT_CALL || false,
+
+MODE: getSetting('mode') || process.env.MODE || 'public',
+
+
 };
 
-
-module.exports = config;
+export default config;
