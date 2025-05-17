@@ -21,7 +21,7 @@ const ChatBotCmd = async (m, Matrix) => {
         setSetting('chatbot', true);
         responseMessage = '*_✅ CHAT BOT HAS BEEN ENABLED NOW BOT WILL REPLY ON USERS MSG_*';
       } else if (text === 'off') {
-   setconfig.CHAT_BOT = false;
+   config.CHAT_BOT = false;
         setSetting('chatbot', false);
         responseMessage = '*_❌ CHAT BOT HAS BEEN DISABLED NOW BOT WILL NOT REPLY ON USERS MSG_*';
       } else {
