@@ -25,13 +25,14 @@ const config = {
   DELETE_PATH: getSetting('deletepath') || process.env.DELETE_PATH || "same",
   AUTO_REACT: toBool(getSetting('autoreact') || process.env.AUTO_REACT),
   AUTO_TYPING: toBool(getSetting('typing') || process.env.AUTO_TYPING),
-  AUTO_RECORDING: toBool(getSetting('recoding') || process.env.AUTO_RECORDING),
+  AUTO_RECORDING: toBool(getSetting('recording') || process.env.AUTO_RECORDING),
   ALWAYS_ONLINE: toBool(getSetting('alwaysonline') || process.env.ALWAYS_ONLINE),
   AUTO_BIO: toBool(getSetting('autobio') || process.env.AUTO_BIO),
   AUTO_STATUS_SEEN: toBool(getSetting('statusView') || process.env.AUTO_STATUS_SEEN, true),
   PM_BLOCK: toBool(getSetting('pmblock') || process.env.PM_BLOCK),
   REJECT_CALL: toBool(getSetting('rejectCall') || process.env.REJECT_CALL),
   MODE: getSetting('mode') || process.env.MODE || 'public',
+  MENU_IMAGE: getSetting('menuimage') || process.env.MENU_IMAGE || 'https://files.catbox.moe/yd6y5b.jpg'
 };
 
 export default config;
