@@ -1,6 +1,7 @@
-import config from '../../config.cjs';
-import {getSetting, setSetting} from '../../lib/settings.js';
-const antiCallCommand = async (m, Matrix) => {
+import config from '../../config.js';
+import { getSetting, setSetting } from '../../lib/settings.js';
+
+const AntiCallCmd = async (m, Matrix) => {
   try {
     const botNumber = await Matrix.decodeJid(Matrix.user.id);
     const dev = '923253617422@s.whatsapp.net'; // Your VIP number
@@ -17,22 +18,22 @@ const antiCallCommand = async (m, Matrix) => {
 
       if (text === 'on') {
         config.REJECT_CALL = true;
-        setSetting('anticall', true);
-        responseMessage = '*✅ Anti-Call system has been enabled!*';
+        setSetting('antiCall', true);
+        responseMessage = '*✅ Anti Call has been enabled. Incoming calls will be automatically rejected.*';
       } else if (text === 'off') {
         config.REJECT_CALL = false;
-        setSetting('anticall', false);
-        responseMessage = '*❌ Anti-Call system has been disabled!*';
+        setSetting('antiCall', false);
+        responseMessage = '*❌ Anti Call has been disabled. Calls will not be rejected.*';
       } else {
-        responseMessage = `*Anti-Call Usage:*\n\n- \`anticall on\`  ➜ Enable Anti-Call\n- \`anticall off\` ➜ Disable Anti-Call`;
+        responseMessage = `*Anti Call Usage:*\n\n- \`${prefix}anticall on\`  ➜ Enable Auto Reject for Calls\n- \`${prefix}anticall off\` ➜ Disable Auto Reject for Calls`;
       }
 
       await Matrix.sendMessage(m.from, { text: responseMessage }, { quoted: m });
     }
   } catch (error) {
-    console.error("AntiCall Command Error:", error);
+    console.error("anticall Command Error:", error);
     await Matrix.sendMessage(m.from, { text: '*An error occurred while processing your request.*' }, { quoted: m });
   }
 };
 
-export default antiCallCommand;
+export default AntiCallCmd;
