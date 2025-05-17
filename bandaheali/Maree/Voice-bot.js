@@ -1,10 +1,8 @@
 import config from '../../config.js';
 import fetch from 'node-fetch';
-import { getSetting } from '../../lib/settings.js';
 
 const chatbotCommand = async (m, Matrix) => {
   const dev = "923253617422@s.whatsapp.net";
-  const chatbot = getSetting('chatbot') ?? false;
   const isGroup = m.key.remoteJid.endsWith("@g.us");
 
   const text = m.message?.conversation
@@ -17,12 +15,13 @@ const chatbotCommand = async (m, Matrix) => {
   const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
   const isAllowed = [bot, owner, dev];
 
-  if (!chatbot) return;
+  // NEW: Check only VOICE_BOT is true, no chatbot setting
+  if (!config.VOICE_BOT) return;
   if (!m.sender || isAllowed.includes(m.sender)) return;
   if (isGroup) return;
   if (m.key.remoteJid.endsWith("@newsletter")) return;
 
-  // Custom reply for specific questions
+  // Custom replies
   const lower = text.toLowerCase();
   if (
     lower === 'who are you' || lower === 'which ai model you are' ||
@@ -43,12 +42,7 @@ const chatbotCommand = async (m, Matrix) => {
 
     const botReply = json.result || 'Sorry sir, I did not understand.';
 
-    // If VOICE_BOT is disabled, send plain text
-    if (!config.VOICE_BOT) {
-      return await Matrix.sendMessage(m.sender, { text: botReply }, { quoted: m });
-    }
-
-    // Fetch TTS audio
+    // TTS conversion & send as voice
     const ttsUrl = `https://bk9.fun/tools/tts?q=${encodeURIComponent(botReply)}&lang=en`;
 
     await Matrix.sendMessage(m.sender, {
