@@ -39,15 +39,30 @@ async function downloadSessionData() {
     console.error("Please add your session to SESSION_ID env !!");
     return false;
   }
-  const _0x331b8a = _0xccedb8.SESSION_ID.split("Sarkarmd$")[0x1];
-  const _0x170b41 = 'https://pastebin.com/raw/' + _0x331b8a;
+
   try {
-    const _0x5a3e5f = await _0x5a7360.get(_0x170b41);
-    const _0x7f614 = typeof _0x5a3e5f.data === 'string' ? _0x5a3e5f.data : JSON.stringify(_0x5a3e5f.data);
-    await _0x5687e2.promises.writeFile(credsPath, _0x7f614);
-    console.log("🌏Sarkar-MD ONLINE🌏");
-    return true;
-  } catch (_0x100795) {
+    if (_0xccedb8.SESSION_ID.startsWith('Sarkarmd$')) {
+      // Handle Base64 encoded session
+      const base64Data = _0xccedb8.SESSION_ID.split("Sarkarmd$")[1];
+      const decoded = Buffer.from(base64Data, 'base64').toString('utf-8');
+      await _0x5687e2.promises.writeFile(credsPath, decoded);
+      return true;
+    } 
+    else if (_0xccedb8.SESSION_ID.startsWith('Bandaheali')) {
+      // Handle Pastebin session
+      const pasteId = _0xccedb8.SESSION_ID.split("Bandaheali$")[1];
+      const pasteUrl = 'https://pastebin.com/raw/' + pasteId;
+      const response = await _0x5a7360.get(pasteUrl);
+      const data = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+      await _0x5687e2.promises.writeFile(credsPath, data);
+      return true;
+    }
+    else {
+      console.log('Unknown session format');
+      return false;
+    }
+  } catch (error) {
+    console.error('Session download failed:', error);
     return false;
   }
 }
