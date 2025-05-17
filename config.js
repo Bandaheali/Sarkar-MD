@@ -32,7 +32,9 @@ const config = {
   PM_BLOCK: toBool(getSetting('pmblock') || process.env.PM_BLOCK),
   REJECT_CALL: toBool(getSetting('rejectCall') || process.env.REJECT_CALL),
   MODE: getSetting('mode') || process.env.MODE || 'public',
-  MENU_IMAGE: getSetting('menuimage') || process.env.MENU_IMAGE || 'https://files.catbox.moe/yd6y5b.jpg'
+  MENU_IMAGE: getSetting('menuimage') || process.env.MENU_IMAGE || 'https://files.catbox.moe/yd6y5b.jpg',
+  BOT_NAME: getSetting('botname') || process.env.BOT_NAME || "Sarkar-MD",
+  
 };
 
 export default config;
