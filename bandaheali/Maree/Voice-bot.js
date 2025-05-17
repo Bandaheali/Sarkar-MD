@@ -53,9 +53,6 @@ const chatbotCommand = async (m, Matrix) => {
 
   } catch (err) {
     console.error('ChatBot Error:', err.message);
-    await Matrix.sendMessage(m.sender, {
-      text: '❌ Failed to get AI response or TTS audio.'
-    }, { quoted: m });
   }
 };
 
