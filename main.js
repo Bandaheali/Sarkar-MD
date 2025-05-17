@@ -10,7 +10,7 @@ import _0x374270 from 'path';
 import _0x4b0fc4 from 'chalk';
 import 'moment-timezone';
 import _0x5a7360 from 'axios';
-import _0xccedb8 from './config.cjs';
+import _0xccedb8 from './config';
 import _0x11fa72 from './lib/autoreact.cjs';
 const {
   emojis,
