@@ -14,7 +14,7 @@ const config = {
 
   PREFIX: getSetting('prefix') || process.env.PREFIX || '.',
 
-  OWNER_NUMBER: getSetting('owner_number') || process.env.OWNER_NUMBER || '923253617422',
+  OWNER_NUMBER: getSetting('ownernumber') || process.env.OWNER_NUMBER || '923253617422',
 
   OWNER_NAME: getSetting('ownerName') || process.env.OWNER_NAME || "©Bandaheali",
 
