@@ -1,5 +1,6 @@
-import dotenv from 'dotenv';
-import { getSetting } from './lib/settings.js';
+const dotenv = require('dotenv');
+const fs = require('fs');
+const  { getSetting } = require('./lib/settings.js');
 
 dotenv.config();
 
