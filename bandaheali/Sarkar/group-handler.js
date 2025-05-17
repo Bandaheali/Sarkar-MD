@@ -1,5 +1,5 @@
 import moment from 'moment-timezone';
-import config from '../../config.cjs';
+import config from '../../config.js';
 import { getSetting } from '../../lib/settings.js';
 export default async function GroupParticipants(sock, { id, participants, action }) {
   try {
