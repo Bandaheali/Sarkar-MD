@@ -12,13 +12,13 @@ const testCmd = async (m, sock) => {
     const mode = config.MODE || "public";
     const pushName = m.pushName || "Sarkar";
     const pushwish = "HAPPY TO SEE YOU";
-    
+
     const cmd = m.body.startsWith(prefix)
       ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
       : '';
 
     const sendCommandMessage = async (messageCaption) => {
-      await sock.sendMessage(
+      return sock.sendMessage(
         m.from,
         {
           image: {
@@ -219,8 +219,8 @@ const testCmd = async (m, sock) => {
 ╰───────────❍
 > POWERED BY ${name}`;
 
-      const msg = stylize(menuMsg, randomFont);
-      await sendCommandMessage(msg);
+      const styled = stylize(menuMsg, randomFont) || menuMsg;
+      await sendCommandMessage(styled);
     }
   } catch (err) {
     console.error("Test command error:", err);
