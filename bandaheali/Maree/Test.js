@@ -1,68 +1,17 @@
-pimport { allFonts, stylize } from '../../lib/fonts.js';
-import moment from 'moment-timezone';
-import pkg from '@whiskeysockets/baileys';
-const { generateWAMessageFromContent, proto } = pkg;
-import fs from 'fs';
-import os from 'os';
-import config from '../../config.cjs';
+import { allFonts, stylize } from '../../lib/fonts.js'; // path adjust kro agar zarurat ho
+import config from '../../config.js';
 const testCmd = async (m, sock) => {
   try {
     const prefix = config.PREFIX;
+    const name = "Bandaheali";
     const cmd = m.body.startsWith(prefix)
       ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
       : '';
-      const mode = config.MODE;
-  const name = config.BOT_NAME;
-  const owner = config.OWNER_NAME
-  const pushName = m.pushName || 'User';
-  
-  const formatBytes = (bytes) => {
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  if (bytes === 0) return '0 Byte';
-  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
-};
-const uptimeSeconds = process.uptime();
-    const days = Math.floor(uptimeSeconds / (24 * 3600));
-    const hours = Math.floor((uptimeSeconds % (24 * 3600)) / 3600);
-    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-    const seconds = Math.floor(uptimeSeconds % 60);
-    //realtime function
-        const realTime = moment().tz("Asia/Karachi").format("HH:mm:ss");
-// pushwish function
-    let pushwish = "";
-    
-        if (realTime < "05:00:00") {
-  pushwish = `𝙶𝙾𝙾𝙳 𝙼𝙾𝚁𝙽𝙸𝙽𝙶 🌄`;
-} else if (realTime < "11:00:00") {
-  pushwish = `𝙶𝙾𝙾𝙳 𝙼𝙾𝚁𝙽𝙸𝙽𝙶 🌄`;
-} else if (realTime < "15:00:00") {
-  pushwish = `𝙶𝙾𝙾𝙳 𝙰𝙵𝚃𝙴𝚁𝙽𝙾𝙾𝙽 🌅`;
-} else if (realTime < "18:00:00") {
-  pushwish = `𝙶𝙾𝙾𝙳 𝙴𝚅𝙴𝙽𝙸𝙽𝙶 🌃`;
-} else if (realTime < "19:00:00") {
-  pushwish = `𝙶𝙾𝙾𝙳 𝙴𝚅𝙴𝙽𝙸𝙽𝙶 🌃`;
-} else {
-  pushwish = `𝙶𝙾𝙾𝙳 𝙽𝙸𝙶𝙷𝚃 🌌`;
-}
 
     if (cmd === 'test') {
       const fonts = Object.keys(allFonts);
       const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
-      let menuMsg = `
-╭───────◇◆◇───────╮
-│ 🕌 ${prefix}IslamicMenu
-│ 📥 ${prefix}DownloadMenu
-│ 🤖 ${prefix}AiMenu
-│ 🫂 ${prefix}GroupMenu
-│ 🎨 ${prefix}LogoMenu
-│ 👑 ${prefix}OwnerMenu
-│ 🧩 ${prefix}OtherMenu
-│ ✨ ${prefix}ToolsMenu
-│ 🔍 ${prefix}SearchMenu
-│ 🔍 ${prefix}ReactionMenu
-╰──────◇◆◇──────╯
-╭───❍「 *ISLAMIC MENU* 」
+      const menuMsg = `╭───❍「 *ISLAMIC MENU* 」
 *│* 💙 *${prefix}SurahAudio*
 *│* 💙 *${prefix}SurahUrdu*
 *│* 💙 *${prefix}SurahArabic*
@@ -226,8 +175,7 @@ const uptimeSeconds = process.uptime();
 *│* 💙 *${prefix}Glomp*
 *│* 💙 *${prefix}Highfive*
 ╰───────────❍
-> POWERED BY ${name}
-`;
+> POWERED BY ${name}`;
 
       const msg = stylize(menuMsg, randomFont);
 
@@ -242,4 +190,3 @@ const uptimeSeconds = process.uptime();
 };
 
 export default testCmd;
-
