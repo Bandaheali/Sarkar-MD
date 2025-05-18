@@ -1,12 +1,17 @@
 import { allFonts, stylize } from '../../lib/fonts.js'; // path adjust kro agar zarurat ho
 import config from '../../config.js';
+import moment from 'moment-timezone';
 const testCmd = async (m, sock) => {
   try {
     const prefix = config.PREFIX;
-    const name = "Bandaheali";
+    const owner = config.OWNER_NAME;
+    const name = config.BOT_NAME;
+    const realTime = moment().tz("Asia/Karachi").format("HH:mm:ss");
+    
     const mode = config.MODE || "public";
     const pushName = m.pushName || "Sarkar";
     const pushwish = "HAPPY TO SEE YOU";
+    
     const cmd = m.body.startsWith(prefix)
       ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
       : '';
@@ -17,6 +22,10 @@ const testCmd = async (m, sock) => {
       const menuMsg = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
+│ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
+│ 😇 *Owner:* ${owner}
+│ 🪄 *Prefix:* ${prefix}
+│ 🇵🇰 *Creater:* *_BANDAHEALI_*
 
       ╭───❍「 *ISLAMIC MENU* 」
 *│* 💙 *${prefix}SurahAudio*
