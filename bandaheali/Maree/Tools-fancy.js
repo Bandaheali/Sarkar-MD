@@ -19,18 +19,20 @@ const fancyCmd = async (m, sock) => {
       const res = await fetch(api);
       const json = await res.json();
 
-      if (!json || !json.result) {
+      if (!json || !json.result || !Array.isArray(json.result)) {
         return m.reply('*❌ Failed to fetch fancy fonts!*');
       }
 
-      const allFonts = json.result;
+      const fonts = json.result;
       let msg = `*✨ Fancy Text Generator Result*\n\n`;
 
-      for (let i = 0; i < allFonts.length; i++) {
-        msg += `*${i + 1} ➜* ${allFonts[i]}\n`;
-      }
+      fonts.forEach((item, i) => {
+        if (item.result && item.result.trim() !== '') {
+          msg += `*${i + 1} ➜ ${item.name}:*\n${item.result}\n\n`;
+        }
+      });
 
-      await sock.sendMessage(m.from, { text: msg }, { quoted: m });
+      await sock.sendMessage(m.from, { text: msg.trim() }, { quoted: m });
     }
   } catch (err) {
     console.error(err);
