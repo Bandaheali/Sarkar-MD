@@ -1,6 +1,6 @@
 import Jimp from 'jimp';
 import config from '../../config.js';
-
+import fs from 'fs';
 const fullppCmd = async (m, sock) => {
   try {
     const prefix = config.PREFIX;
