@@ -1,4 +1,4 @@
-/* import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import config from '../../config.js';
@@ -10,7 +10,7 @@ const fullpp = async (m, sock) => {
     : '';
 
   // Check if the command is 'fullpp' and reply to an image
-  if (cmd === "fullpp") {
+  if (cmd === "fullppss") {
     // Ensure the message is a reply and the reply is an image
     if (!m.quoted || !m.quoted.mimetype.startsWith('image')) {
       return sock.sendMessage(m.from, { text: 'Please reply to an image with the command *!fullpp* to update the profile picture.' }, { quoted: m });
@@ -45,4 +45,3 @@ const fullpp = async (m, sock) => {
 };
 
 export default fullpp;
-*/
