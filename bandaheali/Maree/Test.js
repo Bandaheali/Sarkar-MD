@@ -1,4 +1,4 @@
-import { allFonts, stylize } from '../../lib/fonts.js';
+pimport { allFonts, stylize } from '../../lib/fonts.js';
 import moment from 'moment-timezone';
 import pkg from '@whiskeysockets/baileys';
 const { generateWAMessageFromContent, proto } = pkg;
@@ -50,16 +50,6 @@ const uptimeSeconds = process.uptime();
       const fonts = Object.keys(allFonts);
       const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
       let menuMsg = `
-╭───❍「 *✨${name}✨* 」
-│ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
-│ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
-│ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
-│ 😇 *Owner:* ${owner}
-│ 🪄 *Prefix:* ${prefix}
-│ 🇵🇰 *Creater:* *_BANDAHEALI_*
-│ 📋 *RAM:* ${formatBytes(os.freemem())} / ${formatBytes(os.totalmem())}
-│ 🚀 *Uptime:* ${days}d ${hours}h ${minutes}m ${seconds}s
-╰───────────❍
 ╭───────◇◆◇───────╮
 │ 🕌 ${prefix}IslamicMenu
 │ 📥 ${prefix}DownloadMenu
