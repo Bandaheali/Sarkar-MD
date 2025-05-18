@@ -6,6 +6,7 @@ const testCmd = async (m, sock) => {
     const prefix = config.PREFIX;
     const owner = config.OWNER_NAME;
     const name = config.BOT_NAME;
+    const menuimg = config.MENU_IMAGE;
     const realTime = moment().tz("Asia/Karachi").format("HH:mm:ss");
     
     const mode = config.MODE || "public";
@@ -15,18 +16,40 @@ const testCmd = async (m, sock) => {
     const cmd = m.body.startsWith(prefix)
       ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
       : '';
+const sendCommandMessage = async (messageCaption) => {
+  await sock.sendMessage(
+    m.from,
+    {
+      image: {
+        url: config.MENU_IMAGE || 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
+      },
+      caption: messageCaption,
+      contextInfo: {
+        isForwarded: true,
+        forwardingScore: 999,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: '120363315182578784@newsletter',
+          newsletterName: "SARKAR-MD",
+          serverMessageId: -1,
+        },
+      },
+    },
+    { quoted: m }
+  );
+};
+
 
     if (cmd === 'test') {
       const fonts = Object.keys(allFonts);
       const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
       const menuMsg = `╭───❍「 *✨${name}✨* 」
-│ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
-│ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
-│ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
+│ 🧑‍💻 *USER:* ${pushName} ${pushwish}
+│ 🌐 *MODE:* ${mode}
+│ ⏰ *TIME:* ${realTime}
 │ 😇 *Owner:* ${owner}
 │ 🪄 *Prefix:* ${prefix}
-│ 🇵🇰 *Creater:* *_BANDAHEALI_*
-
+│ 🇵🇰 *CREATER:* *_BANDAHEALI_*
+╰───────────❍
       ╭───❍「 *ISLAMIC MENU* 」
 *│* 💙 *${prefix}SurahAudio*
 *│* 💙 *${prefix}SurahUrdu*
@@ -56,6 +79,7 @@ const testCmd = async (m, sock) => {
 *│* 💙 *${prefix}Snack*
 *│* 💙 *${prefix}Tweet*
 *│* 💙 *${prefix}Apk*
+*│* 💙 *${prefix}MediaFire*
 ╰───────────❍
 ╭───❍「 *AI MENU* 」
 *│* 💙 *${prefix}AI*
@@ -153,12 +177,15 @@ const testCmd = async (m, sock) => {
 *│* 💙 *${prefix}Tstalk*
 *│* 💙 *${prefix}Npm*
 *│* 💙 *${prefix}GitStalk*
+*│* 💙 *${prefix}Fancy*
 ╰───────────❍
 ╭───❍「 *SEARCH MENU* 」
 *│* 💙 *${prefix}YTS*
 *│* 💙 *${prefix}Spotify*
 *│* 💙 *${prefix}Lyrics*
 *│* 💙 *${prefix}Playstore*
+*│* 💙 *${prefix}HappyMod*
+*│* 💙 *${prefix}Movie*
 ╰───────────❍
 ╭───❍「 *REACTION MENU* 」
 *│* 💙 *${prefix}Cry*
@@ -195,14 +222,9 @@ const testCmd = async (m, sock) => {
 
       const msg = stylize(menuMsg, randomFont);
 
-      await sock.sendMessage(m.from, { text: msg }, { quoted: m });
-    }
-  } catch (err) {
-    console.error('Test command error:', err);
-    await sock.sendMessage(m.from, {
-      text: `❌ *Error:* ${err.toString().substring(0, 150)}`
-    }, { quoted: m });
-  }
+      await sendCommandMessage(msg);
+}
+  
 };
 
 export default testCmd;
