@@ -1,6 +1,7 @@
-import { allFonts, stylize } from '../../lib/fonts.js'; // path adjust kro agar zarurat ho
+import { allFonts, stylize } from '../../lib/fonts.js';
 import config from '../../config.js';
 import moment from 'moment-timezone';
+
 const testCmd = async (m, sock) => {
   try {
     const prefix = config.PREFIX;
@@ -8,7 +9,6 @@ const testCmd = async (m, sock) => {
     const name = config.BOT_NAME;
     const menuimg = config.MENU_IMAGE;
     const realTime = moment().tz("Asia/Karachi").format("HH:mm:ss");
-    
     const mode = config.MODE || "public";
     const pushName = m.pushName || "Sarkar";
     const pushwish = "HAPPY TO SEE YOU";
@@ -16,32 +16,33 @@ const testCmd = async (m, sock) => {
     const cmd = m.body.startsWith(prefix)
       ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
       : '';
-const sendCommandMessage = async (messageCaption) => {
-  await sock.sendMessage(
-    m.from,
-    {
-      image: {
-        url: config.MENU_IMAGE || 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
-      },
-      caption: messageCaption,
-      contextInfo: {
-        isForwarded: true,
-        forwardingScore: 999,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: '120363315182578784@newsletter',
-          newsletterName: "SARKAR-MD",
-          serverMessageId: -1,
-        },
-      },
-    },
-    { quoted: m }
-  );
-};
 
+    const sendCommandMessage = async (messageCaption) => {
+      await sock.sendMessage(
+        m.from,
+        {
+          image: {
+            url: menuimg || 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
+          },
+          caption: messageCaption,
+          contextInfo: {
+            isForwarded: true,
+            forwardingScore: 999,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363315182578784@newsletter',
+              newsletterName: "SARKAR-MD",
+              serverMessageId: -1,
+            },
+          },
+        },
+        { quoted: m }
+      );
+    };
 
     if (cmd === 'test') {
       const fonts = Object.keys(allFonts);
       const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
+
       const menuMsg = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *USER:* ${pushName} ${pushwish}
 │ 🌐 *MODE:* ${mode}
@@ -50,7 +51,7 @@ const sendCommandMessage = async (messageCaption) => {
 │ 🪄 *Prefix:* ${prefix}
 │ 🇵🇰 *CREATER:* *_BANDAHEALI_*
 ╰───────────❍
-      ╭───❍「 *ISLAMIC MENU* 」
+╭───❍「 *ISLAMIC MENU* 」
 *│* 💙 *${prefix}SurahAudio*
 *│* 💙 *${prefix}SurahUrdu*
 *│* 💙 *${prefix}SurahArabic*
@@ -59,7 +60,7 @@ const sendCommandMessage = async (messageCaption) => {
 *│* 💙 *${prefix}PTime*
 *│* 💙 *${prefix}SBukhari*  
 ╰───────────❍
-╭───❍「 DOWNLOAD MENU 」
+╭───❍「 *DOWNLOAD MENU* 」
 *│* 💙 *${prefix}Play*
 *│* 💙 *${prefix}Song*
 *│* 💙 *${prefix}Song2*
@@ -71,7 +72,6 @@ const sendCommandMessage = async (messageCaption) => {
 *│* 💙 *${prefix}Ytmp4*
 *│* 💙 *${prefix}FB*
 *│* 💙 *${prefix}FB2*
-*│* 💙 *${prefix}Insta*
 *│* 💙 *${prefix}Insta*
 *│* 💙 *${prefix}TikTok*
 *│* 💙 *${prefix}TikTok2*
@@ -113,7 +113,6 @@ const sendCommandMessage = async (messageCaption) => {
 *┋* ©️ *${prefix}Logo4*
 *┋* ©️ *${prefix}Logo5*
 *┋* ©️ *${prefix}Logo6*
-*┋* ©️ *${prefix}Logo6*
 *┋* ©️ *${prefix}Logo7*
 *┋* ©️ *${prefix}Logo8*
 *┋* ©️ *${prefix}Logo9*
@@ -140,7 +139,7 @@ const sendCommandMessage = async (messageCaption) => {
 *│* 💙 *${prefix}Unblock*
 *│* 💙 *${prefix}AlwaysOnline*
 *│* 💙 *${prefix}Typing*
-*│* 💙 *${prefix}Recoding*
+*│* 💙 *${prefix}Recording*
 *│* 💙 *${prefix}AntiCall*
 *│* 💙 *${prefix}AutoRead*
 *│* 💙 *${prefix}Autoreact*
@@ -155,9 +154,9 @@ const sendCommandMessage = async (messageCaption) => {
 *│* 💙 *${prefix}Vv2*
 *│* 💙 *${prefix}Vv3*
 *│* 💙 *${prefix}Forward*
-*│* 💙 *Lush*
-*│* 💙 *Nice*
-*│* 💙 *🫡*
+*│* 💙 *${prefix}Lush*
+*│* 💙 *${prefix}Nice*
+*│* 💙 *${prefix}Salute*
 ╰───────────❍
 ╭───❍「 *OTHER MENU* 」
 *│* 🗿 *${prefix}Ping*
@@ -167,7 +166,7 @@ const sendCommandMessage = async (messageCaption) => {
 *│* 🗿 *${prefix}Url*
 *│* 🗿 *${prefix}dev*
 *│* 🗿 *${prefix}owner*
-*│* 🗿 *Sendme*
+*│* 🗿 *${prefix}Sendme*
 ╰───────────❍ 
 ╭───❍「 *TOOLS MENU* 」
 *│* 💙 *${prefix}Fetch*
@@ -221,10 +220,11 @@ const sendCommandMessage = async (messageCaption) => {
 > POWERED BY ${name}`;
 
       const msg = stylize(menuMsg, randomFont);
-
       await sendCommandMessage(msg);
-}
-  
+    }
+  } catch (err) {
+    console.error("Test command error:", err);
+  }
 };
 
 export default testCmd;
