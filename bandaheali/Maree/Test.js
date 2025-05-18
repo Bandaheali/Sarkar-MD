@@ -1,4 +1,4 @@
-import { allFonts2, stylize2 } from '../../lib/fonts2.js';
+import { allFonts, stylize } from '../../lib/fonts.js';
 import config from '../../config.js';
 import moment from 'moment-timezone';
 
@@ -40,7 +40,7 @@ const testCmd = async (m, sock) => {
     };
 
     if (cmd === 'test') {
-      const fonts = Object.keys(allFonts2);
+      const fonts = Object.keys(allFonts);
       const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
 
       const menuMsg = `╭───❍「 *✨${name}✨* 」
@@ -219,7 +219,7 @@ const testCmd = async (m, sock) => {
 ╰───────────❍
 > POWERED BY ${name}`;
 
-      const msg = stylize2(menuMsg, randomFont);
+      const msg = stylize(menuMsg, randomFont);
       await sendCommandMessage(msg);
     }
   } catch (err) {
