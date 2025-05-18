@@ -4,6 +4,9 @@ const testCmd = async (m, sock) => {
   try {
     const prefix = config.PREFIX;
     const name = "Bandaheali";
+    const mode = config.MODE || "public";
+    const pushName = m.pushName || "Sarkar";
+    const pushwish = "HAPPY TO SEE YOU";
     const cmd = m.body.startsWith(prefix)
       ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
       : '';
@@ -11,7 +14,11 @@ const testCmd = async (m, sock) => {
     if (cmd === 'test') {
       const fonts = Object.keys(allFonts);
       const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
-      const menuMsg = `╭───❍「 *ISLAMIC MENU* 」
+      const menuMsg = `╭───❍「 *✨${name}✨* 」
+│ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
+│ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
+
+      ╭───❍「 *ISLAMIC MENU* 」
 *│* 💙 *${prefix}SurahAudio*
 *│* 💙 *${prefix}SurahUrdu*
 *│* 💙 *${prefix}SurahArabic*
