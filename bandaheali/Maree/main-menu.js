@@ -45,11 +45,12 @@ const uptimeSeconds = process.uptime();
       );
     };
 
-    if (cmd === 'menu') {
+    if (cmd === 'menu' || cmd === 'islamicmenu' || cmd === 'downloadmenu' || cmd === 'aimenu' || cmd === 'groupmenu' || cmd === 'logomenu' || cmd === 'ownermenu' || 'toolsmenu' || cmd === 'searchmenu' || cmd === 'reactionmenu' || 'othermenu') {
       const fonts = Object.keys(allFonts);
       const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
 
-      const menuMsg = `╭───❍「 *✨${name}✨* 」
+      
+  let menu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *USER:* ${pushName} ${pushwish}
 │ 🌐 *MODE:* ${mode}
 │ ⏰ *TIME:* ${realTime}
@@ -67,8 +68,8 @@ const uptimeSeconds = process.uptime();
 │ 👑 ${prefix}OwnerMenu
 │ 🧩 ${prefix}OtherMenu
 │ ✨ ${prefix}ToolsMenu
-│ 🔍 ${prefix}Search
-│ 🔍 ${prefix}ReactionMenu
+│ 🔍 ${prefix}SearchMenu
+│ 🔍 *${prefix}ReactionMenu*
 ╰──────◇◆◇──────╯
 ╭───❍「 *ISLAMIC MENU* 」
 *│* 💙 *${prefix}SurahAudio*
@@ -238,15 +239,7 @@ const uptimeSeconds = process.uptime();
 ╰───────────❍
 > POWERED BY ${name}`;
 
-      const styled = stylize(menuMsg, randomFont) || menuMsg;
-      await sendCommandMessage(styled);
-    }
-  } catch (err) {
-    console.error("Test command error:", err);
-  }
-    if (cmd === 'islamicmenu' || cmd === 'islamic') {
-  await m.React('⏳'); // React with a loading icon
-  const islamic = `
+let islamicmenu = `
 ╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
@@ -267,13 +260,8 @@ const uptimeSeconds = process.uptime();
 *│* 💙 *${prefix}SBukhari*  
 ╰───────────❍
 `;
-await m.React('✅'); // React with success icon
-    await sendCommandMessage(islamic);
-  }
-  if(cmd === 'dlmenu' || cmd === 'downloadmenu') {
-  await m.React('🕛'); //react with a loading emoji
-  const dl = `
-╭───❍「 *✨${name}✨* 」
+
+let downloadmenu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
@@ -306,14 +294,7 @@ await m.React('✅'); // React with success icon
 ╰───────────❍
 `;
 
-await m.React('📥');
-
-await sendCommandMessage(dl);
-}
-if (cmd === 'aimenu' || cmd === 'ailist') {
-await m.React('🕛');
-const ai = `
-╭───❍「 *✨${name}✨* 」
+let aimenu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
@@ -331,12 +312,8 @@ const ai = `
 *│* 💙 *${prefix}Imagine3*
 ╰───────────❍
 `;
-await m.React('🤖');
-await sendCommandMessage(ai);
-}
-if (cmd === 'groupmenu' || cmd === 'gmenu') {
-await m.React('🕛');
-const group = `
+
+const groupmenu = `
 ╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
@@ -363,12 +340,8 @@ const group = `
 *│* 💙 *${prefix}Out*
 ╰───────────❍
 `;
-await m.React('👬');
-await sendCommandMessage(group);
-}
-if(cmd === 'logomenu' || cmd === 'lmenu') {
-await m.React('🕛');
-const lo = `╭───❍「 *✨${name}✨* 」
+
+const logomenu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
@@ -401,12 +374,9 @@ const lo = `╭───❍「 *✨${name}✨* 」
 *┋* ©️ *${prefix}Logo20*
 ╰───────────❍
 `;
-await m.React('📷');
-await sendCommandMessage(lo);
-}
-if (cmd === 'ownermenu' || cmd === 'omenu') {
-await m.React('🕛');
-const omenu = `╭───❍「 *✨${name}✨* 」
+
+
+let ownermenu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
@@ -446,12 +416,8 @@ const omenu = `╭───❍「 *✨${name}✨* 」
 *│* 💙 *🫡*
 ╰───────────❍
 `;
-await m.React('👑');
-await sendCommandMessage(omenu);
-}
-if (cmd === 'othermenu' || cmd === 'others') {
-await m.React('🕛');
-const other = `╭───❍「 *✨${name}✨* 」
+
+const othermenu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
@@ -471,12 +437,9 @@ const other = `╭───❍「 *✨${name}✨* 」
 *│* 🗿 *${prefix}Sendme*
 ╰───────────❍ 
 `;
-await m.React('🗿');
-await sendCommandMessage(other);
-}
-if (cmd === 'toolsmenu' || cmd === 'tools') {
-await m.React('🕛');
-const tmenu = `╭───❍「 *✨${name}✨* 」
+
+
+const toolsmenu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
@@ -496,12 +459,9 @@ const tmenu = `╭───❍「 *✨${name}✨* 」
 *│* 💙 *${prefix}Fancy*
 ╰───────────❍
  `;
- await m.React('🔧');
- await sendCommandMessage(tmenu);
- }
- if (cmd === 'smenu' || cmd === 'searchmenu') {
- await m.React('🕛');
- const smsg = `╭───❍「 *✨${name}✨* 」
+
+
+let searchmenu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
@@ -510,21 +470,16 @@ const tmenu = `╭───❍「 *✨${name}✨* 」
 │ 🇵🇰 *Creater:* *_BANDAHEALI_*
 │ 🚀 *Uptime:* ${days}d ${hours}h ${minutes}m ${seconds}s
 ╰───────────❍
- ╭───❍「 *SEARCH MENU* 」
+╭───❍「 *SEARCH MENU* 」
 *│* 💙 *${prefix}YTS*
 *│* 💙 *${prefix}Spotify*
 *│* 💙 *${prefix}Lyrics*
 *│* 💙 *${prefix}Playstore*
 *│* 💙 *${prefix}HappyMod*
 *│* 💙 *${prefix}Movie*
-╰───────────❍
- `;
- await m.React('🔍');
- await sendCommandMessage(smsg);
- }
-    if (cmd === 'rmenu' || cmd === 'reactionmenu') {
- await m.React('🕛');
- const reactionmsg = `╭───❍「 *✨${name}✨* 」
+╰───────────❍`;
+
+let reactionmenu = `╭───❍「 *✨${name}✨* 」
 │ 🧑‍💻 *𝚄𝚜𝚎𝚛:* ${pushName} ${pushwish}
 │ 🌐 *𝙼𝚘𝚍𝚎:* ${mode}
 │ ⏰ *𝚃𝚒𝚖𝚎:* ${realTime}
@@ -533,7 +488,7 @@ const tmenu = `╭───❍「 *✨${name}✨* 」
 │ 🇵🇰 *Creater:* *_BANDAHEALI_*
 │ 🚀 *Uptime:* ${days}d ${hours}h ${minutes}m ${seconds}s
 ╰───────────❍
-╭───❍「 *REACTION 𝐌𝐄𝐍𝐔* 」
+╭───❍「 *REACTION MENU* 」
 *│* 💙 *${prefix}Cry*
 *│* 💙 *${prefix}Kiss*
 *│* 💙 *${prefix}Kill*
@@ -563,11 +518,15 @@ const tmenu = `╭───❍「 *✨${name}✨* 」
 *│* 💙 *${prefix}Handhold*
 *│* 💙 *${prefix}Glomp*
 *│* 💙 *${prefix}Highfive*
- ╰───────────❍
-`;
-await m.React('😁');
-await sendCommandMessage(msg);
-}
-};
+╰───────────❍
+> POWERED BY ${name}`;
+
+const styled = stylize(cmd, randomFont) || menuMsg;
+      await sendCommandMessage(styled);
+    }
+  } catch (err) {
+    console.error("Test command error:", err);
+  }
+  };
 
 export default testCmd;
