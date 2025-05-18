@@ -1,4 +1,4 @@
-import fs from 'fs';
+/* import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import config from '../../config.js';
@@ -45,3 +45,4 @@ const fullpp = async (m, sock) => {
 };
 
 export default fullpp;
+*/
