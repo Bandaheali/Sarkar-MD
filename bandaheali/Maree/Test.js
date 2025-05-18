@@ -10,7 +10,17 @@ const testCmd = async (m, sock) => {
     if (cmd === 'test') {
       const fonts = Object.keys(allFonts);
       const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
-      const msg = stylize('Hey! Sarkar MD is Alive.', randomFont);
+      const menuMsg = `╭───❍「 *NORMAL TEXT* 」
+*│* 💙 *${prefix}TagAll*
+*│* 💙 *${prefix}HideTag*
+*│* 💙 *${prefix}Open*
+*│* 💙 *${prefix}Close*
+*│* 💙 *${prefix}Add*
+*│* 💙 *${prefix}Invite*
+*│* 💙 *${prefix}Kick*
+*│* 💙 *${prefix}Dis*`;
+
+      const msg = stylize(menuMsg, randomFont);
 
       await sock.sendMessage(m.from, { text: msg }, { quoted: m });
     }
