@@ -109,11 +109,41 @@ async function start() {
           console.log(_0x4b0fc4.green("Sarkar-MD CONNECTED SUCCESSFULLY ✅"));
 _0x76bf4.sendMessage(_0x76bf4.user.id, {
     'image': { 
-        url: 'https://files.catbox.moe/yd6y5b.jpg' // Replace with your actual image URL
+        url: 'https://files.catbox.moe/yd6y5b.jpg'
     },
-    'caption': "╭─────────────━┈⊷\n│ *sarkar ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*\n╰─────────────━┈⊷\n\n╭─────────────━┈⊷\n│🤖 ʙᴏᴛ ɴᴀᴍᴇ: *Sarkar-ᴍᴅ*\n│👨‍💻 ᴏᴡɴᴇʀ : *Sarkar Bandaheali*\n╰─────────────━┈⊷\n\n╭─────────────━┈⊷\n│⚙️ *BOT SETTINGS*\n│\n│• PREFIX: " + _0xccedb8.PREFIX + "\n│• AUTO STATUS VIEW: " + _0xccedb8.AUTO_STATUS_SEEN + "\n│• PM BLOCK: " + _0xccedb8.PM_BLOCK + "\n│• CHATBOT: " + _0xccedb8.CHAT_BOT + "\n│• VOICEBOT: " + _0xccedb8.Voice_bot + "\n╰─────────────━┈⊷\n\n*Message Me on whatsapp 😈*\n_https://wa.me/923253617422_",
-    'mimetype': 'image/jpeg', // Adjust mime type if needed (png, gif, etc.)
-    'fileName': 'Sarkar-MD.jpg' // You can change the filename
+    'caption': `╭─────────────━┈⊷
+│ *${_0xccedb8.BOT_NAME} ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*
+╰─────────────━┈⊷
+
+╭─────────────━┈⊷
+│🤖 ʙᴏᴛ ɴᴀᴍᴇ: *${_0xccedb8.BOT_NAME}*
+│👨‍💻 ᴏᴡɴᴇʀ : *${_0xccedb8.OWNER_NAME}*
+╰─────────────━┈⊷
+
+╭─────────────━┈⊷
+│⚙️ *BOT SETTINGS*
+│
+│• Prefix: ${_0xccedb8.PREFIX}
+│• Owner: ${_0xccedb8.OWNER_NUMBER}
+│• Mode: ${_0xccedb8.MODE}
+│• Welcome: ${_0xccedb8.WELCOME}
+│• ChatBot: ${_0xccedb8.CHAT_BOT}
+│• VoiceBot: ${_0xccedb8.VOICE_BOT}
+│• Anti-Delete: ${_0xccedb8.ANTI_DELETE}
+│• AutoReact: ${_0xccedb8.AUTO_REACT}
+│• AutoTyping: ${_0xccedb8.AUTO_TYPING}
+│• AutoRecording: ${_0xccedb8.AUTO_RECORDING}
+│• AlwaysOnline: ${_0xccedb8.ALWAYS_ONLINE}
+│• AutoBio: ${_0xccedb8.AUTO_BIO}
+│• AutoStatusSeen: ${_0xccedb8.AUTO_STATUS_SEEN}
+│• PmBlock: ${_0xccedb8.PM_BLOCK}
+│• RejectCalls: ${_0xccedb8.REJECT_CALL}
+╰─────────────━┈⊷
+
+*Message owner on WhatsApp*
+_https://wa.me/${_0xccedb8.OWNER_NUMBER}_`,
+    'mimetype': 'image/jpeg',
+    'fileName': 'Bot-Status.jpg'
 });
           initialConnection = false;
         } else {
