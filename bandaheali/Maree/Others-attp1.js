@@ -11,24 +11,24 @@ const attpCmd = async (m, sock) => {
     const text = m.body.slice(prefix.length + cmd.length).trim();
 
     if (cmd === 'attp') {
-      if (!text) return m.reply(`*❌ Please provide some text!*\n\nExample: ${prefix}attp Bandaheali`);
+      if (!text) {
+        return m.reply(`*❌ Please provide some text!*\n\nExample: ${prefix}attp Bandaheali`);
+      }
 
       const apiUrl = `https://api.nexoracle.com/image-creating/attp?apikey=sarkar_786&text=${encodeURIComponent(text)}`;
       const response = await fetch(apiUrl);
 
-      if (!response.ok) return m.reply(`❌ *Failed to fetch GIF from API.*`);
+      if (!response.ok) return m.reply(`❌ *Failed to download sticker from API.*`);
 
-      const gifBuffer = await response.buffer();
+      const stickerBuffer = await response.buffer();
 
       await sock.sendMessage(m.from, {
-        video: gifBuffer,
-        gifPlayback: true,
-        caption: `✨ *Animated Text (attp)*\n\n📝 Text: _${text}_`
+        sticker: stickerBuffer,
       }, { quoted: m });
     }
 
   } catch (err) {
-    console.error('ATTP Error:', err);
+    console.error('ATTP Sticker Error:', err);
     m.reply(`❌ *Error:* ${err.message}`);
   }
 };
