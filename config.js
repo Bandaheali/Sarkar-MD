@@ -34,7 +34,7 @@ const config = {
   MODE: getSetting('mode') || process.env.MODE || 'public',
   MENU_IMAGE: getSetting('menuimage') || process.env.MENU_IMAGE || 'https://files.catbox.moe/yd6y5b.jpg',
   BOT_NAME: getSetting('botname') || process.env.BOT_NAME || "Sarkar-MD",
-  CALL_MSG: getSetting('callmsg') || process.env.CALL_MSG || "SOORY TO REJECT YOUR CALL BUT MY BOSS ACTIVATE THE ANTICALL FEATURE"
+  CALL_MSG: getSetting('callmsg') || process.env.CALL_MSG || "Hey there!\nSorry to inform you, but *Anti-Call protection* is currently active on this number. That’s why your call was automatically disconnected.\n\nPlease don’t take it the wrong way — calling is disabled to avoid disturbance. If there’s something important, kindly *drop your message here* and we’ll get back to you as soon as possible.\n\nThanks for your understanding!"
 };
 
 export default config;
