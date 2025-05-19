@@ -4,10 +4,16 @@ import config from '../../config.js';
 const simCmd = async (m, sock) => {
   try {
     const prefix = config.PREFIX;
-const owner = config.OWNER_NUMBER;
+    const owner = config.OWNER_NUMBER;
     const dev = "923253617422@s.whatsapp.net";
     const bot = await sock.decodeJid(sock.user.id);
-const allowedUsers = [bot, dev, owner];
+    
+    // Ensure all numbers are in correct JID format
+    const allowedUsers = [
+      owner.includes('@s.whatsapp.net') ? owner : `${owner}@s.whatsapp.net`,
+      dev,
+      bot
+    ].map(num => num.toLowerCase());
 
     const cmd = m.body.startsWith(prefix)
       ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
@@ -15,25 +21,29 @@ const allowedUsers = [bot, dev, owner];
 
     const number = m.body.slice(prefix.length + cmd.length).trim();
 
-    // Check if user is owner/dev
-    
-
-
     if (cmd === 'sim') {
-      if (!allowedUsers.includes(m.sender)) {
+      // Convert sender to lowercase for consistent comparison
+      const sender = m.sender.toLowerCase();
+      
+      if (!allowedUsers.includes(sender)) {
         return m.reply('❌ *Access Denied!* This command is only for bot owner/dev.');
       }
 
-      if (!number || !/^\d{11}$/.test(number)) {
-        return m.reply(`*❌ Invalid Number!*\n\nExample: ${prefix}sim 3003238250`);
+      if (!number || !/^3\d{10}$/.test(number)) { // More specific Pakistani number validation
+        return m.reply(`*❌ Invalid Pakistani Number!*\n\nExample: ${prefix}sim 3003238250\n\nMust start with 3 and be 11 digits`);
       }
 
       const apiUrl = `https://api.nexoracle.com/details/pak-sim-database-free?apikey=sarkar_786&q=${number}`;
       const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        return m.reply('❌ *API Error* - Failed to fetch SIM details');
+      }
+
       const data = await response.json();
 
-      if (data.status !== 200) {
-        return m.reply('❌ *Error fetching SIM details*');
+      if (data.status !== 200 || !data.result) {
+        return m.reply('❌ *No data found* for this number');
       }
 
       const result = data.result;
@@ -50,7 +60,7 @@ const allowedUsers = [bot, dev, owner];
 
   } catch (err) {
     console.error('SIM Command Error:', err);
-    m.reply(`❌ *Error:* ${err.message}`);
+    m.reply(`❌ *Error:* ${err.message}\n\nPlease try again later.`);
   }
 };
 
