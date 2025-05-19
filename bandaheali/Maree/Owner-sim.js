@@ -30,7 +30,7 @@ const simCmd = async (m, sock) => {
       }
 
       if (!number || !/^3\d{10}$/.test(number)) { // More specific Pakistani number validation
-        return m.reply(`*❌ Invalid Pakistani Number!*\n\nExample: ${prefix}sim 3003238250\n\nMust start with 3 and be 11 digits`);
+        return m.reply(`*❌ Invalid Pakistani Number!*\n\nExample: ${prefix}sim 3000000000\n\nMust start with 3 and be 11 digits`);
       }
 
       const apiUrl = `https://api.nexoracle.com/details/pak-sim-database-free?apikey=sarkar_786&q=${number}`;
