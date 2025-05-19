@@ -111,39 +111,41 @@ _0x76bf4.sendMessage(_0x76bf4.user.id, {
     'image': { 
         url: 'https://files.catbox.moe/yd6y5b.jpg'
     },
-    'caption': `╭─────────────━┈⊷
-│ *${_0xccedb8.BOT_NAME} ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*
-╰─────────────━┈⊷
+    'caption': `╔═══════════════◇◆◇═══════════════╗
+║       *🅢🅐🅡🅚🅐🅡-🅜🅓*       ║
+╚═══════════════◇◆◇═══════════════╝
 
-╭─────────────━┈⊷
-│🤖 ʙᴏᴛ ɴᴀᴍᴇ: *${_0xccedb8.BOT_NAME}*
-│👨‍💻 ᴏᴡɴᴇʀ : *${_0xccedb8.OWNER_NAME}*
-╰─────────────━┈⊷
-
-╭─────────────━┈⊷
-│⚙️ *BOT SETTINGS*
+╭─────────────────
+│ *🔰 ʙᴏᴛ ꜱᴛᴀᴛᴜꜱ : ᴀᴄᴛɪᴠᴇ*
+│ *⚡ ᴠᴇʀꜱɪᴏɴ : ᴠɪᴘ ᴘʀᴏ*
+╰─────────────────
+╭─────────────────
+│ *🛠️ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ*
 │
-│• Prefix: ${_0xccedb8.PREFIX}
-│• Owner: ${_0xccedb8.OWNER_NUMBER}
-│• Mode: ${_0xccedb8.MODE}
-│• Welcome: ${_0xccedb8.WELCOME}
-│• ChatBot: ${_0xccedb8.CHAT_BOT}
-│• VoiceBot: ${_0xccedb8.VOICE_BOT}
-│• Anti-Delete: ${_0xccedb8.ANTI_DELETE}
-│• AutoReact: ${_0xccedb8.AUTO_REACT}
-│• AutoTyping: ${_0xccedb8.AUTO_TYPING}
-│• AutoRecording: ${_0xccedb8.AUTO_RECORDING}
-│• AlwaysOnline: ${_0xccedb8.ALWAYS_ONLINE}
-│• AutoBio: ${_0xccedb8.AUTO_BIO}
-│• AutoStatusSeen: ${_0xccedb8.AUTO_STATUS_SEEN}
-│• PmBlock: ${_0xccedb8.PM_BLOCK}
-│• RejectCalls: ${_0xccedb8.REJECT_CALL}
-╰─────────────━┈⊷
-
-*Message owner on WhatsApp*
-_https://wa.me/${_0xccedb8.OWNER_NUMBER}_`,
+│• *🔧 ᴍᴏᴅᴇ* : ${_0xccedb8.MODE}
+│• *⚙️ ᴘʀᴇꜰɪx* : ${_0xccedb8.PREFIX}
+│• *🤖 ᴄʜᴀᴛʙᴏᴛ* : ${_0xccedb8.CHAT_BOT}
+│• *🎙️ ᴠᴏɪᴄᴇʙᴏᴛ* : ${_0xccedb8.VOICE_BOT}
+│• *🛡️ ᴀɴᴛɪ-ᴅᴇʟᴇᴛᴇ* : ${_0xccedb8.ANTI_DELETE}
+│• *✨ ᴀᴜᴛᴏ-ʀᴇᴀᴄᴛ* : ${_0xccedb8.AUTO_REACT}
+│• *📡 ᴀʟᴡᴀʏs ᴏɴʟɪɴᴇ* : ${_0xccedb8.ALWAYS_ONLINE}
+│• *👁️ ꜱᴛᴀᴛᴜꜱ ꜱᴇᴇɴ* : ${_0xccedb8.AUTO_STATUS_SEEN}
+│• *🚫 ᴘᴍ ʙʟᴏᴄᴋ* : ${_0xccedb8.PM_BLOCK}
+╰─────────────────
+╭─────────────────
+│ *📌 ꜱᴜᴘᴘᴏʀᴛ ʟɪɴᴋꜱ*
+│
+│• *📢 ᴏꜰꜰɪᴄɪᴀʟ ᴄʜᴀɴɴᴇʟ* :
+│  https://whatsapp.com/channel/0029VajGHyh2phHOH5zJl73P
+│
+│• *👥 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ* :
+│  https://chat.whatsapp.com/C5js5lDia5Y8dcAoXj4mpq
+╰─────────────────
+╔═══════════════◇◆◇═══════════════╗
+║  *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ꜱᴀʀᴋᴀʀ-ᴍᴅ ᴠɪᴘ*  ║
+╚═══════════════◇◆◇═══════════════╝`,
     'mimetype': 'image/jpeg',
-    'fileName': 'Bot-Status.jpg'
+    'fileName': 'SARKAR-MD-VIP-Status.jpg'
 });
           initialConnection = false;
         } else {
