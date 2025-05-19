@@ -107,20 +107,13 @@ async function start() {
       } else if (_0x237ed1 === 'open') {
         if (initialConnection) {
           console.log(_0x4b0fc4.green("Sarkar-MD CONNECTED SUCCESSFULLY ✅"));
-await _0x76bf4.sendMessage(_0x76bf4.user.id, {
-  image: { url: 'https://files.catbox.moe/yd6y5b.jpg' }, // yahan image link daalein
-  caption:
-`╭────〔 *ʙᴏᴛ ᴏɴʟɪɴᴇ* 〕─────✦
-│ ✅ *SARKAR is now Connected*
-╰─────────────━┈⊷
-
-╭────〔 *ʙᴏᴛ ɪɴғᴏ* 〕─────✦
-│ 🤖 *Name:* 𝗦𝗮𝗿𝗸𝗮𝗿-𝗠𝗗
-│ 👑 *Owner:* 𝗦𝗮𝗿𝗸𝗮𝗿 𝗕𝗮𝗻𝗱𝗮𝗵𝗲𝗮𝗹𝗶
-╰─────────────━┈⊷
-
-✉️ *Contact the Boss:*
-_https://wa.me/923253617422_`
+_0x76bf4.sendMessage(_0x76bf4.user.id, {
+    'image': { 
+        url: 'https://files.catbox.moe/yd6y5b.jpg' // Replace with your actual image URL
+    },
+    'caption': "╭─────────────━┈⊷\n│ *sarkar ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*\n╰─────────────━┈⊷\n\n╭─────────────━┈⊷\n│🤖 ʙᴏᴛ ɴᴀᴍᴇ: *Sarkar-ᴍᴅ*\n│👨‍💻 ᴏᴡɴᴇʀ : *Sarkar Bandaheali*\n╰─────────────━┈⊷\n\n*Message Me on whatsapp 😈*\n_https://wa.me/923253617422_",
+    'mimetype': 'image/jpeg', // Adjust mime type if needed (png, gif, etc.)
+    'fileName': 'Sarkar-MD.jpg' // You can change the filename
 });
           initialConnection = false;
         } else {
