@@ -48,7 +48,7 @@ async function downloadSessionData() {
       await _0x5687e2.promises.writeFile(credsPath, decoded);
       return true;
     } 
-    else if (_0xccedb8.SESSION_ID.startsWith('Bandaheali')) {
+    else if (_0xccedb8.SESSION_ID.startsWith('Bandaheali$')) {
       // Handle Pastebin session
       const pasteId = _0xccedb8.SESSION_ID.split("Bandaheali$")[1];
       const pasteUrl = 'https://pastebin.com/raw/' + pasteId;
