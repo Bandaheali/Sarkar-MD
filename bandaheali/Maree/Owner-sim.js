@@ -19,7 +19,7 @@ const simCmd = async (m, sock) => {
       ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
       : '';
 
-    const number = m.body.slice(prefix.length + cmd.length).trim();
+    let number = m.body.slice(prefix.length + cmd.length).trim();
 
     if (cmd === 'sim') {
       // Convert sender to lowercase for consistent comparison
@@ -29,11 +29,21 @@ const simCmd = async (m, sock) => {
         return m.reply('❌ *Access Denied!* This command is only for bot owner/dev.');
       }
 
-      if (!number || !/^3\d{10}$/.test(number)) { // More specific Pakistani number validation
-        return m.reply(`*❌ Invalid Pakistani Number!*\n\nExample: ${prefix}sim 3000000000\n\nMust start with 3 and be 11 digits`);
+      // Remove any non-digit characters
+      number = number.replace(/\D/g, '');
+
+      // Validate number format
+      if (!number || !(
+        (number.startsWith('3') && number.length === 10) || // 3XXXXXXXXX (10 digits)
+        (number.startsWith('0') && number.length === 11)   // 0XXXXXXXXXX (11 digits)
+      )) {
+        return m.reply(`*❌ Invalid Pakistani Number Format!*\n\nExamples:\n${prefix}sim 3001234567 (10 digits starting with 3)\n${prefix}sim 03001234567 (11 digits starting with 0)`);
       }
 
-      const apiUrl = `https://api.nexoracle.com/details/pak-sim-database-free?apikey=sarkar_786&q=${number}`;
+      // If number starts with 0, remove it for API query
+      const apiNumber = number.startsWith('0') ? number.substring(1) : number;
+
+      const apiUrl = `https://api.nexoracle.com/details/pak-sim-database-free?apikey=sarkar_786&q=${apiNumber}`;
       const response = await fetch(apiUrl);
       
       if (!response.ok) {
