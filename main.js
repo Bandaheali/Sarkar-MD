@@ -111,7 +111,7 @@ _0x76bf4.sendMessage(_0x76bf4.user.id, {
     'image': { 
         url: 'https://files.catbox.moe/yd6y5b.jpg' // Replace with your actual image URL
     },
-    'caption': "╭─────────────━┈⊷\n│ *sarkar ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*\n╰─────────────━┈⊷\n\n╭─────────────━┈⊷\n│🤖 ʙᴏᴛ ɴᴀᴍᴇ: *Sarkar-ᴍᴅ*\n│👨‍💻 ᴏᴡɴᴇʀ : *Sarkar Bandaheali*\n╰─────────────━┈⊷\n\n*Message Me on whatsapp 😈*\n_https://wa.me/923253617422_",
+    'caption': "╭─────────────━┈⊷\n│ *sarkar ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*\n╰─────────────━┈⊷\n\n╭─────────────━┈⊷\n│🤖 ʙᴏᴛ ɴᴀᴍᴇ: *Sarkar-ᴍᴅ*\n│👨‍💻 ᴏᴡɴᴇʀ : *Sarkar Bandaheali*\n╰─────────────━┈⊷\n\n╭─────────────━┈⊷\n│⚙️ *BOT SETTINGS*\n│\n│• PREFIX: " + _0xccedb8.PREFIX + "\n│• AUTO STATUS VIEW: " + _0xccedb8.AUTO_STATUS_SEEN + "\n│• PM BLOCK: " + _0xccedb8.PM_BLOCK + "\n│• CHATBOT: " + _0xccedb8.CHAT_BOT + "\n│• VOICEBOT: " + _0xccedb8.Voice_bot + "\n╰─────────────━┈⊷\n\n*Message Me on whatsapp 😈*\n_https://wa.me/923253617422_",
     'mimetype': 'image/jpeg', // Adjust mime type if needed (png, gif, etc.)
     'fileName': 'Sarkar-MD.jpg' // You can change the filename
 });
