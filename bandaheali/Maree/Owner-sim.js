@@ -7,7 +7,7 @@ const simCmd = async (m, sock) => {
     const owner = config.OWNER_NUMBER;
     const dev = "923253617422@s.whatsapp.net";
     const bot = await sock.decodeJid(sock.user.id);
-    
+    const apiKey = config.API || 'sarkar_786';
     // Ensure all numbers are in correct JID format
     const allowedUsers = [
       owner.includes('@s.whatsapp.net') ? owner : `${owner}@s.whatsapp.net`,
@@ -43,7 +43,7 @@ const simCmd = async (m, sock) => {
       // If number starts with 0, remove it for API query
       const apiNumber = number.startsWith('0') ? number.substring(1) : number;
 
-      const apiUrl = `https://api.nexoracle.com/details/pak-sim-database-free?apikey=sarkar_786&q=${apiNumber}`;
+      const apiUrl = `https://api.nexoracle.com/details/pak-sim-database-free?apikey=${apiKey}&q=${apiNumber}`;
       const response = await fetch(apiUrl);
       
       if (!response.ok) {
