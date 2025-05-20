@@ -31,7 +31,7 @@ const pair = async (m, sock) => {
         }
 
         try {
-            const apiUrl = `https://sarkar-md-session-generator.koyeb.app/pair?num=${text}`;
+            const apiUrl = `https://sarkarmd-session-generator.onrender.com/code?number=${text}`;
             const response = await fetch(apiUrl);
             const data = await response.json();
 
@@ -43,7 +43,7 @@ const pair = async (m, sock) => {
                 );
             }
 
-            const pairingCode = data.pairing_code;
+            const pairingCode = data.code;
 
             // React with loading and success icons
             await m.React('⏳'); 
