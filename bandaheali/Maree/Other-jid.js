@@ -8,36 +8,15 @@ const jid = async (m, sock) => {
     // Command check
     if (cmd !== 'jid') return;
 
-    // Proper group detection
-    const isGroup = m.key.remoteJid.endsWith('@g.us');
-
     try {
-        if (!isGroup) {
-            // Personal chat
-            await sendNewsletter(
-                sock,
-                m.from,
-                `${m.from}``,
-                m,
-                "✨ JID Finder ✨",
-                "User Information"
-            );
-            return;
-        }
-
-        // Group info
-        const groupInfo = await sock.groupMetadata(m.from);
-        const participants = groupInfo.participants.map(p => p.id);
-
-        let jidInfo = `${m.from}`;
-
+        // Send only the JID (works for both private and group chats)
         await sendNewsletter(
             sock,
             m.from,
-            jidInfo,
+            `${m.from}`,
             m,
             "✨ JID Finder ✨",
-            "Group Information"
+            "JID Information"
         );
 
     } catch (error) {
