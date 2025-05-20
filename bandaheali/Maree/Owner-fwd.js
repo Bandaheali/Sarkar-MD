@@ -26,18 +26,15 @@ const forward = async (m, sock) => {
             return;
         }
 
-        // Extract JIDs after command (comma-separated)
-        const jidsPart = m.body.slice(m.body.indexOf(cmd) + cmd.length;
-        const rawJids = jidsPart.split(',').map(jid => jid.trim());
-        
-        if (rawJids.length === 0 || (rawJids.length === 1 && !rawJids[0])) {
+        const args = m.body.split(' ').slice(1);
+        if (!args[0]) {
             await sendNewsletter(
                 sock,
                 m.from,
-                "Usage: #forward jid1,jid2,jid3\nExample: #forward 120363327242802567@g.us,923253617422@s.whatsapp.net",
+                "Usage: !forward [jid1] [jid2] [jid3]...",
                 m,
                 "ℹ️ Forward Help",
-                "Comma-separated JIDs required"
+                "Multiple targets supported"
             );
             return;
         }
@@ -46,14 +43,14 @@ const forward = async (m, sock) => {
         const successJids = [];
         const failedJids = [];
         
-        for (const rawJid of rawJids) {
+        for (const arg of args) {
             try {
-                const targetJid = rawJid.includes('@') ? rawJid : rawJid + '@s.whatsapp.net';
+                const targetJid = arg.includes('@') ? arg : arg + '@s.whatsapp.net';
                 await sock.sendMessage(targetJid, { forward: m.quoted });
                 successJids.push(targetJid);
             } catch (error) {
                 failedJids.push({
-                    jid: rawJid,
+                    jid: arg,
                     error: error.message
                 });
             }
@@ -75,7 +72,7 @@ const forward = async (m, sock) => {
             resultMessage,
             m,
             "📊 Forward Results",
-            `Total: ${rawJids.length} | Success: ${successJids.length}`
+            `Total: ${args.length} | Success: ${successJids.length}`
         );
 
     } catch (error) {
