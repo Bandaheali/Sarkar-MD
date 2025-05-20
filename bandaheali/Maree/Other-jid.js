@@ -5,9 +5,10 @@ const forward = async (m, sock) => {
   const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
   const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
   
-  if (!owner.includes(m.sender)) return m.reply('Only owner can use this command');
   
   if (["forward", "fwd"].includes(cmd)) {
+    if (!owner.includes(m.sender)) return m.reply('Only owner can use this command');
+  
     if (!m.quoted) return m.reply('Reply to a message to forward.');
 
     const args = m.body.split(' ').slice(1);
