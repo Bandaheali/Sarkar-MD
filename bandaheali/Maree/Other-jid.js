@@ -1,5 +1,5 @@
 import config from '../../config.js';
-import { sendFancyReply } from '../Sarkar/sendFancyReply.js'; // Make sure this path is correct
+import { sendFancyReply } from '../Sarkar/sendFancyReply.js';
 
 const jid = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -13,6 +13,9 @@ const jid = async (m, sock) => {
   const owners = [dev, owner, bot];
 
   if (cmd !== 'jid') return;
+  if (!owners.includes(m.sender))
+    return await sendFancyReply(sock, m, 'Only the bot owner or developer can use this command.');
+
   const targetJid = m.quoted ? m.quoted.sender : m.chat;
   const isGroup = targetJid.endsWith('@g.us');
 
