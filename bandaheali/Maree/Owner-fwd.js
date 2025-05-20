@@ -1,4 +1,3 @@
-
 import config from '../../config.js';
 import { sendNewsletter } from '../Sarkar/newsletter.js';
 
@@ -27,15 +26,18 @@ const forward = async (m, sock) => {
             return;
         }
 
-        const args = m.body.split(' ').slice(1);
-        if (!args[0]) {
+        // Extract JIDs after command (comma-separated)
+        const jidsPart = m.body.slice(m.body.indexOf(cmd) + cmd.length;
+        const rawJids = jidsPart.split(',').map(jid => jid.trim());
+        
+        if (rawJids.length === 0 || (rawJids.length === 1 && !rawJids[0])) {
             await sendNewsletter(
                 sock,
                 m.from,
-                "Usage: !forward [jid1] [jid2] [jid3]...",
+                "Usage: #forward jid1,jid2,jid3\nExample: #forward 120363327242802567@g.us,923253617422@s.whatsapp.net",
                 m,
                 "ℹ️ Forward Help",
-                "Multiple targets supported"
+                "Comma-separated JIDs required"
             );
             return;
         }
@@ -44,14 +46,14 @@ const forward = async (m, sock) => {
         const successJids = [];
         const failedJids = [];
         
-        for (const arg of args) {
+        for (const rawJid of rawJids) {
             try {
-                const targetJid = arg.includes('@') ? arg : arg + '@s.whatsapp.net';
+                const targetJid = rawJid.includes('@') ? rawJid : rawJid + '@s.whatsapp.net';
                 await sock.sendMessage(targetJid, { forward: m.quoted });
                 successJids.push(targetJid);
             } catch (error) {
                 failedJids.push({
-                    jid: arg,
+                    jid: rawJid,
                     error: error.message
                 });
             }
@@ -73,7 +75,7 @@ const forward = async (m, sock) => {
             resultMessage,
             m,
             "📊 Forward Results",
-            `Total: ${args.length} | Success: ${successJids.length}`
+            `Total: ${rawJids.length} | Success: ${successJids.length}`
         );
 
     } catch (error) {
@@ -89,93 +91,3 @@ const forward = async (m, sock) => {
 };
 
 export default forward;
-
-
-
-
-
-
-
-
-
-
-
-
-/*import config from '../../config.js';
-import { sendNewsletter } from '../Sarkar/newsletter.js';
-
-const forward = async (m, sock) => {
-    const prefix = config.PREFIX;
-  const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
-  const bot = sock.decodeJid(sock.user.id);
-  const dev = '923253617422@s.whatsapp.net';
- const isCreater = [dev, owner, bot].includes(m.sender);
-    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-    
-    if (!["forward", "fwd"].includes(cmd)) return;
-if(!isCreater) return;
-    try {
-        if (!m.quoted) {
-            await sendNewsletter(
-                sock,
-                m.from,
-                "Reply to a message to forward!",
-                m,
-                "🚫 Forward Error",
-                "Missing quoted message"
-            );
-            return;
-        }
-
-        const args = m.body.split(' ').slice(1);
-        if (!args[0]) {
-            await sendNewsletter(
-                sock,
-                m.from,
-                "Usage: !forward [jid]",
-                m,
-                "ℹ️ Forward Help",
-                "Missing destination"
-            );
-            return;
-        }
-
-        const targetJid = args[0].includes('@') ? args[0] : args[0] + '@s.whatsapp.net';
-        
-        // Normal forwarding (no newsletter style)
-        await sock.sendMessage(targetJid, { forward: m.quoted });
-
-        // Success message (newsletter style)
-        await sendNewsletter(
-            sock,
-            m.from,
-            `Message forwarded to ${targetJid}`,
-            m,
-            "✅ Forward Success",
-            "Message delivered"
-        );
-
-    } catch (error) {
-        await sendNewsletter(
-            sock,
-            m.from,
-            `Failed: ${error.message}`,
-            m,
-            "🚫 Forward Error",
-            "Delivery failed"
-        );
-    }
-};
-
-export default forward;
-
-
-
-
-
-*/
-
-
-
-
-
