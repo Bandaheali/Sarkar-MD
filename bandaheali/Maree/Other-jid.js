@@ -1,58 +1,53 @@
 import config from '../../config.js';
 
-const jid = async (m, sock) => {
+const forward = async (m, sock) => {
   const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix)
-    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
-    : '';
-
-  const dev = '923253617422@s.whatsapp.net';
+  const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
   const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
-  const bot = typeof sock.user.id === 'string' ? sock.user.id : sock.decodeJid(sock.user.id);
-  const owners = [dev, owner, bot];
+  
+  if (!owner.includes(m.sender)) return m.reply('Only owner can use this command');
+  
+  if (["forward", "fwd"].includes(cmd)) {
+    if (!m.quoted) return m.reply('Reply to a message to forward.');
 
-  // Inline function for fancy reply
-  const sendFancyReply = async (responseText) => {
-    await sock.sendMessage(
-      m.from,
-      {
-        text: responseText,
-        contextInfo: {
-          mentionedJid: [m.sender],
-          isForwarded: true,
-          forwardingScore: 999,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363315182578784@newsletter',
-            newsletterName: 'Sarkar-MD',
-            serverMessageId: -1,
-          },
-          externalAdReply: {
-            title: '✨ Sarkar-MD ✨',
-            body: 'Powered by Sarkar-Bandaheali',
-            thumbnailUrl:
-              'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
-            sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD/fork',
-            mediaType: 1,
-            renderLargerThumbnail: false,
+    const args = m.body.split(' ').slice(1);
+    if (args.length === 0) return m.reply('Provide a JID (group/number) to forward to.');
+
+    const targetJid = args[0].includes('@') ? args[0] : `${args[0]}@s.whatsapp.net`;
+
+    try {
+      // Forward with newsletter style context
+      await sock.sendMessage(
+        targetJid,
+        {
+          forward: m.quoted,
+          contextInfo: {
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363315182578784@newsletter',
+              newsletterName: "Sarkar-MD",
+              serverMessageId: -1,
+            },
+            forwardingScore: 999,
+            externalAdReply: {
+              title: "✨ Sarkar-MD ✨",
+              body: "Forwarded Message",
+              thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/main/Pairing/1733805817658.webp',
+              sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
+              mediaType: 1,
+              renderLargerThumbnail: false,
+            },
           },
         },
-      },
-      { quoted: m }
-    );
-  };
-
-  if (cmd !== 'jid') return;
-
-  if (!owners.includes(m.sender)) {
-    return await sendFancyReply('Only the bot owner or developer can use this command.');
+        { quoted: m }
+      );
+      
+      m.reply('Message forwarded successfully with newsletter style!');
+    } catch (error) {
+      m.reply('Failed to forward message.');
+      console.error(error);
+    }
   }
-
-  const targetJid = m.quoted ? m.quoted.sender : m.chat;
-  const isGroup = targetJid.endsWith('@g.us');
-
-  const response = `*JID Info:*\n${isGroup ? 'Group JID' : 'User JID'}: \n\`\`\`${targetJid}\`\`\``;
-
-  await sendFancyReply(response);
 };
 
-export default jid;
+export default forward;
