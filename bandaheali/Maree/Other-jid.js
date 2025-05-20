@@ -17,7 +17,7 @@ const jid = async (m, sock) => {
             await sendNewsletter(
                 sock,
                 m.from,
-                `📌 *Your Personal JID:*\n\`\`\`${m.from}\`\`\`\n📌 *Bot Prefix:* \`${prefix}\``,
+                `${m.from}``,
                 m,
                 "✨ JID Finder ✨",
                 "User Information"
@@ -29,13 +29,7 @@ const jid = async (m, sock) => {
         const groupInfo = await sock.groupMetadata(m.from);
         const participants = groupInfo.participants.map(p => p.id);
 
-        let jidInfo = `
-📌 *Group JID:* \`\`\`${m.from}\`\`\`
-👤 *Creator:* \`\`\`${groupInfo.owner}\`\`\`
-👥 *Participants (${participants.length}):*\n${
-    participants.slice(0, 10).map((jid, i) => `${i+1}. \`\`\`${jid}\`\`\``).join('\n')
-}${participants.length > 10 ? `\n...and ${participants.length-10} more` : ''}
-        `;
+        let jidInfo = `${m.from}`;
 
         await sendNewsletter(
             sock,
