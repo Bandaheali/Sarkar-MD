@@ -6,7 +6,7 @@ const forward = async (m, sock) => {
   const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
   const bot = sock.decodeJid(sock.user.id);
   const dev = '923253617422@s.whatsapp.net';
-  isCreater = [dev, owner, bot].includes(m.sender);
+ const isCreater = [dev, owner, bot].includes(m.sender);
     const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
     
     if (!["forward", "fwd"].includes(cmd)) return;
