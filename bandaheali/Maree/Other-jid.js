@@ -1,54 +1,62 @@
 import config from '../../config.js';
+import { sendNewsletter } from '../Sarkar/newsletter.js';
 
-const forward = async (m, sock) => {
-  const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-  const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
-  
-  
-  if (["forward", "fwd"].includes(cmd)) {
-    if (!owner.includes(m.sender)) return m.reply('Only owner can use this command');
-  
-    if (!m.quoted) return m.reply('Reply to a message to forward.');
+const jid = async (m, sock) => {
+    const prefix = config.PREFIX;
+    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+    
+    // Command check
+    if (cmd !== 'jid') return;
 
-    const args = m.body.split(' ').slice(1);
-    if (args.length === 0) return m.reply('Provide a JID (group/number) to forward to.');
-
-    const targetJid = args[0].includes('@') ? args[0] : `${args[0]}@s.whatsapp.net`;
+    // Proper group detection
+    const isGroup = m.key.remoteJid.endsWith('@g.us');
 
     try {
-      // Forward with newsletter style context
-      await sock.sendMessage(
-        targetJid,
-        {
-          forward: m.quoted,
-          contextInfo: {
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363315182578784@newsletter',
-              newsletterName: "Sarkar-MD",
-              serverMessageId: -1,
-            },
-            forwardingScore: 999,
-            externalAdReply: {
-              title: "✨ Sarkar-MD ✨",
-              body: "Forwarded Message",
-              thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/main/Pairing/1733805817658.webp',
-              sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
-              mediaType: 1,
-              renderLargerThumbnail: false,
-            },
-          },
-        },
-        { quoted: m }
-      );
-      
-      m.reply('Message forwarded successfully with newsletter style!');
+        if (!isGroup) {
+            // Personal chat
+            await sendNewsletter(
+                sock,
+                m.from,
+                `📌 *Your Personal JID:*\n\`\`\`${m.from}\`\`\`\n📌 *Bot Prefix:* \`${prefix}\``,
+                m,
+                "✨ JID Finder ✨",
+                "User Information"
+            );
+            return;
+        }
+
+        // Group info
+        const groupInfo = await sock.groupMetadata(m.from);
+        const participants = groupInfo.participants.map(p => p.id);
+
+        let jidInfo = `
+📌 *Group JID:* \`\`\`${m.from}\`\`\`
+👤 *Creator:* \`\`\`${groupInfo.owner}\`\`\`
+👥 *Participants (${participants.length}):*\n${
+    participants.slice(0, 10).map((jid, i) => `${i+1}. \`\`\`${jid}\`\`\``).join('\n')
+}${participants.length > 10 ? `\n...and ${participants.length-10} more` : ''}
+        `;
+
+        await sendNewsletter(
+            sock,
+            m.from,
+            jidInfo,
+            m,
+            "✨ JID Finder ✨",
+            "Group Information"
+        );
+
     } catch (error) {
-      m.reply('Failed to forward message.');
-      console.error(error);
+        await sendNewsletter(
+            sock,
+            m.from,
+            "❌ Error: " + error.message,
+            m,
+            "✨ JID Finder ✨",
+            "Error"
+        );
+        console.error("JID Command Error:", error);
     }
-  }
 };
 
-export default forward;
+export default jid;
