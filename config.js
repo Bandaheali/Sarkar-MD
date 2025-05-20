@@ -30,7 +30,7 @@ const config = {
   AUTO_BIO: toBool(getSetting('autobio') || process.env.AUTO_BIO),
   AUTO_STATUS_SEEN: toBool(getSetting('statusView') || process.env.AUTO_STATUS_SEEN, true),
   PM_BLOCK: toBool(getSetting('pmblock') || process.env.PM_BLOCK),
-  REJECT_CALL: toBool(getSetting('rejectCall') || process.env.REJECT_CALL),
+  REJECT_CALL: toBool(getSetting('antiCall') || process.env.REJECT_CALL),
   MODE: getSetting('mode') || process.env.MODE || 'public',
   MENU_IMAGE: getSetting('menuimage') || process.env.MENU_IMAGE || 'https://files.catbox.moe/yd6y5b.jpg',
   BOT_NAME: getSetting('botname') || process.env.BOT_NAME || "Sarkar-MD",
