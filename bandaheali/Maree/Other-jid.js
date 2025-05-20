@@ -1,5 +1,5 @@
 import config from '../../config.js';
-import { sendFancyReply } from '../Sarkar/sendFancyReply.js';
+import { Sarkar } from '../../lib/Sarkar.js';
 
 const jid = async (m, sock) => {
   const prefix = config.PREFIX;
