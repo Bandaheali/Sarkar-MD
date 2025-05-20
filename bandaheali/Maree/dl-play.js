@@ -122,8 +122,8 @@ const dlplay = async (m, sock) => {
             isForwarded: false,
             forwardingScore: 999,
             externalAdReply: {
-              title: "✨ YouTube Audio Downloader ✨",
-              body: "Powered by 4 API Fallback System",
+              title: "✨ SARKAR-MD 🥰 ✨",
+              body: "Powered by Sarkar-MD",
               thumbnailUrl: thumbnail,
               sourceUrl: videoUrl,
               mediaType: 1,
@@ -137,7 +137,7 @@ const dlplay = async (m, sock) => {
     } catch (error) {
       console.error("Error in dlSong command:", error);
       await m.React('❌');
-      sock.sendMessage(m.from, { text: "❌ An error occurred while processing your request!" }, { quoted: m });
+      sock.sendMessage(m.from, { text: `error occured ${error}` }, { quoted: m });
     }
   }
 };
