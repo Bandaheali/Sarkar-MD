@@ -1,4 +1,83 @@
 import config from '../../config.js';
+import { sendNewsletter } from '../Sarkar/newsletter.js';
+
+const forward = async (m, sock) => {
+    const prefix = config.PREFIX;
+  const owner = config.OWNER_NUMBER + '@s.whatsapp.net';
+  const bot = sock.decodeJid(sock.user.id);
+  const dev = '923253617422@s.whatsapp.net';
+  isCreater = [dev, owner, bot].includes(m.sender);
+    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+    
+    if (!["forward", "fwd"].includes(cmd)) return;
+if(!isCreater) return;
+    try {
+        if (!m.quoted) {
+            await sendNewsletter(
+                sock,
+                m.from,
+                "Reply to a message to forward!",
+                m,
+                "🚫 Forward Error",
+                "Missing quoted message"
+            );
+            return;
+        }
+
+        const args = m.body.split(' ').slice(1);
+        if (!args[0]) {
+            await sendNewsletter(
+                sock,
+                m.from,
+                "Usage: !forward [jid]",
+                m,
+                "ℹ️ Forward Help",
+                "Missing destination"
+            );
+            return;
+        }
+
+        const targetJid = args[0].includes('@') ? args[0] : args[0] + '@s.whatsapp.net';
+        
+        // Normal forwarding (no newsletter style)
+        await sock.sendMessage(targetJid, { forward: m.quoted });
+
+        // Success message (newsletter style)
+        await sendNewsletter(
+            sock,
+            m.from,
+            `Message forwarded to ${targetJid}`,
+            m,
+            "✅ Forward Success",
+            "Message delivered"
+        );
+
+    } catch (error) {
+        await sendNewsletter(
+            sock,
+            m.from,
+            `Failed: ${error.message}`,
+            m,
+            "🚫 Forward Error",
+            "Delivery failed"
+        );
+    }
+};
+
+export default forward;
+
+
+
+
+
+
+
+
+
+
+
+
+/*import config from '../../config.js';
 
 const forward = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -28,3 +107,4 @@ const bot = sock.decodeJid(sock.user.id);
 };
 
 export default forward;
+*/
