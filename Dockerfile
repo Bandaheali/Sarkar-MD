@@ -4,17 +4,17 @@ FROM node:lts-buster
 # Set working directory
 WORKDIR /
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Only copy package.json (no lock file)
+COPY package.json .
 
-# Install dependencies
+# Install dependencies (no lock file used)
 RUN npm install --omit=dev && npm install -g pm2
 
-# Copy rest of the files
+# Copy the rest of the application files
 COPY . .
 
-# Expose necessary ports
+# Expose your port
 EXPOSE 9090
 
-# Start the application
+# Start the app using PM2
 CMD ["pm2-runtime", "start", "main.js", "--name", "Sarkar-MD"]
