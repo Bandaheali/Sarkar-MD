@@ -53,7 +53,7 @@ const removebg = async (m, sock) => {
         await sock.sendMessage(
             m.from,
             {
-                image: { url: apiUrl },
+                image: { url: processedImageUrl },
                 caption: "✅ *Background Removed Successfully*",
                 contextInfo: {
                     externalAdReply: {
