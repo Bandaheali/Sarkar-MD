@@ -1,15 +1,15 @@
-import config from '../../config.js';
-import { sendNewsletter } from '../Sarkar/newsletter.js';
 import axios from 'axios';
 import FormData from 'form-data';
+import config from '../../config.js';
+import { sendNewsletter } from '../Sarkar/newsletter.js';
 
-const blur = async (m, sock) => {
+const removebg = async (m, sock) => {
     const prefix = config.PREFIX;
     const cmd = m.body.startsWith(prefix) 
         ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
         : '';
 
-    if (cmd !== "blur") return;
+    if (!['removebg', 'rmbg'].includes(cmd)) return;
 
     try {
         // Check if replied to an image
@@ -17,9 +17,9 @@ const blur = async (m, sock) => {
             await sendNewsletter(
                 sock,
                 m.from,
-                "❌ *Reply to an image first!*\nExample: Reply to an image and type `.blur`",
+                "⚠️ *Please reply to an image with* `.removebg` *or* `.rmbg`",
                 m,
-                "🖼️ Blur Tool",
+                "🖼️ Background Remover",
                 "Image Required"
             );
             return;
@@ -30,24 +30,40 @@ const blur = async (m, sock) => {
         await m.React('⏳');
 
         // Download image
-        const media = await sock.downloadMediaMessage(m.quoted);
-        
-        // Prepare API request
+        const mediaBuffer = await sock.downloadMediaMessage(m.quoted);
+
+        // Upload to temporary host (Telegraph)
         const form = new FormData();
-        form.append('image', media, 'image.jpg');
+        form.append('file', mediaBuffer, { filename: 'image.jpg' });
+        
+        const uploadRes = await axios.post(
+            'https://telegra.ph/upload',
+            form,
+            { headers: form.getHeaders() }
+        );
+        const imageUrl = 'https://telegra.ph' + uploadRes.data[0].src;
 
-        // The API URL that directly returns the image
-        const apiUrl = 'https://api.siputzx.my.id/api/iloveimg/blurface';
+        // Process image through background removal API
+        const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageUrl)}`;
+        
+        // Get processed image (direct image response)
+        const processedImageUrl = `${apiUrl}&timestamp=${Date.now()}`;
 
-        // Get the blurred image URL
-        const blurredImageUrl = `${apiUrl}?timestamp=${Date.now()}`; // Add timestamp to avoid caching
-
-        // Send the image directly to WhatsApp
+        // Send result with newsletter styling
         await sock.sendMessage(
             m.from,
-            { 
-                image: { url: blurredImageUrl }, // Direct image URL
-                caption: "✅ *Blurred Image* (Powered by Sarkar-MD)"
+            {
+                image: { url: apiUrl },
+                caption: "✅ *Background Removed Successfully*",
+                contextInfo: {
+                    externalAdReply: {
+                        title: "✨ Sarkar-MD ✨",
+                        body: "Professional Background Removal",
+                        thumbnailUrl: processedImageUrl,
+                        sourceUrl: "https://github.com/Sarkar-Bandaheali/Sarkar-MD",
+                        mediaType: 1
+                    }
+                }
             },
             { quoted: m }
         );
@@ -55,17 +71,17 @@ const blur = async (m, sock) => {
         await m.React('✅');
 
     } catch (error) {
-        console.error("Blur Error:", error);
+        console.error("RemoveBG Error:", error);
         await sendNewsletter(
             sock,
             m.from,
-            "⚠️ *Blur Failed!*\nPlease try again with another image",
+            "❌ *Background Removal Failed!*\nPlease try another image",
             m,
-            "🖼️ Blur Tool",
-            "Error"
+            "🖼️ Background Remover",
+            "API Error"
         );
         await m.React('❌');
     }
 };
 
-export default blur;
+export default removebg;
