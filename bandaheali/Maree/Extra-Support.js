@@ -11,22 +11,24 @@ const support = async (m, sock) => {
 
     try {
         const supportMessage = `
-🌟 *SUPPORT INFORMATION* 🌟
+╔══════════════════════╗
+       *🛠️ SARKAR-MD SUPPORT*       
+╚══════════════════════╝
 
-📌 *Before asking for help:*
-1. Try restarting your device
-2. Make sure you're using the latest version
+*📢 Official WhatsApp Channel:*
+https://whatsapp.com/channel/0029VajGHyh2phHOH5zJl73P
 
-🔗 *Official Channels:*
-📢 WhatsApp Channel: https://whatsapp.com/channel/0029VajGHyh2phHOH5zJl73P
-👥 Support Group: https://chat.whatsapp.com/YourGroupLink
-💻 GitHub Repo: https://github.com/Sarkar-Bandaheali/Sarkar-MD
+*👥 Official Support Group:*
+https://chat.whatsapp.com/YourGroupLink
 
-📝 *Important Notice:*
-- *Must* fork and star the repo if you use this bot!
-- Your support keeps this project alive
-
-💬 *Developer's Message:*
+*💻 GitHub Repository:*
+https://github.com/Sarkar-Bandaheali/Sarkar-MD
+━━━━━━━━━━━━━━━━━━━━━━
+*❗ Important Requirements:*
+- Must *fork* the GitHub repository
+- Must *star* the project if you use it
+━━━━━━━━━━━━━━━━━━━━━━
+*💬 Words of Motivation:*
 "${getRandomQuote()}"
 `;
 
@@ -35,16 +37,16 @@ const support = async (m, sock) => {
             m.from,
             supportMessage,
             m,
-            "🛠️ Support Center",
-            "We appreciate your support!",
-            "https://i.imgur.com/NkUITKj.mp4" // Your thumbnail URL
+            "🌟 PROJECT SUPPORT",
+            "Your support means everything",
+            "https://i.imgur.com/NkUITKj.mp4" // Your thumbnail
         );
 
     } catch (error) {
         console.error(error);
         await sock.sendMessage(
             m.from,
-            { text: "⚠️ Failed to load support information" },
+            { text: "⚠️ Error loading support details" },
             { quoted: m }
         );
     }
@@ -52,10 +54,26 @@ const support = async (m, sock) => {
 
 function getRandomQuote() {
     const quotes = [
-        "Code is poetry - make yours beautiful",
-        "Every star on GitHub lights up my motivation",
-        "Support open source - it's the future",
-        "Your appreciation fuels my coding nights"
+        "Great things in business are never done by one person",
+        "The way to get started is to quit talking and begin doing",
+        "Your time is limited, don't waste it living someone else's life",
+        "Innovation distinguishes between a leader and a follower",
+        "The only limit to our realization of tomorrow is our doubts of today",
+        "The best way to predict the future is to create it",
+        "Don't watch the clock; do what it does. Keep going",
+        "Believe you can and you're halfway there",
+        "The secret of getting ahead is getting started",
+        "It always seems impossible until it's done",
+        "Success is not final, failure is not fatal",
+        "The only place where success comes before work is in the dictionary",
+        "The future belongs to those who believe in the beauty of their dreams",
+        "The harder I work, the luckier I get",
+        "Dream big and dare to fail",
+        "Quality is not an act, it is a habit",
+        "Strive not to be a success, but rather to be of value",
+        "The mind is everything. What you think you become",
+        "Life is what happens when you're busy making other plans",
+        "Do what you love and the money will follow"
     ];
     return quotes[Math.floor(Math.random() * quotes.length)];
 }
