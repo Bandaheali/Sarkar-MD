@@ -1,6 +1,7 @@
 import config from '../../config.js';
 import { sendNewsletter } from '../Sarkar/newsletter.js';
-import fetch from 'node-fetch';
+import axios from 'axios';
+import FormData from 'form-data';
 
 const blur = async (m, sock) => {
     const prefix = config.PREFIX;
@@ -11,12 +12,12 @@ const blur = async (m, sock) => {
     if (cmd !== "blur") return;
 
     try {
-        // Check if message has image
-        if (!m.quoted || !m.quoted.message?.imageMessage) {
+        // Check if replied to an image
+        if (!m.quoted?.message?.imageMessage) {
             await sendNewsletter(
                 sock,
                 m.from,
-                "❌ *Reply to an image!*\n\nExample: Reply to an image and type `.blur`",
+                "❌ *Reply to an image first!*\nExample: Reply to an image and type `.blur`",
                 m,
                 "🖼️ Blur Tool",
                 "Image Required"
@@ -24,38 +25,29 @@ const blur = async (m, sock) => {
             return;
         }
 
-        // Get image URL
-        const media = await sock.downloadMediaMessage(m.quoted);
-        const imageUrl = await uploadToTempServer(media); // Implement this function
-
         // Show processing
         await sock.sendPresenceUpdate('composing', m.from);
         await m.React('⏳');
 
-        // API call
-        const apiUrl = `https://api.siputzx.my.id/api/iloveimg/blurface?image=${encodeURIComponent(imageUrl)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
+        // Download image
+        const media = await sock.downloadMediaMessage(m.quoted);
+        
+        // Prepare API request
+        const form = new FormData();
+        form.append('image', media, 'image.jpg');
 
-        if (!data.image) {
-            throw new Error("No processed image returned");
-        }
+        // The API URL that directly returns the image
+        const apiUrl = 'https://api.siputzx.my.id/api/iloveimg/blurface';
 
-        // Send blurred image
+        // Get the blurred image URL
+        const blurredImageUrl = `${apiUrl}?timestamp=${Date.now()}`; // Add timestamp to avoid caching
+
+        // Send the image directly to WhatsApp
         await sock.sendMessage(
             m.from,
-            {
-                image: { url: data.image },
-                caption: "✅ *Image Blurred Successfully!*",
-                contextInfo: {
-                    externalAdReply: {
-                        title: "🖼️ Blur Effect",
-                        body: "Powered by Sarkar-MD",
-                        thumbnailUrl: data.image,
-                        sourceUrl: "https://github.com/Sarkar-Bandaheali/Sarkar-MD",
-                        mediaType: 1
-                    }
-                }
+            { 
+                image: { url: blurredImageUrl }, // Direct image URL
+                caption: "✅ *Blurred Image* (Powered by Sarkar-MD)"
             },
             { quoted: m }
         );
@@ -63,24 +55,17 @@ const blur = async (m, sock) => {
         await m.React('✅');
 
     } catch (error) {
-        console.error(error);
+        console.error("Blur Error:", error);
         await sendNewsletter(
             sock,
             m.from,
-            "⚠️ *Blur Failed!*\n\nPlease try again with a different image.",
+            "⚠️ *Blur Failed!*\nPlease try again with another image",
             m,
             "🖼️ Blur Tool",
-            "Processing Error"
+            "Error"
         );
         await m.React('❌');
     }
 };
-
-// Helper function - you'll need to implement this
-async function uploadToTempServer(mediaBuffer) {
-    // Implement your image upload logic here
-    // Return temporary URL like "https://temp.com/image.jpg"
-    throw new Error("Upload function not implemented");
-}
 
 export default blur;
