@@ -52,7 +52,7 @@ const removebg = async (m, sock) => {
     } catch (err) {
         console.error(err);
         await sock.sendMessage(m.from, {
-            text: "❌ Failed to remove background. Try again."
+            text: `❌ Failed to remove background: ${err}`
         }, { quoted: m });
     }
 };
