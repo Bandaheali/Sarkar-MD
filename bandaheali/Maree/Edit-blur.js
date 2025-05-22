@@ -29,39 +29,52 @@ const readqr = async (m, sock) => {
         await sock.sendPresenceUpdate('composing', m.from);
         await m.React('⏳');
 
-        // Download and process image
+        // Download image
         const buffer = await sock.downloadMediaMessage(m.quoted);
         const image = await Jimp.read(buffer);
         
-        // Enhance image for better detection
-        image.greyscale().contrast(0.2);
+        // Enhance image for better scanning
+        image
+            .greyscale()
+            .contrast(0.4)
+            .normalize();
 
         const { data, width, height } = image.bitmap;
+        
+        // Multiple scan attempts
         const code = jsQR(new Uint8ClampedArray(data), width, height, {
-            inversionAttempts: 'dontInvert'
+            inversionAttempts: 'attemptBoth'
         });
 
         if (!code) {
-            throw new Error("Couldn't detect QR code");
+            throw new Error("No QR code detected");
         }
 
-        // Format different QR types
+        // Special handling for WiFi QR codes
         let resultMessage;
-        if (code.data.startsWith('http')) {
-            resultMessage = `🔗 *URL Found:*\n${code.data}`;
-        } else if (code.data.includes('\n')) {
-            resultMessage = `📝 *Multi-line Text:*\n${code.data}`;
+        if (code.data.startsWith('WIFI:')) {
+            const wifiData = parseWifiQR(code.data);
+            resultMessage = `📶 *WiFi Credentials Found*:\n\n` +
+                           `🔹 *SSID:* ${wifiData.ssid}\n` +
+                           `🔹 *Password:* ${wifiData.password || 'None'}\n` +
+                           `🔹 *Security:* ${wifiData.security || 'WPA/WPA2'}`;
+        } 
+        // Handling for other QR types
+        else if (code.data.startsWith('http')) {
+            resultMessage = `🌐 *Website URL*:\n${code.data}`;
+        } else if (code.data.match(/^[A-Za-z0-9+/=]+$/) && code.data.length > 20) {
+            resultMessage = `🔐 *Encoded Data*:\n${code.data.substring(0, 30)}...`;
         } else {
-            resultMessage = `📄 *Decoded Text:*\n${code.data}`;
+            resultMessage = `📄 *Text Content*:\n${code.data}`;
         }
 
         // Send result
         await sendNewsletter(
             sock,
             m.from,
-            `*QR SCAN SUCCESS* ✅\n\n${resultMessage}\n\n🕒 ${new Date().toLocaleTimeString()}`,
+            `*✅ QR CODE DECODED*\n\n${resultMessage}\n\n🕒 Scanned at: ${new Date().toLocaleTimeString()}`,
             m,
-            "📲 QR Result",
+            "🔍 Scan Successful",
             "Powered by Sarkar-MD"
         );
         await m.React('✅');
@@ -71,23 +84,28 @@ const readqr = async (m, sock) => {
         await sendNewsletter(
             sock,
             m.from,
-            `❌ *QR Scan Failed*\n\n${getErrorMessage(error)}`,
+            "❌ *Failed to scan QR code*\n\nPossible reasons:\n" +
+            "• QR code is blurry/damaged\n" +
+            "• Poor lighting conditions\n" +
+            "• QR is too small in the image\n" +
+            "• Unsupported QR format",
             m,
             "📲 QR Scanner",
-            "Try again"
+            "Try Again"
         );
         await m.React('❌');
     }
 };
 
-function getErrorMessage(error) {
-    if (error.message.includes("detect QR")) {
-        return "• No QR code detected\n• Try with clearer image";
-    } else if (error.message.includes("Jimp.read")) {
-        return "• Invalid image format\n• Use JPEG/PNG";
-    } else {
-        return "• Processing error\n• Try different image";
-    }
+// Special function to parse WiFi QR codes
+function parseWifiQR(data) {
+    const result = { ssid: '', password: '', security: 'WPA/WPA2' };
+    data.split(';').forEach(part => {
+        if (part.startsWith('S:')) result.ssid = part.substring(2);
+        if (part.startsWith('P:')) result.password = part.substring(2);
+        if (part.startsWith('T:')) result.security = part.substring(2);
+    });
+    return result;
 }
 
 export default readqr;
