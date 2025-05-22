@@ -3,6 +3,8 @@ import FormData from 'form-data';
 import config from '../../config.js';
 import { sendNewsletter } from '../Sarkar/newsletter.js';
 
+const IMGBB_API_KEY = "e909ac2cc8d50250c08f176afef0e333"; // Your ImgBB API key
+
 const removebg = async (m, sock) => {
     const prefix = config.PREFIX;
     const cmd = m.body.startsWith(prefix)
@@ -12,7 +14,7 @@ const removebg = async (m, sock) => {
     if (!['removebg', 'rmbg'].includes(cmd)) return;
 
     try {
-        // Validate quoted message
+        // Validate quoted image
         if (!m.quoted?.message?.imageMessage) {
             await sendNewsletter(
                 sock,
@@ -29,44 +31,42 @@ const removebg = async (m, sock) => {
         await sock.sendPresenceUpdate('composing', m.from);
         await m.React('⏳');
 
-        // 1. Download image with error handling
-        let mediaBuffer;
-        try {
-            mediaBuffer = await sock.downloadMediaMessage(m.quoted);
-            if (!mediaBuffer || mediaBuffer.length === 0) {
-                throw new Error('Empty media buffer');
-            }
-        } catch (downloadError) {
-            throw new Error('Cannot download image (may be expired)');
+        // 1. Download image
+        const mediaBuffer = await sock.downloadMediaMessage(m.quoted);
+        if (!mediaBuffer || mediaBuffer.length < 1024) {
+            throw new Error('Invalid image (too small or corrupted)');
         }
 
-        // 2. Upload to temp host (Catbox)
-        const form = new FormData();
-        form.append('reqtype', 'fileupload');
-        form.append('fileToUpload', mediaBuffer, 'image.jpg');
-
+        // 2. Upload to ImgBB
+        const formData = new FormData();
+        formData.append('image', mediaBuffer.toString('base64'));
+        
         const uploadRes = await axios.post(
-            'https://catbox.moe/user/api.php',
-            form,
+            `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+            formData,
             {
-                headers: form.getHeaders(),
-                timeout: 20000
+                headers: formData.getHeaders(),
+                timeout: 15000
             }
         );
 
-        const imageUrl = uploadRes.data.trim();
-        if (!imageUrl.startsWith('http')) {
+        if (!uploadRes.data?.data?.url) {
             throw new Error('Image upload failed');
         }
+        const imageUrl = uploadRes.data.data.url;
 
-        // 3. Process through API
+        // 3. Process through RemoveBG API
         const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageUrl)}`;
         
-        // 4. Get result (direct image)
+        // 4. Get and verify result
         const result = await axios.get(apiUrl, {
             responseType: 'arraybuffer',
             timeout: 30000
         });
+
+        if (!result.data || result.data.length < 1024) {
+            throw new Error('Empty result from API');
+        }
 
         // 5. Send result
         await sock.sendMessage(
@@ -89,13 +89,14 @@ const removebg = async (m, sock) => {
         await m.React('✅');
 
     } catch (error) {
+        console.error("RemoveBG Error:", error.message);
         await sendNewsletter(
             sock,
             m.from,
-            `❌ *Background Removal Failed*\n\n▸ Reason: ${error}\n▸ Solution: Try with a fresh image`,
+            `❌ *Background Removal Failed*\n\n▸ Reason: ${error}`,
             m,
             "🖼️ Error Occurred",
-            "Support available"
+            "Try again later"
         );
         await m.React('❌');
     }
