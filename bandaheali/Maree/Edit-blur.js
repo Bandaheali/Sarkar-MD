@@ -1,6 +1,7 @@
 import axios from 'axios';
-import config from '../../config.js';
 import FormData from 'form-data';
+import config from '../../config.js';
+import { sendNewsletter } from '../Sarkar/newsletter.js';
 
 const removebg = async (m, sock) => {
     const prefix = config.PREFIX;
@@ -8,52 +9,95 @@ const removebg = async (m, sock) => {
         ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
         : '';
 
-    if (cmd !== "removebg" && cmd !== "rmbg") return;
+    if (!['removebg', 'rmbg'].includes(cmd)) return;
 
     try {
-        if (!m.quoted || m.quoted.mtype !== 'imageMessage') {
-            return sock.sendMessage(m.from, {
-                text: "⚠️ Please *reply to an image* with `removebg` or `rmbg`"
-            }, { quoted: m });
+        // Validate quoted message
+        if (!m.quoted?.message?.imageMessage) {
+            await sendNewsletter(
+                sock,
+                m.from,
+                "⚠️ *Invalid Usage!*\nPlease reply to an image with `.removebg` or `.rmbg`",
+                m,
+                "🖼️ Background Remover",
+                "Command Help"
+            );
+            return;
         }
 
-        // Step 1: Download Image Buffer
-        const mediaBuffer = await sock.downloadMediaMessage(m.quoted);
+        // Show processing
+        await sock.sendPresenceUpdate('composing', m.from);
+        await m.React('⏳');
 
-        // Step 2: Upload to Catbox (or any image host)
-        const uploadToCatbox = async (buffer) => {
-            const form = new FormData();
-            form.append('reqtype', 'fileupload');
-            form.append('fileToUpload', buffer, 'image.jpg');
+        // 1. Download image with error handling
+        let mediaBuffer;
+        try {
+            mediaBuffer = await sock.downloadMediaMessage(m.quoted);
+            if (!mediaBuffer || mediaBuffer.length === 0) {
+                throw new Error('Empty media buffer');
+            }
+        } catch (downloadError) {
+            throw new Error('Cannot download image (may be expired)');
+        }
 
-            const res = await axios.post("https://catbox.moe/user/api.php", form, {
-                headers: form.getHeaders()
-            });
+        // 2. Upload to temp host (Catbox)
+        const form = new FormData();
+        form.append('reqtype', 'fileupload');
+        form.append('fileToUpload', mediaBuffer, 'image.jpg');
 
-            return res.data.trim(); // Direct image URL
-        };
+        const uploadRes = await axios.post(
+            'https://catbox.moe/user/api.php',
+            form,
+            {
+                headers: form.getHeaders(),
+                timeout: 20000
+            }
+        );
 
-        const imageUrl = await uploadToCatbox(mediaBuffer);
+        const imageUrl = uploadRes.data.trim();
+        if (!imageUrl.startsWith('http')) {
+            throw new Error('Image upload failed');
+        }
 
-        // Step 3: Create RemoveBG API URL
-        const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageUrl)}&scale=2`;
-
-        // Step 4: Get Image Back (API returns image directly)
+        // 3. Process through API
+        const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageUrl)}`;
+        
+        // 4. Get result (direct image)
         const result = await axios.get(apiUrl, {
-            responseType: 'arraybuffer'
+            responseType: 'arraybuffer',
+            timeout: 30000
         });
 
-        // Step 5: Send Image To User
-        await sock.sendMessage(m.from, {
-            image: Buffer.from(result.data),
-            caption: "✅ Background removed!"
-        }, { quoted: m });
+        // 5. Send result
+        await sock.sendMessage(
+            m.from,
+            {
+                image: result.data,
+                caption: "✅ *Background Removed Successfully*",
+                contextInfo: {
+                    externalAdReply: {
+                        title: "✨ Sarkar-MD ✨",
+                        body: "Professional Background Removal",
+                        thumbnail: result.data,
+                        sourceUrl: "https://github.com/Sarkar-Bandaheali/Sarkar-MD",
+                        mediaType: 1
+                    }
+                }
+            },
+            { quoted: m }
+        );
+        await m.React('✅');
 
-    } catch (err) {
-        console.error(err);
-        await sock.sendMessage(m.from, {
-            text: `❌ Failed to remove background: ${err}`
-        }, { quoted: m });
+    } catch (error) {
+        await sendNewsletter(
+            sock,
+            m.from,
+            `❌ *Background Removal Failed*\n\n▸ Reason: ${error}\n▸ Solution: Try with a fresh image`,
+            m,
+            "🖼️ Error Occurred",
+            "Support available"
+        );
+        await m.React('❌');
     }
 };
 
