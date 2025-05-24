@@ -1,65 +1,49 @@
-import config from '../../config.js';
 import axios from 'axios';
+import config from '../../config.js';
+import { sendNewsletter } from '../Sarkar/newsletter.js';
 
 const advice = async (m, sock) => {
-  const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix)
-    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
-    : '';
-  const text = m.body.slice(prefix.length + cmd.length).trim();
+    const prefix = config.PREFIX;
+    const cmd = m.body.startsWith(prefix) 
+        ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
+        : '';
 
-  if (cmd === "advice") {
+    if (cmd !== "advice") return;
+
     try {
-      await m.React('⏳'); // React with loading icon
-      
-      // Fetch advice from API
-      const response = await axios.get('https://api.adviceslip.com/advice');
-      const adviceData = response.data.slip;
-      
-      const formattedAdvice = `
-📌 *Advice #${adviceData.id}* 📌
+        // Show processing
+        await sock.sendPresenceUpdate('composing', m.from);
+        await m.React('⏳');
 
-${adviceData.advice}
+        // Fetch advice from API
+        const response = await axios.get('https://api.adviceslip.com/advice');
+        const adviceText = response.data.slip.advice;
 
-_— Advice Slip API_
-      `;
+        // Send advice with newsletter styling
+        await sendNewsletter(
+            sock,
+            m.from,
+            `💡 *Random Advice* 💡\n\n"${adviceText}"\n\n✨ *Words of Wisdom* ✨`,
+            m,
+            "🧠 Life Advice",
+            "Powered by Adviceslip API",
+            "https://i.imgur.com/JQ0wX9p.png" // Lightbulb thumbnail
+        );
 
-      await m.React('✅'); // React with success icon
+        await m.React('💡');
 
-      sock.sendMessage(
-        m.from,
-        {
-          text: formattedAdvice,
-          contextInfo: {
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363315182578784@newsletter',
-              newsletterName: "Sarkar-MD",
-              serverMessageId: -1,
-            },
-            forwardingScore: 999,
-            externalAdReply: {
-              title: "✨ Sarkar-MD Wisdom ✨",
-              body: "Daily Advice Generator",
-              thumbnailUrl: 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/refs/heads/main/Pairing/1733805817658.webp',
-              sourceUrl: 'https://github.com/Sarkar-Bandaheali/Sarkar-MD',
-              mediaType: 1,
-              renderLargerThumbnail: false,
-            },
-          },
-        },
-        { quoted: m }
-      );
     } catch (error) {
-      console.error('Error fetching advice:', error);
-      await m.React('❌'); // React with error icon
-      sock.sendMessage(
-        m.from,
-        { text: '⚠️ Failed to fetch advice. Please try again later.' },
-        { quoted: m }
-      );
+        console.error("Advice Error:", error);
+        await sendNewsletter(
+            sock,
+            m.from,
+            "❌ *Couldn't fetch advice!*\n\n• API is busy\n• Try again later",
+            m,
+            "🧠 Life Advice",
+            "Better luck next time"
+        );
+        await m.React('❌');
     }
-  }
 };
 
 export default advice;
