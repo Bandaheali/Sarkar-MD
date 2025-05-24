@@ -1,4 +1,4 @@
-import config from '../../config.js';
+import config from '../../config.cjs';
 
 const stylizedChars = {
   a: '🅐', b: '🅑', c: '🅒', d: '🅓', e: '🅔', f: '🅕', g: '🅖',
@@ -36,7 +36,7 @@ const chr = async (m, sock) => {
     }
 
     const channelId = link.split('/')[4];
-    const messageId = link.split('/')[5];
+    const messageId = link.split('/')[5]?.split('?')[0];
     if (!channelId || !messageId) {
       return m.reply("❌ Invalid link - missing channel ID or message ID.");
     }
@@ -49,32 +49,32 @@ const chr = async (m, sock) => {
     await m.React('🔤');
 
     try {
-      const channelMeta = await sock.newsletterMetadata("invite", channelId);
-      await sock.newsletterReactMessage(channelMeta.id, messageId, stylized);
+      // First get the channel JID
+      const channelJid = `${channelId}@newsletter`;
+      
+      // Send the reaction directly
+      await sock.sendMessage(channelJid, {
+        react: {
+          text: stylized,
+          key: {
+            id: messageId,
+            remoteJid: channelJid,
+            fromMe: false
+          }
+        }
+      });
 
       await sock.sendMessage(
         m.from,
         {
           text:
-`╭━━━〔 *Sarkar-MD* 〕━━━┈⊷
+`╭━━━〔 *KHAN-MD* 〕━━━┈⊷
 ┃▸ *Success!* Reaction sent
-┃▸ *Channel:* ${channelMeta.name}
+┃▸ *Channel ID:* ${channelId}
+┃▸ *Message ID:* ${messageId}
 ┃▸ *Reaction:* ${stylized}
 ╰────────────────┈⊷
-> *© Pᴏᴡᴇʀᴇᴅ Bʏ Sarkar-MD*`,
-          contextInfo: {
-            mentionedJid: [m.sender],
-            isForwarded: true,
-            forwardingScore: 999,
-            externalAdReply: {
-              title: "Sarkar-MD",
-              body: "Channel Message Reaction",
-              thumbnailUrl: 'https://i.imgur.com/ZRDeoRi.jpeg',
-              sourceUrl: 'https://github.com/YourRepo/YourBot',
-              mediaType: 1,
-              renderLargerThumbnail: true,
-            },
-          },
+> *© Pᴏᴡᴇʀᴇᴅ Bʏ KʜᴀɴX-Aɪ ♡*`
         },
         { quoted: m }
       );
@@ -82,6 +82,7 @@ const chr = async (m, sock) => {
       await m.React('✅');
     } catch (err) {
       console.error(err);
+      await m.React('❌');
       return m.reply(`❎ Error: ${err.message || "Failed to send reaction"}`);
     }
   }
