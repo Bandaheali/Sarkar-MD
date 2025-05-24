@@ -16,18 +16,30 @@ const dlvideo = async (m, sock) => {
     await m.React('⏳'); // React with a loading icon
 
     try {
-      // Search for the video using yt-search
-      const searchResults = await yts(text);
-      if (!searchResults.videos.length) {
-        await m.React('❌');
-        return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
-      }
+      let videoUrl, title, duration;
 
-      const video = searchResults.videos[0];
-      const videoUrl = video.url;
-      const title = video.title;
-      const thumbnail = video.thumbnail;
-      const duration = video.duration;
+      // Check if input is a YouTube URL
+      if (text.match(/(youtube\.com|youtu\.be)/i)) {
+        // Directly use the provided URL
+        videoUrl = text.includes('://') ? text : `https://${text}`;
+        
+        // Fetch video info without search
+        const videoInfo = await yts({ videoId: getVideoId(videoUrl) });
+        title = videoInfo.title;
+        duration = videoInfo.duration;
+      } else {
+        // Search for the video using yt-search
+        const searchResults = await yts(text);
+        if (!searchResults.videos.length) {
+          await m.React('❌');
+          return sock.sendMessage(m.from, { text: "❌ No results found!" }, { quoted: m });
+        }
+
+        const video = searchResults.videos[0];
+        videoUrl = video.url;
+        title = video.title;
+        duration = video.duration;
+      }
 
       // Define all video APIs with their response handlers
       const videoApis = [
@@ -83,26 +95,13 @@ const dlvideo = async (m, sock) => {
 
       await m.React('✅');
 
-      // Send the video file
+      // Send the video file with updated caption
       sock.sendMessage(
         m.from,
         {
           video: { url: videoData.url },
           mimetype: "video/mp4",
-          caption: `🎬 *Title:* ${title}\n⏱ *Duration:* ${duration}\n📺 *Quality:* ${videoData.quality}\n📥 *Downloaded BY SARKAR-MD*`,
-          thumbnail: thumbnail,
-          contextInfo: {
-            isForwarded: false,
-            forwardingScore: 999,
-            externalAdReply: {
-              title: "✨ YouTube Video Downloader ✨",
-              body: "Powered by Sarkar-MD",
-              thumbnailUrl: thumbnail,
-              sourceUrl: videoUrl,
-              mediaType: 1,
-              renderLargerThumbnail: true,
-            },
-          },
+          caption: `📌 *${title}*\n\n⏱ Duration: ${duration}\n🔍 Quality: ${videoData.quality}\n\n⚡ Powered By ${config.BOT_NAME}\n💻 Keep Using Sarkar-MD`,
         },
         { quoted: m }
       );
@@ -114,5 +113,12 @@ const dlvideo = async (m, sock) => {
     }
   }
 };
+
+// Helper function to extract video ID from URL
+function getVideoId(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
 
 export default dlvideo;
