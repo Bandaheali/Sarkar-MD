@@ -37,7 +37,7 @@ const element = async (m, sock) => {
             throw new Error("Element not found");
         }
 
-        // Format element info with HTML-like formatting
+        // Format element info
         const elementInfo = `
 ✨ *${data.name} (${data.symbol})* ✨
 
@@ -50,7 +50,7 @@ const element = async (m, sock) => {
 ${data.summary}
 `;
 
-        // Send as newsletter with image
+        // Send as single newsletter with image thumbnail
         await sendNewsletter(
             sock,
             m.from,
@@ -58,7 +58,7 @@ ${data.summary}
             m,
             `⚛️ ${data.name} (${data.symbol})`,
             `Period ${data.period} | Atomic Mass: ${data.atomic_mass}`,
-            data.image // Element image as thumbnail
+            data.image // This sets as thumbnail
         );
 
         await m.React('✅');
@@ -68,7 +68,7 @@ ${data.summary}
         await sendNewsletter(
             sock,
             m.from,
-            "❌ *Element Not Found*\n\n• Check spelling (e.g. 'iron' or 'Fe')\n• Try English element names\n• Supported: 1-118 elements",
+            "❌ *Element Not Found*\n\n• Check spelling\n• Try symbols (Fe, Au)\n• Elements 1-118 only",
             m,
             "⚛️ Periodic Table",
             "Try Again"
