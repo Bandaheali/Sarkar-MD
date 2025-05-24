@@ -37,38 +37,30 @@ const element = async (m, sock) => {
             throw new Error("Element not found");
         }
 
-        // Format element info
+        // Format element info with HTML-like formatting
         const elementInfo = `
-⚡ *${data.name} (${data.symbol})*
-        
-🔢 *Atomic Number:* ${data.atomic_number}
-⚖️ *Atomic Mass:* ${data.atomic_mass}
-📊 *Period:* ${data.period}
-🧊 *Phase:* ${data.phase}
-🕰️ *Discovered:* ${data.discovered_by}
+✨ *${data.name} (${data.symbol})* ✨
 
-📝 *Summary:*
+▫️ *Atomic Number:* ${data.atomic_number}
+▫️ *Atomic Mass:* ${data.atomic_mass}
+▫️ *Period:* ${data.period} | *Phase:* ${data.phase}
+▫️ *Discovered:* ${data.discovered_by}
+
+📜 *Description:*
 ${data.summary}
 `;
 
-        // Send element info with image
-        await sock.sendMessage(
+        // Send as newsletter with image
+        await sendNewsletter(
+            sock,
             m.from,
-            {
-                image: { url: data.image },
-                caption: elementInfo,
-                contextInfo: {
-                    externalAdReply: {
-                        title: "⚛️ Periodic Table",
-                        body: `Element: ${data.name}`,
-                        thumbnailUrl: data.image,
-                        sourceUrl: "https://periodic-table.com/",
-                        mediaType: 1
-                    }
-                }
-            },
-            { quoted: m }
+            elementInfo,
+            m,
+            `⚛️ ${data.name} (${data.symbol})`,
+            `Period ${data.period} | Atomic Mass: ${data.atomic_mass}`,
+            data.image // Element image as thumbnail
         );
+
         await m.React('✅');
 
     } catch (error) {
@@ -76,7 +68,7 @@ ${data.summary}
         await sendNewsletter(
             sock,
             m.from,
-            "❌ *Element Not Found*\n\n• Check spelling (e.g. 'iron' or 'Fe')\n• Try English element names",
+            "❌ *Element Not Found*\n\n• Check spelling (e.g. 'iron' or 'Fe')\n• Try English element names\n• Supported: 1-118 elements",
             m,
             "⚛️ Periodic Table",
             "Try Again"
