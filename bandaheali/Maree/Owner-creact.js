@@ -1,4 +1,4 @@
-import config from '../../config.cjs';
+import config from '../../config.js';
 
 const stylizedChars = {
   a: '🅐', b: '🅑', c: '🅒', d: '🅓', e: '🅔', f: '🅕', g: '🅖',
