@@ -9,9 +9,18 @@ const rmbg = async (m, sock) => {
 
   if (cmd === 'rmbg') {
     try {
-      // Check if message has an image
-      if (!m.quoted || !m.quoted.mimetype || !m.quoted.mimetype.includes('image')) {
+      // Check if message is a reply and has an image
+      if (!m.quoted) {
         return sock.sendMessage(m.from, { text: '❌ Please reply to an image with *.rmbg* to remove its background' }, { quoted: m });
+      }
+
+      // Check for image in different ways
+      const isImage = m.quoted.mimetype?.includes('image') || 
+                     m.quoted.message?.imageMessage || 
+                     m.quoted?.type === 'image';
+
+      if (!isImage) {
+        return sock.sendMessage(m.from, { text: '❌ The replied message is not an image. Please reply to an image.' }, { quoted: m });
       }
 
       await m.React('⏳'); // React with loading icon
@@ -24,8 +33,15 @@ const rmbg = async (m, sock) => {
       const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageBase64)}`;
       
       const response = await axios.post(apiUrl, {}, {
-        responseType: 'arraybuffer'
+        responseType: 'arraybuffer',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+
+      if (!response.data || response.data.length === 0) {
+        throw new Error('Empty response from API');
+      }
 
       // Send the result back
       await sock.sendMessage(
@@ -41,7 +57,7 @@ const rmbg = async (m, sock) => {
       await m.React('✅'); // React with success icon
     } catch (error) {
       console.error('Error in rmbg command:', error);
-      await sock.sendMessage(m.from, { text: '❌ Failed to remove background. Please try again later.' }, { quoted: m });
+      await sock.sendMessage(m.from, { text: `❌ Error: ${error}` }, { quoted: m });
       await m.React('❌'); // React with error icon
     }
   }
