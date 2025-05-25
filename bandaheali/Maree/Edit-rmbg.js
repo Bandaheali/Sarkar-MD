@@ -1,5 +1,5 @@
 import axios from 'axios';
-import config from '../../config.cjs';
+import config from '../../config.js';
 
 const rmbg = async (m, sock) => {
   const prefix = config.PREFIX;
