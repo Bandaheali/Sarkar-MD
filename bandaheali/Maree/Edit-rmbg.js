@@ -32,7 +32,8 @@ const rmbg = async (m, sock) => {
         );
       }
 
-      await m.React('⏳'); // Show loading reaction
+      // React with loading emoji
+      await sock.sendMessage(m.from, { react: { text: '⏳', key: m.key } });
 
       // Download the image using safer method
       let media;
@@ -51,14 +52,18 @@ const rmbg = async (m, sock) => {
       const imageBase64 = media.toString('base64');
 
       // API call to remove background
-      const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageBase64)}`;
+      const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg`;
 
-      const response = await axios.post(apiUrl, {}, {
-        responseType: 'arraybuffer',
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await axios.post(
+        apiUrl,
+        { image: imageBase64 },
+        {
+          responseType: 'arraybuffer',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       if (!response.data || response.data.length === 0) {
         throw new Error('Empty response from API');
@@ -70,12 +75,13 @@ const rmbg = async (m, sock) => {
         {
           image: Buffer.from(response.data),
           caption: '✅ Background removed successfully!',
-          mentions: [m.sender]
+          mentions: [m.sender],
         },
         { quoted: m }
       );
 
-      await m.React('✅'); // Success reaction
+      // React with success emoji
+      await sock.sendMessage(m.from, { react: { text: '✅', key: m.key } });
     } catch (error) {
       console.error('Error in rmbg command:', error);
       await sock.sendMessage(
@@ -83,7 +89,7 @@ const rmbg = async (m, sock) => {
         { text: `❌ Error: ${error.message || error}` },
         { quoted: m }
       );
-      await m.React('❌'); // Error reaction
+      await sock.sendMessage(m.from, { react: { text: '❌', key: m.key } });
     }
   }
 };
