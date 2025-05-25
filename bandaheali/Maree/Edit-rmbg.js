@@ -32,7 +32,7 @@ const rmbg = async (m, sock) => {
         );
       }
 
-      await m.react('⏳'); // Show loading reaction
+      await m.React('⏳'); // Show loading reaction
 
       // Download the image using safer method
       let media;
@@ -75,7 +75,7 @@ const rmbg = async (m, sock) => {
         { quoted: m }
       );
 
-      await m.react('✅'); // Success reaction
+      await m.React('✅'); // Success reaction
     } catch (error) {
       console.error('Error in rmbg command:', error);
       await sock.sendMessage(
@@ -83,7 +83,7 @@ const rmbg = async (m, sock) => {
         { text: `❌ Error: ${error.message || error}` },
         { quoted: m }
       );
-      await m.react('❌'); // Error reaction
+      await m.React('❌'); // Error reaction
     }
   }
 };
