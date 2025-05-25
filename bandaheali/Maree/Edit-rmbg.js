@@ -1,4 +1,5 @@
 import axios from 'axios';
+import FormData from 'form-data';
 import config from '../../config.js';
 
 const rmbg = async (m, sock) => {
@@ -9,86 +10,67 @@ const rmbg = async (m, sock) => {
 
   if (cmd === 'rmbg') {
     try {
-      // Check if message is a reply
       if (!m.quoted) {
-        return sock.sendMessage(
-          m.from,
-          { text: '❌ Please reply to an image with *.rmbg* to remove its background' },
-          { quoted: m }
-        );
+        return sock.sendMessage(m.from, {
+          text: '❌ Please reply to an image with *.rmbg* to remove its background',
+        }, { quoted: m });
       }
 
-      // Check if the quoted message is an image
       const isImage =
         m.quoted.mimetype?.includes('image') ||
         m.quoted.message?.imageMessage ||
         m.quoted?.type === 'image';
 
       if (!isImage) {
-        return sock.sendMessage(
-          m.from,
-          { text: '❌ The replied message is not an image. Please reply to an image.' },
-          { quoted: m }
-        );
+        return sock.sendMessage(m.from, {
+          text: '❌ The replied message is not an image. Please reply to an image.',
+        }, { quoted: m });
       }
 
-      // React with loading emoji
       await sock.sendMessage(m.from, { react: { text: '⏳', key: m.key } });
 
-      // Download the image using safer method
-      let media;
-      try {
-        media = await m.quoted.download();
-        if (!media) throw new Error('Media download returned null');
-      } catch (err) {
-        console.error('Download failed:', err);
-        return sock.sendMessage(
-          m.from,
-          { text: '❌ Failed to download image. Please try again with a different image.' },
-          { quoted: m }
-        );
-      }
+      const media = await m.quoted.download();
+      if (!media) throw new Error('Media download failed.');
 
-      const imageBase64 = media.toString('base64');
+      // Upload to file.io
+      const form = new FormData();
+      form.append('file', media, { filename: 'image.png', contentType: 'image/png' });
 
-      // API call to remove background
-      const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg`;
+      const uploadRes = await axios.post('https://file.io/', form, {
+        headers: form.getHeaders(),
+      });
 
-      const response = await axios.post(
-        apiUrl,
-        { image: imageBase64 },
-        {
-          responseType: 'arraybuffer',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+      const imageUrl = uploadRes.data.link;
+      if (!imageUrl) throw new Error('Failed to upload image to file.io');
+
+      // Now send URL to removebg API
+      const apiRes = await axios.post(
+        'https://api.siputzx.my.id/api/iloveimg/removebg',
+        { url: imageUrl },
+        { responseType: 'arraybuffer' }
       );
 
-      if (!response.data || response.data.length === 0) {
-        throw new Error('Empty response from API');
+      if (!apiRes.data || apiRes.data.length === 0) {
+        throw new Error('Empty response from background removal API');
       }
 
-      // Send back image with background removed
       await sock.sendMessage(
         m.from,
         {
-          image: Buffer.from(response.data),
+          image: Buffer.from(apiRes.data),
           caption: '✅ Background removed successfully!',
           mentions: [m.sender],
         },
         { quoted: m }
       );
 
-      // React with success emoji
       await sock.sendMessage(m.from, { react: { text: '✅', key: m.key } });
+
     } catch (error) {
-      console.error('Error in rmbg command:', error);
-      await sock.sendMessage(
-        m.from,
-        { text: `❌ Error: ${error.message || error}` },
-        { quoted: m }
-      );
+      console.error('rmbg error:', error.message || error);
+      await sock.sendMessage(m.from, {
+        text: `❌ Error: ${error.response?.data?.message || error.message}`,
+      }, { quoted: m });
       await sock.sendMessage(m.from, { react: { text: '❌', key: m.key } });
     }
   }
