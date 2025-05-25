@@ -43,7 +43,7 @@ const uptime = async (m, sock) => {
 🔄 *Node.js:* ${process.version}
 
 🌐 *Bot Version:* ${config.VERSION || '1.0.0'}
-📂 *Commands in This Folder:* ${commandFiles.length}
+📂 *Commands:* ${commandFiles.length}
 `;
 
         await sendNewsletter(
