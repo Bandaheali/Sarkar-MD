@@ -9,7 +9,7 @@ const deep = async (m, sock) => {
         : '';
     const query = m.body.slice(prefix.length + cmd.length).trim();
 
-    if (!['deep', 'deepseek'].includes(cmd)) return;
+    if (!['deepseek', 'deeps'].includes(cmd)) return;
 
     try {
         if (!query) {
