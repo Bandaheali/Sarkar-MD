@@ -23,14 +23,15 @@ const rmbg = async (m, sock) => {
 
       if (!isImage) {
         return sock.sendMessage(m.from, {
-          text: '❌ The replied message is not an image. Please reply to an image.',
+          text: '❌ The replied message is not an image.',
         }, { quoted: m });
       }
 
       await sock.sendMessage(m.from, { react: { text: '⏳', key: m.key } });
 
+      // Download image
       const media = await m.quoted.download();
-      if (!media) throw new Error('Media download failed.');
+      if (!media) throw new Error('Media download failed');
 
       // Upload to file.io
       const form = new FormData();
@@ -41,23 +42,24 @@ const rmbg = async (m, sock) => {
       });
 
       const imageUrl = uploadRes.data.link;
-      if (!imageUrl) throw new Error('Failed to upload image to file.io');
+      if (!imageUrl) throw new Error('Image upload failed');
 
-      // Now send URL to removebg API
-      const apiRes = await axios.post(
-        'https://api.siputzx.my.id/api/iloveimg/removebg',
-        { url: imageUrl },
-        { responseType: 'arraybuffer' }
-      );
+      // Now call the API with image URL
+      const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageUrl)}`;
 
-      if (!apiRes.data || apiRes.data.length === 0) {
-        throw new Error('Empty response from background removal API');
+      const bgRemoved = await axios.get(apiUrl, {
+        responseType: 'arraybuffer',
+      });
+
+      if (!bgRemoved.data || bgRemoved.data.length === 0) {
+        throw new Error('Background removal failed');
       }
 
+      // Send back to user
       await sock.sendMessage(
         m.from,
         {
-          image: Buffer.from(apiRes.data),
+          image: Buffer.from(bgRemoved.data),
           caption: '✅ Background removed successfully!',
           mentions: [m.sender],
         },
@@ -66,10 +68,10 @@ const rmbg = async (m, sock) => {
 
       await sock.sendMessage(m.from, { react: { text: '✅', key: m.key } });
 
-    } catch (error) {
-      console.error('rmbg error:', error.message || error);
+    } catch (err) {
+      console.error('Error:', err.message || err);
       await sock.sendMessage(m.from, {
-        text: `❌ Error: ${error.response?.data?.message || error.message}`,
+        text: `❌ Error: ${err.response?.data?.message || err.message}`,
       }, { quoted: m });
       await sock.sendMessage(m.from, { react: { text: '❌', key: m.key } });
     }
