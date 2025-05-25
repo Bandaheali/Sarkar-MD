@@ -1,119 +1,113 @@
+import config from '../../config.js';
 import axios from 'axios';
 import FormData from 'form-data';
-import config from '../../config.js';
-import { sendNewsletter } from '../Sarkar/newsletter.js';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
-const IMGBB_API_KEY = "e909ac2cc8d50250c08f176afef0e333"; // Your ImgBB API key
+const blur = async (m, sock) => {
+  const prefix = config.PREFIX;
+  const cmd = m.body.startsWith(prefix)
+    ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
+    : '';
 
-const removebg = async (m, sock) => {
-    const prefix = config.PREFIX;
-    const cmd = m.body.startsWith(prefix)
-        ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
-        : '';
-
-    if (!['removebg', 'rmbg'].includes(cmd)) return;
-
+  if (["blur", "bluredit"].includes(cmd)) {
     try {
-        // Validate quoted image
-        if (!m.quoted?.message?.imageMessage) {
-            await sendNewsletter(
-                sock,
-                m.from,
-                "⚠️ *Invalid Usage!*\nPlease reply to an image with `.removebg` or `.rmbg`",
-                m,
-                "🖼️ Background Remover",
-                "Command Help"
-            );
-            return;
-        }
+      // Helper function to format bytes
+      const formatBytes = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      };
 
-        // Show processing
-        await sock.sendPresenceUpdate('composing', m.from);
-        await m.React('⏳');
+      await m.React('📸'); // React with camera emoji
 
-        // 1. Download image
-        const mediaBuffer = await sock.downloadMediaMessage(m.quoted);
-        if (!mediaBuffer || mediaBuffer.length < 1024) {
-            throw new Error('Invalid image (too small or corrupted)');
-        }
+      // Check if quoted message exists and has media
+      const quotedMsg = m.quoted ? m.quoted : m;
+      const mimeType = (quotedMsg.msg || quotedMsg).mimetype || '';
+      
+      if (!mimeType || !mimeType.startsWith('image/')) {
+        await m.React('❌');
+        return sock.sendMessage(m.from, { text: "Please reply to an image file (JPEG/PNG)" }, { quoted: m });
+      }
 
-        // 2. Upload to ImgBB
-        const formData = new FormData();
-        formData.append('image', mediaBuffer.toString('base64'));
-        
-        const uploadRes = await axios.post(
-            `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
-            formData,
-            {
-                headers: formData.getHeaders(),
-                timeout: 15000
-            }
-        );
+      // Download the media
+      const mediaBuffer = await quotedMsg.download();
+      const fileSize = formatBytes(mediaBuffer.length);
+      
+      // Get file extension
+      let extension = '';
+      if (mimeType.includes('image/jpeg')) extension = '.jpg';
+      else if (mimeType.includes('image/png')) extension = '.png';
+      else {
+        await m.React('❌');
+        return sock.sendMessage(m.from, { text: "Unsupported image format. Please use JPEG or PNG" }, { quoted: m });
+      }
 
-        if (!uploadRes.data?.data?.url) {
-            throw new Error('Image upload failed');
-        }
-        const imageUrl = uploadRes.data.data.url;
+      const tempFilePath = path.join(os.tmpdir(), `blur_${Date.now()}${extension}`);
+      fs.writeFileSync(tempFilePath, mediaBuffer);
 
-        // 3. Process through RemoveBG API
-        const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageUrl)}`;
-        
-        // 4. Get and verify result
-        const result = await axios.get(apiUrl, {
-            responseType: 'arraybuffer',
-            timeout: 30000
-        });
+      // Upload to Catbox
+      const form = new FormData();
+      form.append('fileToUpload', fs.createReadStream(tempFilePath), `image${extension}`);
+      form.append('reqtype', 'fileupload');
 
-        if (!result.data || result.data.length < 1024) {
-            throw new Error('Empty result from API');
-        }
+      const uploadResponse = await axios.post("https://catbox.moe/user/api.php", form, {
+        headers: form.getHeaders()
+      });
 
-        // 5. Send result
-        await sock.sendMessage(
-            m.from,
-            {
-                image: result.data,
-                caption: "✅ *Background Removed Successfully*",
-                contextInfo: {
-                    externalAdReply: {
-                        title: "✨ Sarkar-MD ✨",
-                        body: "Professional Background Removal",
-                        thumbnail: result.data,
-                        sourceUrl: "https://github.com/Sarkar-Bandaheali/Sarkar-MD",
-                        mediaType: 1
-                    }
-                }
+      const imageUrl = uploadResponse.data;
+      fs.unlinkSync(tempFilePath); // Clean up temp file
+
+      if (!imageUrl) {
+        throw "Failed to upload image to Catbox";
+      }
+
+      // Process the image
+      const apiUrl = `https://api.popcat.xyz/v2/blur?image=${encodeURIComponent(imageUrl)}`;
+      const response = await axios.get(apiUrl, { responseType: "arraybuffer" });
+
+      if (!response || !response.data) {
+        await m.React('❌');
+        return sock.sendMessage(m.from, { text: "Error: The API did not return a valid image. Try again later." }, { quoted: m });
+      }
+
+      const imageBuffer = Buffer.from(response.data, "binary");
+
+      await sock.sendMessage(
+        m.from,
+        {
+          image: imageBuffer,
+          caption: `> *Powered by JawadTechX*`,
+          contextInfo: {
+            mentionedJid: [m.sender],
+            forwardingScore: 999,
+            isForwarded: true,
+            externalAdReply: {
+              title: "✨ Image Editor ✨",
+              body: "Blur Effect Applied",
+              thumbnailUrl: 'https://example.com/thumbnail.jpg', // Replace with your thumbnail
+              sourceUrl: 'https://github.com/your-repo', // Replace with your repo
+              mediaType: 1,
+              renderLargerThumbnail: false,
             },
-            { quoted: m }
-        );
-        await m.React('✅');
+          },
+        },
+        { quoted: m }
+      );
+
+      await m.React('✅'); // React with success icon
 
     } catch (error) {
-        console.error("RemoveBG Error:", error.message);
-        await sendNewsletter(
-            sock,
-            m.from,
-            `❌ *Background Removal Failed*\n\n▸ Reason: ${getErrorMessage(error)}\n▸ Solution: ${getSolution(error)}`,
-            m,
-            "🖼️ Error Occurred",
-            "Try again later"
-        );
-        await m.React('❌');
+      console.error("Blur Error:", error);
+      await m.React('❌');
+      sock.sendMessage(m.from, { 
+        text: `An error occurred: ${error.response?.data?.message || error.message || "Unknown error"}` 
+      }, { quoted: m });
     }
+  }
 };
 
-function getErrorMessage(error) {
-    if (error.message.includes('Invalid image')) return "Corrupted image data";
-    if (error.message.includes('Image upload')) return "Image hosting failed";
-    if (error.message.includes('timeout')) return "Process timed out";
-    if (error.message.includes('Empty result')) return "API returned no image";
-    return "Processing error";
-}
-
-function getSolution(error) {
-    if (error.message.includes('timeout')) return "Try smaller image (<2MB)";
-    if (error.message.includes('upload')) return "Check your internet connection";
-    return "Send a different image";
-}
-
-export default removebg;
+export default blur;
