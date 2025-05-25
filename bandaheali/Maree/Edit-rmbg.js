@@ -9,29 +9,50 @@ const rmbg = async (m, sock) => {
 
   if (cmd === 'rmbg') {
     try {
-      // Check if message is a reply and has an image
+      // Check if message is a reply
       if (!m.quoted) {
-        return sock.sendMessage(m.from, { text: '❌ Please reply to an image with *.rmbg* to remove its background' }, { quoted: m });
+        return sock.sendMessage(
+          m.from,
+          { text: '❌ Please reply to an image with *.rmbg* to remove its background' },
+          { quoted: m }
+        );
       }
 
-      // Check for image in different ways
-      const isImage = m.quoted.mimetype?.includes('image') || 
-                     m.quoted.message?.imageMessage || 
-                     m.quoted?.type === 'image';
+      // Check if the quoted message is an image
+      const isImage =
+        m.quoted.mimetype?.includes('image') ||
+        m.quoted.message?.imageMessage ||
+        m.quoted?.type === 'image';
 
       if (!isImage) {
-        return sock.sendMessage(m.from, { text: '❌ The replied message is not an image. Please reply to an image.' }, { quoted: m });
+        return sock.sendMessage(
+          m.from,
+          { text: '❌ The replied message is not an image. Please reply to an image.' },
+          { quoted: m }
+        );
       }
 
-      await m.React('⏳'); // React with loading icon
+      await m.react('⏳'); // Show loading reaction
 
-      // Download the image
-      const media = await sock.downloadMediaMessage(m.quoted);
+      // Download the image using safer method
+      let media;
+      try {
+        media = await m.quoted.download();
+        if (!media) throw new Error('Media download returned null');
+      } catch (err) {
+        console.error('Download failed:', err);
+        return sock.sendMessage(
+          m.from,
+          { text: '❌ Failed to download image. Please try again with a different image.' },
+          { quoted: m }
+        );
+      }
+
       const imageBase64 = media.toString('base64');
 
-      // Call the removebg API
+      // API call to remove background
       const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageBase64)}`;
-      
+
       const response = await axios.post(apiUrl, {}, {
         responseType: 'arraybuffer',
         headers: {
@@ -43,7 +64,7 @@ const rmbg = async (m, sock) => {
         throw new Error('Empty response from API');
       }
 
-      // Send the result back
+      // Send back image with background removed
       await sock.sendMessage(
         m.from,
         {
@@ -54,11 +75,15 @@ const rmbg = async (m, sock) => {
         { quoted: m }
       );
 
-      await m.React('✅'); // React with success icon
+      await m.react('✅'); // Success reaction
     } catch (error) {
       console.error('Error in rmbg command:', error);
-      await sock.sendMessage(m.from, { text: `❌ Error: ${error}` }, { quoted: m });
-      await m.React('❌'); // React with error icon
+      await sock.sendMessage(
+        m.from,
+        { text: `❌ Error: ${error.message || error}` },
+        { quoted: m }
+      );
+      await m.react('❌'); // Error reaction
     }
   }
 };
