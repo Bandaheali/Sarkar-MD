@@ -13,7 +13,6 @@ const blur = async (m, sock) => {
 
   if (["blur", "bluredit"].includes(cmd)) {
     try {
-      // Helper function to format bytes
       const formatBytes = (bytes) => {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -22,29 +21,35 @@ const blur = async (m, sock) => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
       };
 
-      await m.React('📸'); // React with camera emoji
+      await m.React('📸');
 
-      // Check if quoted message exists and has media
+      // Improved media detection
       const quotedMsg = m.quoted ? m.quoted : m;
-      const mimeType = (quotedMsg.msg || quotedMsg).mimetype || '';
-      
-      if (!mimeType || !mimeType.startsWith('image/')) {
+      const isImage = quotedMsg.message?.imageMessage || 
+                     quotedMsg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
+
+      if (!isImage) {
         await m.React('❌');
-        return sock.sendMessage(m.from, { text: "Please reply to an image file (JPEG/PNG)" }, { quoted: m });
+        return sock.sendMessage(m.from, { 
+          text: "Please reply to an image or send an image with the command" 
+        }, { quoted: m });
       }
 
-      // Download the media
-      const mediaBuffer = await quotedMsg.download();
-      const fileSize = formatBytes(mediaBuffer.length);
-      
-      // Get file extension
-      let extension = '';
-      if (mimeType.includes('image/jpeg')) extension = '.jpg';
-      else if (mimeType.includes('image/png')) extension = '.png';
-      else {
+      // Download the media - improved method
+      let mediaBuffer;
+      try {
+        mediaBuffer = await sock.downloadMediaMessage(quotedMsg);
+      } catch (downloadError) {
         await m.React('❌');
-        return sock.sendMessage(m.from, { text: "Unsupported image format. Please use JPEG or PNG" }, { quoted: m });
+        return sock.sendMessage(m.from, { 
+          text: "Failed to download the image. Please try again." 
+        }, { quoted: m });
       }
+
+      // Determine file extension
+      let extension = '.jpg'; // default to jpg
+      const mimeType = quotedMsg.message?.imageMessage?.mimetype || 'image/jpeg';
+      if (mimeType.includes('png')) extension = '.png';
 
       const tempFilePath = path.join(os.tmpdir(), `blur_${Date.now()}${extension}`);
       fs.writeFileSync(tempFilePath, mediaBuffer);
@@ -59,52 +64,44 @@ const blur = async (m, sock) => {
       });
 
       const imageUrl = uploadResponse.data;
-      fs.unlinkSync(tempFilePath); // Clean up temp file
+      fs.unlinkSync(tempFilePath);
 
       if (!imageUrl) {
-        throw "Failed to upload image to Catbox";
+        throw new Error("Failed to upload image to Catbox");
       }
 
       // Process the image
       const apiUrl = `https://api.popcat.xyz/v2/blur?image=${encodeURIComponent(imageUrl)}`;
       const response = await axios.get(apiUrl, { responseType: "arraybuffer" });
 
-      if (!response || !response.data) {
+      if (!response?.data) {
         await m.React('❌');
-        return sock.sendMessage(m.from, { text: "Error: The API did not return a valid image. Try again later." }, { quoted: m });
+        return sock.sendMessage(m.from, { 
+          text: "Error processing image. Please try again later." 
+        }, { quoted: m });
       }
-
-      const imageBuffer = Buffer.from(response.data, "binary");
 
       await sock.sendMessage(
         m.from,
         {
-          image: imageBuffer,
+          image: Buffer.from(response.data, "binary"),
           caption: `> *Powered by JawadTechX*`,
           contextInfo: {
             mentionedJid: [m.sender],
             forwardingScore: 999,
-            isForwarded: true,
-            externalAdReply: {
-              title: "✨ Image Editor ✨",
-              body: "Blur Effect Applied",
-              thumbnailUrl: 'https://example.com/thumbnail.jpg', // Replace with your thumbnail
-              sourceUrl: 'https://github.com/your-repo', // Replace with your repo
-              mediaType: 1,
-              renderLargerThumbnail: false,
-            },
-          },
+            isForwarded: true
+          }
         },
         { quoted: m }
       );
 
-      await m.React('✅'); // React with success icon
+      await m.React('✅');
 
     } catch (error) {
       console.error("Blur Error:", error);
       await m.React('❌');
       sock.sendMessage(m.from, { 
-        text: `An error occurred: ${error.response?.data?.message || error.message || "Unknown error"}` 
+        text: `Error: ${error.message || "Failed to process image"}` 
       }, { quoted: m });
     }
   }
