@@ -29,37 +29,36 @@ const rmbg = async (m, sock) => {
 
       await sock.sendMessage(m.from, { react: { text: '⏳', key: m.key } });
 
-      // Download image
+      // Step 1: Download image
       const media = await m.quoted.download();
       if (!media) throw new Error('Media download failed');
 
-      // Upload to file.io
+      // Step 2: Upload to Telegra.ph
       const form = new FormData();
       form.append('file', media, { filename: 'image.png', contentType: 'image/png' });
 
-      const uploadRes = await axios.post('https://file.io/', form, {
+      const uploadRes = await axios.post('https://telegra.ph/upload', form, {
         headers: form.getHeaders(),
       });
 
-      const imageUrl = uploadRes.data.link;
-      if (!imageUrl) throw new Error('Image upload failed');
+      const imageUrl = 'https://telegra.ph' + uploadRes.data[0].src;
 
-      // Now call the API with image URL
+      // Step 3: Call background remove API with image URL
       const apiUrl = `https://api.siputzx.my.id/api/iloveimg/removebg?image=${encodeURIComponent(imageUrl)}`;
 
-      const bgRemoved = await axios.get(apiUrl, {
+      const result = await axios.get(apiUrl, {
         responseType: 'arraybuffer',
       });
 
-      if (!bgRemoved.data || bgRemoved.data.length === 0) {
-        throw new Error('Background removal failed');
+      if (!result.data || result.data.length === 0) {
+        throw new Error('Empty response from background removal API');
       }
 
-      // Send back to user
+      // Step 4: Send final image back
       await sock.sendMessage(
         m.from,
         {
-          image: Buffer.from(bgRemoved.data),
+          image: Buffer.from(result.data),
           caption: '✅ Background removed successfully!',
           mentions: [m.sender],
         },
@@ -69,7 +68,7 @@ const rmbg = async (m, sock) => {
       await sock.sendMessage(m.from, { react: { text: '✅', key: m.key } });
 
     } catch (err) {
-      console.error('Error:', err.message || err);
+      console.error('❌ Error:', err.message || err);
       await sock.sendMessage(m.from, {
         text: `❌ Error: ${err.response?.data?.message || err.message}`,
       }, { quoted: m });
