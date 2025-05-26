@@ -17,7 +17,7 @@ const google = async (m, sock) => {
             await sendNewsletter(
                 sock,
                 m.from,
-                "🔍 *Google Search*\n\nUsage: `.google [search query]`\nExample: `.google latest AI developments`\n\nGet top 5 Google search results directly in WhatsApp",
+                "🔍 *Google Search*\n\nUsage: `.google [search query]`\nExample: `.google ChatGPT updates`\n\nGet top Google search results",
                 m,
                 "🌐 Google Command",
                 "Query Required"
@@ -29,48 +29,75 @@ const google = async (m, sock) => {
         await sock.sendPresenceUpdate('composing', m.from);
         await m.React('⏳');
 
-        // Fetch Google search results
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        // Set proper headers to mimic a browser
         const headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9'
         };
 
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&gl=us&hl=en`;
+        
         const response = await axios.get(searchUrl, { headers });
         const $ = cheerio.load(response.data);
 
-        // Extract search results
+        // New method to parse Google's current HTML structure
         const results = [];
+        
+        // Main organic results
         $('div.g').each((i, el) => {
-            if (i >= 5) return; // Limit to 5 results
+            if (i >= 5) return false; // Limit to 5 results
             
             const title = $(el).find('h3').text();
-            const url = $(el).find('a').attr('href');
-            const description = $(el).find('div.IsZvec').text() || $(el).find('.VwiC3b').text();
+            const urlElement = $(el).find('a[href^="/url?"]');
+            const url = urlElement.attr('href') ? 
+                new URLSearchParams(urlElement.attr('href').split('?')[1]).get('q') : 
+                null;
+            const snippet = $(el).find('div[data-sncf]').text() || $(el).find('.VwiC3b').text();
             
-            if (title && url && description) {
+            if (title && url) {
                 results.push({
                     title,
-                    url: url.startsWith('/url?q=') ? 
-                        decodeURIComponent(url.split('/url?q=')[1].split('&')[0]) : 
-                        url,
-                    description: description.replace(/\s+/g, ' ').trim()
+                    url,
+                    description: snippet.replace(/\s+/g, ' ').trim()
                 });
             }
         });
 
+        // Alternative parsing if first method didn't work
         if (results.length === 0) {
-            throw new Error("No results found");
+            $('a[href^="/url?"]').each((i, el) => {
+                if (i >= 10) return false; // Safety limit
+                
+                const title = $(el).find('h3').text();
+                const url = new URLSearchParams($(el).attr('href').split('?')[1]).get('q');
+                const parentDiv = $(el).closest('div');
+                const snippet = parentDiv.find('div[data-sncf]').text() || parentDiv.find('.VwiC3b').text();
+                
+                if (title && url && !url.startsWith('https://www.google.com/')) {
+                    results.push({
+                        title,
+                        url,
+                        description: snippet.replace(/\s+/g, ' ').trim()
+                    });
+                }
+            });
         }
 
-        // Format results message
-        let resultMessage = `🔍 *Google Search Results for "${query}"*\n\n`;
-        results.forEach((result, index) => {
-            resultMessage += `*${index + 1}. ${result.title}*\n`;
-            resultMessage += `🌐 ${result.url}\n`;
-            resultMessage += `📝 ${result.description}\n\n`;
-        });
+        if (results.length === 0) {
+            throw new Error("No results found - Google may have blocked the request");
+        }
 
-        resultMessage += `\nℹ️ Total results: ${results.length}`;
+        // Format results
+        let resultMessage = `🔍 *Google Results for "${query}"*\n\n`;
+        results.slice(0, 5).forEach((result, index) => {
+            resultMessage += `*${index + 1}. ${result.title}*\n`;
+            resultMessage += `🔗 ${result.url}\n`;
+            if (result.description) {
+                resultMessage += `📝 ${result.description}\n\n`;
+            } else {
+                resultMessage += `\n`;
+            }
+        });
 
         // Send results
         await sock.sendMessage(
@@ -86,7 +113,7 @@ const google = async (m, sock) => {
         await sendNewsletter(
             sock,
             m.from,
-            "❌ *Google Search Failed*\n\n• No results found\n• Try different keywords\n• Google might be blocking requests\n\nTry again later or refine your search",
+            "❌ *Google Search Failed*\n\nPossible reasons:\n• Google blocked the request\n• No results found\n• Try different keywords\n• Temporary service issue\n\nTry again in a few minutes",
             m,
             "🌐 Google Error",
             "Try Again"
