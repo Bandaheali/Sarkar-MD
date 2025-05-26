@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { fileTypeFromBuffer } from 'file-type';
 import config from '../../config.js';
 
@@ -10,57 +9,38 @@ const postCommand = async (m, sock) => {
     if (isCmd !== 'post') return;
 
     try {
-        const quotedMsg = m.quoted?.message;
-        let mediaBuffer;
-        let mediaType;
-        let caption = m.body.slice(prefix.length + 'post'.length).trim();
+        const caption = m.body.slice(prefix.length + 'post'.length).trim();
 
-        const downloadMedia = async (msg) => {
+        // Select message to get media from
+        const targetMsg = m.quoted || m;
+
+        // Detect media type and download buffer
+        const getMedia = async () => {
             try {
-                const buffer = await sock.downloadMediaMessage(msg);
+                const buffer = await sock.downloadMediaMessage(targetMsg, 'buffer');
                 if (!buffer || buffer.length === 0) {
                     throw new Error('Empty media buffer');
                 }
                 return buffer;
-            } catch (error) {
-                console.error('Download failed:', error);
-                throw new Error('❌ Could not download media');
+            } catch (err) {
+                console.error('Media download failed:', err);
+                throw new Error('❌ Could not download media. Please make sure it is recent and valid.');
             }
         };
 
-        if (!m.quoted) {
-            if (m.message?.imageMessage) {
-                mediaBuffer = await downloadMedia(m);
-                mediaType = 'image';
-            } else if (m.message?.videoMessage) {
-                mediaBuffer = await downloadMedia(m);
-                mediaType = 'video';
-            } else if (m.message?.audioMessage) {
-                mediaBuffer = await downloadMedia(m);
-                mediaType = 'audio';
-            } else {
-                await m.reply('❌ Please attach media or reply to media with *.post*');
-                return;
-            }
+        let mediaType;
+        if (targetMsg?.message?.imageMessage) {
+            mediaType = 'image';
+        } else if (targetMsg?.message?.videoMessage) {
+            mediaType = 'video';
+        } else if (targetMsg?.message?.audioMessage) {
+            mediaType = 'audio';
         } else {
-            if (quotedMsg?.imageMessage) {
-                mediaBuffer = await downloadMedia(m.quoted);
-                mediaType = 'image';
-            } else if (quotedMsg?.videoMessage) {
-                mediaBuffer = await downloadMedia(m.quoted);
-                mediaType = 'video';
-            } else if (quotedMsg?.audioMessage) {
-                mediaBuffer = await downloadMedia(m.quoted);
-                mediaType = 'audio';
-            } else {
-                await m.reply('❌ The replied message has no media');
-                return;
-            }
+            await m.reply('❌ Please attach or reply to an image, video, or audio with *.post*');
+            return;
         }
 
-        if (!mediaBuffer || mediaBuffer.length === 0) {
-            throw new Error('❌ Received empty media buffer');
-        }
+        const mediaBuffer = await getMedia();
 
         const fileInfo = await fileTypeFromBuffer(mediaBuffer);
         if (!fileInfo) {
@@ -68,11 +48,7 @@ const postCommand = async (m, sock) => {
             return;
         }
 
-        const statusOptions = {
-            ephemeralExpiration: 86400,
-            mediaUploadTimeoutMs: 60000
-        };
-
+        // Prepare media message
         let mediaPayload;
         switch (mediaType) {
             case 'image':
@@ -98,15 +74,19 @@ const postCommand = async (m, sock) => {
                 break;
         }
 
+        const statusOptions = {
+            ephemeralExpiration: 86400,
+            mediaUploadTimeoutMs: 60000
+        };
+
         await sock.sendMessage('status@broadcast', mediaPayload, statusOptions);
 
         await m.reply('✅ Successfully posted to your status!');
-        // Optional: Only react if `m.react` exists
         if (typeof m.react === 'function') await m.react('✅');
 
     } catch (error) {
         console.error('Post Command Error:', error);
-        await m.reply(error.message || '❌ Something went wrong');
+        await m.reply(error.message || '❌ Something went wrong.');
         if (typeof m.react === 'function') await m.react('❌');
     }
 };
