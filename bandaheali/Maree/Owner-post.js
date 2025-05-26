@@ -4,19 +4,17 @@ import config from '../../config.js';
 
 const postCommand = async (m, sock) => {
     const prefix = config.PREFIX;
-    const isCmd = m.body.startsWith(prefix) 
-        ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() 
+    const isCmd = m.body.startsWith(prefix)
+        ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
         : '';
     if (isCmd !== 'post') return;
 
     try {
-        // Get the quoted message (if any)
         const quotedMsg = m.quoted?.message;
         let mediaBuffer;
         let mediaType;
         let caption = m.body.slice(prefix.length + 'post'.length).trim();
 
-        // Helper function to download media safely
         const downloadMedia = async (msg) => {
             try {
                 const buffer = await sock.downloadMediaMessage(msg);
@@ -26,120 +24,90 @@ const postCommand = async (m, sock) => {
                 return buffer;
             } catch (error) {
                 console.error('Download failed:', error);
-                throw new Error('Could not download media');
+                throw new Error('❌ Could not download media');
             }
         };
 
-        // Case 1: Direct media message
         if (!m.quoted) {
             if (m.message?.imageMessage) {
                 mediaBuffer = await downloadMedia(m);
                 mediaType = 'image';
-            } 
-            else if (m.message?.videoMessage) {
+            } else if (m.message?.videoMessage) {
                 mediaBuffer = await downloadMedia(m);
                 mediaType = 'video';
-            } 
-            else if (m.message?.audioMessage) {
+            } else if (m.message?.audioMessage) {
                 mediaBuffer = await downloadMedia(m);
                 mediaType = 'audio';
-            }
-            else {
+            } else {
                 await m.reply('❌ Please attach media or reply to media with *.post*');
                 return;
             }
-        }
-        // Case 2: Quoted media message
-        else {
+        } else {
             if (quotedMsg?.imageMessage) {
                 mediaBuffer = await downloadMedia(m.quoted);
                 mediaType = 'image';
-            } 
-            else if (quotedMsg?.videoMessage) {
+            } else if (quotedMsg?.videoMessage) {
                 mediaBuffer = await downloadMedia(m.quoted);
                 mediaType = 'video';
-            } 
-            else if (quotedMsg?.audioMessage) {
+            } else if (quotedMsg?.audioMessage) {
                 mediaBuffer = await downloadMedia(m.quoted);
                 mediaType = 'audio';
-            }
-            else {
+            } else {
                 await m.reply('❌ The replied message has no media');
                 return;
             }
         }
 
-        // Verify media buffer
         if (!mediaBuffer || mediaBuffer.length === 0) {
-            throw new Error('Received empty media buffer');
+            throw new Error('❌ Received empty media buffer');
         }
 
-        // Determine file type
         const fileInfo = await fileTypeFromBuffer(mediaBuffer);
         if (!fileInfo) {
-            throw new Error('Could not determine file type');
+            await m.reply('❌ Could not determine the file type. Please send a valid media file.');
+            return;
         }
 
-        // Create temp directory if not exists
-        if (!fs.existsSync('./temp')) {
-            fs.mkdirSync('./temp');
-        }
-
-        const tempFilePath = `./temp/post_${Date.now()}.${fileInfo.ext}`;
-        fs.writeFileSync(tempFilePath, mediaBuffer);
-
-        // Status upload options
         const statusOptions = {
             ephemeralExpiration: 86400,
             mediaUploadTimeoutMs: 60000
         };
 
-        // Prepare media payload
         let mediaPayload;
-        const fileContent = fs.readFileSync(tempFilePath);
-        
         switch (mediaType) {
             case 'image':
-                mediaPayload = { 
-                    image: fileContent,
+                mediaPayload = {
+                    image: mediaBuffer,
                     caption: caption || '',
                     mimetype: fileInfo.mime
                 };
                 break;
             case 'video':
-                mediaPayload = { 
-                    video: fileContent,
+                mediaPayload = {
+                    video: mediaBuffer,
                     caption: caption || '',
                     mimetype: fileInfo.mime
                 };
                 break;
             case 'audio':
                 mediaPayload = {
-                    audio: fileContent,
+                    audio: mediaBuffer,
                     mimetype: fileInfo.mime,
                     ptt: true
                 };
                 break;
         }
 
-        // Upload to status
-        await sock.sendMessage(
-            'status@broadcast',
-            mediaPayload,
-            statusOptions
-        );
-
-        // Clean up
-        fs.unlinkSync(tempFilePath);
+        await sock.sendMessage('status@broadcast', mediaPayload, statusOptions);
 
         await m.reply('✅ Successfully posted to your status!');
-        await m.React('✅');
+        // Optional: Only react if `m.react` exists
+        if (typeof m.react === 'function') await m.react('✅');
 
     } catch (error) {
         console.error('Post Command Error:', error);
-    
-        await m.reply(error);
-        await m.React('❌');
+        await m.reply(error.message || '❌ Something went wrong');
+        if (typeof m.react === 'function') await m.react('❌');
     }
 };
 
