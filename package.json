@@ -20,7 +20,7 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@google/generative-ai": "^0.9.0",
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "6.7.17",
+    "@whiskeysockets/baileys": "npm:@fizzxydev/baileys-pro@8.5.12",
     "@xaviabot/fb-downloader": "^1.0.14",
     "acrcloud": "^1.4.0",
     "api-dylux": "^1.8.3",
