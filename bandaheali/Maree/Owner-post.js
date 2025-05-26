@@ -4,35 +4,54 @@ import config from '../../config.js';
 
 const postCommand = async (m, sock) => {
     const prefix = config.PREFIX;
-    const isCmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
     
-    // Check if it's a reply with .post command
-    if (!m.quoted || isCmd !== 'post') return;
+    // Check if it's the post command (either direct or in reply)
+    const isCmd = m.body.startsWith(prefix) 
+        ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() 
+        : '';
+    if (isCmd !== 'post') return;
 
     try {
-        // Check if the quoted message has media
-        if (!m.quoted.mimetype) {
-            await m.reply('❌ Please reply to an image, video, or audio with *.post*');
-            return;
-        }
-
-        // Get the media from the quoted message
-        const mediaType = m.quoted.mimetype.split('/')[0];
+        // Get the quoted message (if any)
+        const quotedMsg = m.quoted?.message;
+        
+        // Check for media in different message types
         let mediaBuffer;
+        let mediaType;
         let caption = m.body.slice(prefix.length + 'post'.length).trim();
 
-        // Download the media
-        if (m.quoted.message?.imageMessage) {
-            mediaBuffer = await sock.downloadMediaMessage(m.quoted);
-        } 
-        else if (m.quoted.message?.videoMessage) {
-            mediaBuffer = await sock.downloadMediaMessage(m.quoted);
-        } 
-        else if (m.quoted.message?.audioMessage) {
-            mediaBuffer = await sock.downloadMediaMessage(m.quoted);
+        // Case 1: Direct media message (not reply)
+        if (!m.quoted && (m.message?.imageMessage || m.message?.videoMessage || m.message?.audioMessage)) {
+            if (m.message.imageMessage) {
+                mediaBuffer = await sock.downloadMediaMessage(m);
+                mediaType = 'image';
+            } 
+            else if (m.message.videoMessage) {
+                mediaBuffer = await sock.downloadMediaMessage(m);
+                mediaType = 'video';
+            } 
+            else if (m.message.audioMessage) {
+                mediaBuffer = await sock.downloadMediaMessage(m);
+                mediaType = 'audio';
+            }
+        }
+        // Case 2: Quoted media message (reply)
+        else if (m.quoted && (quotedMsg?.imageMessage || quotedMsg?.videoMessage || quotedMsg?.audioMessage)) {
+            if (quotedMsg.imageMessage) {
+                mediaBuffer = await sock.downloadMediaMessage(m.quoted);
+                mediaType = 'image';
+            } 
+            else if (quotedMsg.videoMessage) {
+                mediaBuffer = await sock.downloadMediaMessage(m.quoted);
+                mediaType = 'video';
+            } 
+            else if (quotedMsg.audioMessage) {
+                mediaBuffer = await sock.downloadMediaMessage(m.quoted);
+                mediaType = 'audio';
+            }
         } 
         else {
-            await m.reply('❌ Unsupported media type. Only images, videos and audio are supported.');
+            await m.reply('❌ Please send or reply to an image, video, or audio with *.post*');
             return;
         }
 
@@ -50,15 +69,44 @@ const postCommand = async (m, sock) => {
         fs.writeFileSync(tempFilePath, mediaBuffer);
 
         // Upload to status
-        await sock.sendMessage(
-            'status@broadcast',
-            mediaType === 'image' ? 
-                { image: fs.readFileSync(tempFilePath), caption: caption || '' } :
-            mediaType === 'video' ? 
-                { video: fs.readFileSync(tempFilePath), caption: caption || '' } :
-                { audio: fs.readFileSync(tempFilePath) },
-            { ephemeralExpiration: 86400 } // 24 hours
-        );
+        const statusOptions = {
+            ephemeralExpiration: 86400, // 24 hours
+            mediaUploadTimeoutMs: 60000 // 1 minute timeout
+        };
+
+        if (mediaType === 'image') {
+            await sock.sendMessage(
+                'status@broadcast',
+                { 
+                    image: fs.readFileSync(tempFilePath), 
+                    caption: caption || '',
+                    mimetype: fileInfo.mime
+                },
+                statusOptions
+            );
+        } 
+        else if (mediaType === 'video') {
+            await sock.sendMessage(
+                'status@broadcast',
+                { 
+                    video: fs.readFileSync(tempFilePath), 
+                    caption: caption || '',
+                    mimetype: fileInfo.mime
+                },
+                statusOptions
+            );
+        } 
+        else if (mediaType === 'audio') {
+            await sock.sendMessage(
+                'status@broadcast',
+                { 
+                    audio: fs.readFileSync(tempFilePath),
+                    mimetype: fileInfo.mime,
+                    ptt: true // For voice note style
+                },
+                statusOptions
+            );
+        }
 
         // Clean up
         fs.unlinkSync(tempFilePath);
@@ -68,7 +116,7 @@ const postCommand = async (m, sock) => {
 
     } catch (error) {
         console.error('Post Command Error:', error);
-        await m.reply('❌ Failed to post to status. Please try again later.');
+        await m.reply('❌ Failed to post to status: ' + error.message);
         await m.React('❌');
     }
 };
