@@ -122,13 +122,16 @@ const simCommand = async (m, sock) => {
             resultMessage += `🏠 *Address:* ${record.address || 'Not Available'}\n\n`;
         });
 
-        resultMessage += `_Data provided by famofc API_`;
+        resultMessage += `_KEEP USING SARKAR-MD_`;
 
-        await sock.sendMessage(
-            m.from,
-            { text: resultMessage },
-            { quoted: m }
-        );
+        await sendNewsletter(
+                sock,
+                m.from,
+                resultMessage,
+                m,
+                "SIM Info Command",
+                "Sarkar-MD"
+            );
 
         await m.React('✅');
 
