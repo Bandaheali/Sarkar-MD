@@ -24,6 +24,7 @@ const config = {
   ANTI_DELETE: toBool(getSetting('antidelete') || process.env.ANTI_DELETE),
   DELETE_PATH: getSetting('deletepath') || process.env.DELETE_PATH || "same",
   AUTO_REACT: toBool(getSetting('autoreact') || process.env.AUTO_REACT),
+  HEART_REACT: toBool(getSetting('heartreact') || process.env.HEART_REACT),
   AUTO_TYPING: toBool(getSetting('typing') || process.env.AUTO_TYPING),
   AUTO_RECORDING: toBool(getSetting('recording') || process.env.AUTO_RECORDING),
   ALWAYS_ONLINE: toBool(getSetting('alwaysonline') || process.env.ALWAYS_ONLINE),
