@@ -2,20 +2,22 @@ import { allFonts, stylize } from '../../lib/fonts.js';
 import { readFileSync } from 'fs';
 import moment from 'moment-timezone';
 
-// Helper function to get fresh config
-const getConfig = () => {
+// Dynamic config loader
+const loadConfig = () => {
   try {
-    const configFile = readFileSync('./config.js', 'utf-8');
-    // Extract the config object from the file
-    const configMatch = configFile.match(/export\s+default\s+({[\s\S]*?});/);
-    if (configMatch) {
-      // Note: This is a simple approach - for more complex configs, consider using import()
-      return eval(`(${configMatch[1]})`);
-    }
-    return {};
+    // Using dynamic import to get fresh config each time
+    const configPath = new URL('../../config.js', import.meta.url).pathname;
+    delete require.cache[require.resolve(configPath)];
+    return require(configPath);
   } catch (err) {
-    console.error('Error reading config:', err);
-    return {};
+    console.error('Config loading error:', err);
+    return {
+      PREFIX: '.',
+      OWNER_NAME: 'Owner',
+      BOT_NAME: 'Bot',
+      MENU_IMAGE: 'https://example.com/default.jpg',
+      MODE: 'public'
+    };
   }
 };
 
@@ -37,13 +39,13 @@ const getRandomFont = () => {
 };
 
 const generateHeader = (pushName) => {
-  const config = getConfig();
-  return `╭───❍「 *✨${config.BOT_NAME || 'BOT'}✨* 」
+  const { BOT_NAME, MODE, OWNER_NAME, PREFIX } = loadConfig();
+  return `╭───❍「 *✨${BOT_NAME}✨* 」
 │ 🧑‍💻 *USER:* ${pushName || "User"} HAPPY TO SEE YOU
-│ 🌐 *MODE:* ${config.MODE || "public"}
+│ 🌐 *MODE:* ${MODE}
 │ ⏰ *TIME:* ${getCurrentTime()}
-│ 😇 *Owner:* ${config.OWNER_NAME || 'Owner'}
-│ 🪄 *Prefix:* ${config.PREFIX || '.'}
+│ 😇 *Owner:* ${OWNER_NAME}
+│ 🪄 *Prefix:* ${PREFIX}
 │ 🇵🇰 *CREATER:* *_BANDAHEALI_*
 │ 🚀 *Uptime:* ${getUptime()}
 ╰───────────❍`;
@@ -51,34 +53,34 @@ const generateHeader = (pushName) => {
 
 // Menu generators
 const generateMainMenu = () => {
-  const config = getConfig();
+  const { PREFIX } = loadConfig();
   return `╭───────◇◆◇───────╮
-│ 🕌 ${config.PREFIX || '.'}IslamicMenu
-│ 📖 ${config.PREFIX || '.'}StudyMenu
-│ 📥 ${config.PREFIX || '.'}DownloadMenu
-│ 🤖 ${config.PREFIX || '.'}AiMenu
-│ 🫂 ${config.PREFIX || '.'}GroupMenu
-│ 🎨 ${config.PREFIX || '.'}LogoMenu
-│ 👑 ${config.PREFIX || '.'}OwnerMenu
-│ 🧩 ${config.PREFIX || '.'}OtherMenu
-│ 🤣 ${config.PREFIX || '.'}FunMenu
-│ ✨ ${config.PREFIX || '.'}ToolsMenu
-│ 🔍 ${config.PREFIX || '.'}SearchMenu
-│ 😁 ${config.PREFIX || '.'}ReactionMenu
+│ 🕌 ${PREFIX}IslamicMenu
+│ 📖 ${PREFIX}StudyMenu
+│ 📥 ${PREFIX}DownloadMenu
+│ 🤖 ${PREFIX}AiMenu
+│ 🫂 ${PREFIX}GroupMenu
+│ 🎨 ${PREFIX}LogoMenu
+│ 👑 ${PREFIX}OwnerMenu
+│ 🧩 ${PREFIX}OtherMenu
+│ 🤣 ${PREFIX}FunMenu
+│ ✨ ${PREFIX}ToolsMenu
+│ 🔍 ${PREFIX}SearchMenu
+│ 😁 ${PREFIX}ReactionMenu
 ╰──────◇◆◇──────╯`;
 };
 
 const generateSection = (title, items) => {
-  const config = getConfig();
+  const { PREFIX } = loadConfig();
   let section = `╭───❍「 *${title}* 」\n`;
   items.forEach(item => {
-    section += `*│* 💙 *${config.PREFIX || '.'}${item}*\n`;
+    section += `*│* 💙 *${PREFIX}${item}*\n`;
   });
   section += `╰───────────❍`;
   return section;
 };
 
-// Menu sections
+// Menu sections (unchanged)
 const MENU_SECTIONS = {
   islamic: ['SurahAudio', 'SurahUrdu', 'SurahArabic', 'SurahEng', 'PrayerTime', 'PTime', 'SBukhari'],
   study: ['deepseek', 'mathai', 'element'],
@@ -95,14 +97,14 @@ const MENU_SECTIONS = {
 };
 
 const generateFullMenu = (pushName) => {
+  const { BOT_NAME } = loadConfig();
   let menu = `${generateHeader(pushName)}\n${generateMainMenu()}\n`;
   
   for (const [section, items] of Object.entries(MENU_SECTIONS)) {
     menu += `${generateSection(section.toUpperCase(), items)}\n`;
   }
   
-  const config = getConfig();
-  return `${menu}> POWERED BY ${config.BOT_NAME || 'BOT'}`;
+  return `${menu}> POWERED BY ${BOT_NAME}`;
 };
 
 const generateSpecificMenu = (pushName, menuType) => {
@@ -128,7 +130,7 @@ const generateSpecificMenu = (pushName, menuType) => {
 // Command handler
 const menuCmd = async (m, sock) => {
   try {
-    const config = getConfig();
+    const config = loadConfig();
     const prefix = config.PREFIX || '.';
     
     if (!m.body.startsWith(prefix)) return;
@@ -152,7 +154,7 @@ const menuCmd = async (m, sock) => {
     await sock.sendMessage(
       m.from,
       {
-        image: { url: config.MENU_IMAGE || 'https://raw.githubusercontent.com/Sarkar-Bandaheali/BALOCH-MD_DATABASE/main/Pairing/1733805817658.webp' },
+        image: { url: config.MENU_IMAGE },
         caption: styledContent,
         contextInfo: {
           isForwarded: true,
