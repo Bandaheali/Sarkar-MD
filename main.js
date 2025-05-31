@@ -13,7 +13,7 @@ import {
   messageHandler, 
   callHandler, 
   groupHandler 
-} from './handlers/index.js';
+} from './bandaheali/Sarkar/index.js';
 
 import express from 'express';
 import pino from 'pino';
