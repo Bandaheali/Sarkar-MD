@@ -1,87 +1,84 @@
-import { serialize } from '../../lib/Serializer.js';
+import { serialize, decodeJid } from '../../lib/Serializer.js';
 import path from 'path';
 import fs from 'fs/promises';
 import config from '../../config.js';
+import { smsg } from '../../lib/myfunc.cjs';
 import { handleAntilink } from './antilink.js';
 import { fileURLToPath } from 'url';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dev = '923253617422@s.whatsapp.net';
 
 // Function to get group admins
 export const getGroupAdmins = (participants) => {
-    return participants
-        .filter(p => p.admin === "superadmin" || p.admin === "admin")
-        .map(p => p.id);
+    let admins = [];
+    for (let i of participants) {
+        if (i.admin === "superadmin" || i.admin === "admin") {
+            admins.push(i.id);
+        }
+    }
+    return admins || [];
 };
 
 const Handler = async (chatUpdate, sock, logger) => {
     try {
-        if (chatUpdate.type !== 'notify' || !chatUpdate.messages?.[0]) return;
+        if (chatUpdate.type !== 'notify') return;
 
         const m = serialize(JSON.parse(JSON.stringify(chatUpdate.messages[0])), sock, logger);
         if (!m.message) return;
 
-        // Get group metadata if it's a group message
-        let participants = [];
-        let groupAdmins = [];
+
+        const participants = m.isGroup ? await sock.groupMetadata(m.from).then(metadata => metadata.participants) : [];
+        const groupAdmins = m.isGroup ? getGroupAdmins(participants) : [];
+        const botId = sock.user.id.split(':')[0] + '@s.whatsapp.net';
+        const isBotAdmins = m.isGroup ? groupAdmins.includes(botId) : false;
+        const isAdmins = m.isGroup ? groupAdmins.includes(m.sender) : false;
+
+        const PREFIX = /^[\\/!#.]/;
+        const isCOMMAND = (body) => PREFIX.test(body);
+        const prefixMatch = isCOMMAND(m.body) ? m.body.match(PREFIX) : null;
+        const prefix = prefixMatch ? prefixMatch[0] : '/';
+        const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+        const text = m.body.slice(prefix.length + cmd.length).trim();
+
+        if (m.key && m.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN) {
+            await sock.readMessages([m.key]);
+        }
+
+        const botNumber = await sock.decodeJid(sock.user.id);
+        const ownerNumber = config.OWNER_NUMBER + '@s.whatsapp.net';
+        let isCreator = false;
+
         if (m.isGroup) {
-            try {
-                const metadata = await sock.groupMetadata(m.from);
-                participants = metadata.participants;
-                groupAdmins = getGroupAdmins(participants);
-            } catch (err) {
-                logger.error(`Failed to get group metadata: ${err}`);
+            isCreator = m.sender === ownerNumber || m.sender === botNumber;
+        } else {
+            isCreator = m.sender === ownerNumber || m.sender === botNumber;
+        }
+
+        if (!sock.public) {
+            if (!isCreator) {
                 return;
             }
         }
 
-        const botNumber = sock.user?.id?.split(':')[0] + '@s.whatsapp.net';
-        const isBotAdmin = m.isGroup ? groupAdmins.includes(botNumber) : false;
-        const isAdmin = m.isGroup ? groupAdmins.includes(m.sender) : false;
+        await handleAntilink(m, sock, logger, isBotAdmins, isAdmins, isCreator);
 
-        // Handle status updates
-        if (m.key?.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN) {
-            await sock.readMessages([m.key]).catch(err => 
-                logger.error(`Failed to mark status as read: ${err}`)
-            );
-        }
-
-        // Check if sender is owner/creator
-        const ownerNumber = config.OWNER_NUMBER + '@s.whatsapp.net';
-        const isCreator = [dev, ownerNumber, botNumber].includes(m.sender);
-
-        // If bot is private, only respond to creator
-        if (!sock.public && !isCreator) {
-            return;
-        }
-
-        // Handle antilink functionality
-        await handleAntilink(m, sock, logger, isBotAdmin, isAdmin, isCreator);
-
-        // Load and execute plugins
         const pluginDir = path.join(__dirname, '..', 'Maree');
-        try {
-            const pluginFiles = (await fs.readdir(pluginDir)).filter(file => file.endsWith('.js'));
-            
-            for (const file of pluginFiles) {
+        const pluginFiles = await fs.readdir(pluginDir);
+
+        for (const file of pluginFiles) {
+            if (file.endsWith('.js')) {
                 const pluginPath = path.join(pluginDir, file);
                 try {
                     const pluginModule = await import(`file://${pluginPath}`);
-                    if (typeof pluginModule.default === 'function') {
-                        await pluginModule.default(m, sock);
-                    }
+                    const loadPlugins = pluginModule.default;
+                    await loadPlugins(m, sock);
                 } catch (err) {
-                    logger.error(`Failed to execute plugin ${file}: ${err}`);
+                    console.error(`Failed to load plugin: ${pluginPath}`, err);
                 }
             }
-        } catch (err) {
-            logger.error(`Failed to read plugin directory: ${err}`);
         }
-
     } catch (e) {
-        logger.error(`Handler error: ${e}`);
+        console.log(e);
     }
 };
 
