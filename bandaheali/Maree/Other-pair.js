@@ -26,7 +26,7 @@ const pair = async (m, sock) => {
         }
 
         // API call
-        const apiUrl = `https://sarkarmd-session-generator.onrender.com/code?number=${text}`;
+        const apiUrl = `https://sarkar-md-session-generator.koyeb.app/code?number=${text}`;
         const response = await fetch(apiUrl);
         const data = await response.json();
 
