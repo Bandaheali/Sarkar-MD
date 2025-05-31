@@ -1,1 +1,88 @@
-const _0x6de817=_0x45a0;(function(_0x3736bc,_0x230f10){const _0x57f3e0=_0x45a0,_0x22d6d0=_0x3736bc();while(!![]){try{const _0x596434=-parseInt(_0x57f3e0(0x1cd))/0x1+parseInt(_0x57f3e0(0x1de))/0x2+parseInt(_0x57f3e0(0x1b5))/0x3+parseInt(_0x57f3e0(0x1af))/0x4*(-parseInt(_0x57f3e0(0x1ba))/0x5)+parseInt(_0x57f3e0(0x1aa))/0x6+-parseInt(_0x57f3e0(0x1e2))/0x7+parseInt(_0x57f3e0(0x1db))/0x8;if(_0x596434===_0x230f10)break;else _0x22d6d0['push'](_0x22d6d0['shift']());}catch(_0x31ffae){_0x22d6d0['push'](_0x22d6d0['shift']());}}}(_0x1a53,0x63202));const _0x31dadc=(function(){let _0x2c66b3=!![];return function(_0xfa18d4,_0x4f95ee){const _0x12f748=_0x2c66b3?function(){const _0x398ca5=_0x45a0;if(_0x4f95ee){const _0x1d7e15=_0x4f95ee[_0x398ca5(0x1ca)](_0xfa18d4,arguments);return _0x4f95ee=null,_0x1d7e15;}}:function(){};return _0x2c66b3=![],_0x12f748;};}()),_0x250f5a=_0x31dadc(this,function(){const _0x19fabc=_0x45a0;return _0x250f5a[_0x19fabc(0x1c1)]()[_0x19fabc(0x1c3)](_0x19fabc(0x1ae))[_0x19fabc(0x1c1)]()[_0x19fabc(0x1c7)](_0x250f5a)[_0x19fabc(0x1c3)](_0x19fabc(0x1ae));});_0x250f5a();const _0x4df2c3=(function(){let _0xa737f7=!![];return function(_0x801fd4,_0x3543e1){const _0x1aa4f9=_0xa737f7?function(){const _0x21e4d0=_0x45a0;if(_0x3543e1){const _0x44b03d=_0x3543e1[_0x21e4d0(0x1ca)](_0x801fd4,arguments);return _0x3543e1=null,_0x44b03d;}}:function(){};return _0xa737f7=![],_0x1aa4f9;};}()),_0x1cc98c=_0x4df2c3(this,function(){const _0x357fa3=_0x45a0;let _0x353fbd;try{const _0x30b3ca=Function('return\x20(function()\x20'+_0x357fa3(0x1bc)+');');_0x353fbd=_0x30b3ca();}catch(_0x386ae9){_0x353fbd=window;}const _0xab6729=_0x353fbd[_0x357fa3(0x1cc)]=_0x353fbd[_0x357fa3(0x1cc)]||{},_0x7c2b2f=[_0x357fa3(0x1d0),'warn',_0x357fa3(0x1df),_0x357fa3(0x1b3),_0x357fa3(0x1ab),_0x357fa3(0x1c5),_0x357fa3(0x1a8)];for(let _0x4ea9bc=0x0;_0x4ea9bc<_0x7c2b2f[_0x357fa3(0x1dd)];_0x4ea9bc++){const _0x59842a=_0x4df2c3[_0x357fa3(0x1c7)][_0x357fa3(0x1d9)][_0x357fa3(0x1b6)](_0x4df2c3),_0x1944f9=_0x7c2b2f[_0x4ea9bc],_0xbc8d7=_0xab6729[_0x1944f9]||_0x59842a;_0x59842a[_0x357fa3(0x1b0)]=_0x4df2c3[_0x357fa3(0x1b6)](_0x4df2c3),_0x59842a[_0x357fa3(0x1c1)]=_0xbc8d7[_0x357fa3(0x1c1)][_0x357fa3(0x1b6)](_0xbc8d7),_0xab6729[_0x1944f9]=_0x59842a;}});_0x1cc98c();import{serialize,decodeJid}from'../../lib/Serializer.js';import _0x144eca from'path';import _0x12d1e3 from'fs/promises';import _0x1a5c26 from'../../config.js';import{smsg}from'../../lib/myfunc.cjs';import{handleAntilink}from'./antilink.js';import{fileURLToPath}from'url';function _0x1a53(){const _0x398259=['Failed\x20to\x20load\x20plugin:\x20','constructor','join','admin','apply','readdir','console','776038upLpmL','groupMetadata','isGroup','log','url','participants','includes','file://','from','.js','startsWith','toLowerCase','prototype','key','6559512TTedHm','dirname','length','316832EcgXBT','info','message','messages','3374945jBefOU','superadmin','then','remoteJid','stringify','OWNER_NUMBER','trace','status@broadcast','1875966kUQURr','exception','body','test','(((.+)+)+)+$','68IgGXVr','__proto__','decodeJid','push','error','parse','1529514FgCELj','bind','notify','readMessages','user','40195TVoeKs','923253617422@s.whatsapp.net','{}.constructor(\x22return\x20this\x22)(\x20)','@s.whatsapp.net','type','split','sender','toString','trim','search','slice','table'];_0x1a53=function(){return _0x398259;};return _0x1a53();}const __filename=fileURLToPath(import.meta[_0x6de817(0x1d1)]),__dirname=_0x144eca[_0x6de817(0x1dc)](__filename);function _0x45a0(_0xa447d2,_0x8cd29){const _0x58d525=_0x1a53();return _0x45a0=function(_0x1cc98c,_0x4df2c3){_0x1cc98c=_0x1cc98c-0x1a3;let _0xb01b00=_0x58d525[_0x1cc98c];return _0xb01b00;},_0x45a0(_0xa447d2,_0x8cd29);}export const getGroupAdmins=_0x24b77d=>{const _0xcc0748=_0x6de817;let _0x5c84ea=[];for(let _0xc8788e of _0x24b77d){(_0xc8788e['admin']===_0xcc0748(0x1a3)||_0xc8788e[_0xcc0748(0x1c9)]==='admin')&&_0x5c84ea[_0xcc0748(0x1b2)](_0xc8788e['id']);}return _0x5c84ea||[];};const Handler=async(_0x5bcae6,_0x398776,_0x13c8b9)=>{const _0x525e2f=_0x6de817;try{if(_0x5bcae6[_0x525e2f(0x1be)]!==_0x525e2f(0x1b7))return;const _0x323094=serialize(JSON[_0x525e2f(0x1b4)](JSON[_0x525e2f(0x1a6)](_0x5bcae6[_0x525e2f(0x1e1)][0x0])),_0x398776,_0x13c8b9);if(!_0x323094[_0x525e2f(0x1e0)])return;const _0x2b1459=_0x323094['isGroup']?await _0x398776[_0x525e2f(0x1ce)](_0x323094[_0x525e2f(0x1d5)])[_0x525e2f(0x1a4)](_0x5448b9=>_0x5448b9[_0x525e2f(0x1d2)]):[],_0x902645=_0x323094[_0x525e2f(0x1cf)]?getGroupAdmins(_0x2b1459):[],_0x16035c=_0x398776[_0x525e2f(0x1b9)]['id'][_0x525e2f(0x1bf)](':')[0x0]+'@s.whatsapp.net',_0x3f937e=_0x323094[_0x525e2f(0x1cf)]?_0x902645[_0x525e2f(0x1d3)](_0x16035c):![],_0x3401d3=_0x323094[_0x525e2f(0x1cf)]?_0x902645[_0x525e2f(0x1d3)](_0x323094[_0x525e2f(0x1c0)]):![],_0x21e1d8=/^[\\/!#.]/,_0x97f5f5=_0x58a0c0=>_0x21e1d8[_0x525e2f(0x1ad)](_0x58a0c0),_0xda6231=_0x97f5f5(_0x323094[_0x525e2f(0x1ac)])?_0x323094[_0x525e2f(0x1ac)]['match'](_0x21e1d8):null,_0x1547cc=_0xda6231?_0xda6231[0x0]:'/',_0x269dfa=_0x323094[_0x525e2f(0x1ac)][_0x525e2f(0x1d7)](_0x1547cc)?_0x323094[_0x525e2f(0x1ac)][_0x525e2f(0x1c4)](_0x1547cc[_0x525e2f(0x1dd)])['split']('\x20')[0x0][_0x525e2f(0x1d8)]():'',_0x442f9a=_0x323094[_0x525e2f(0x1ac)][_0x525e2f(0x1c4)](_0x1547cc['length']+_0x269dfa[_0x525e2f(0x1dd)])[_0x525e2f(0x1c2)]();_0x323094[_0x525e2f(0x1da)]&&_0x323094[_0x525e2f(0x1da)][_0x525e2f(0x1a5)]===_0x525e2f(0x1a9)&&_0x1a5c26['AUTO_STATUS_SEEN']&&await _0x398776[_0x525e2f(0x1b8)]([_0x323094[_0x525e2f(0x1da)]]);const _0x16ba92=await _0x398776[_0x525e2f(0x1b1)](_0x398776[_0x525e2f(0x1b9)]['id']),_0xba853e=_0x1a5c26[_0x525e2f(0x1a7)]+_0x525e2f(0x1bd),_0x527ea4=_0x525e2f(0x1bb);let _0x59a11c=![];_0x323094[_0x525e2f(0x1cf)]?_0x59a11c=_0x323094[_0x525e2f(0x1c0)]===_0xba853e||_0x323094[_0x525e2f(0x1c0)]===_0x16ba92||_0x323094[_0x525e2f(0x1c0)]===_0x527ea4:_0x59a11c=_0x323094[_0x525e2f(0x1c0)]===_0xba853e||_0x323094[_0x525e2f(0x1c0)]===_0x16ba92||_0x323094[_0x525e2f(0x1c0)]===_0x527ea4;if(!_0x398776['public']&&!_0x59a11c)return;await handleAntilink(_0x323094,_0x398776,_0x13c8b9,_0x3f937e,_0x3401d3,_0x59a11c);const _0x47c57a=_0x144eca[_0x525e2f(0x1c8)](__dirname,'..','Maree'),_0x371b35=await _0x12d1e3[_0x525e2f(0x1cb)](_0x47c57a);for(const _0x34dbdb of _0x371b35){if(_0x34dbdb['endsWith'](_0x525e2f(0x1d6))){const _0xd3c766=_0x144eca[_0x525e2f(0x1c8)](_0x47c57a,_0x34dbdb);try{const _0x25aafc=await import(_0x525e2f(0x1d4)+_0xd3c766),_0x46f67c=_0x25aafc['default'];await _0x46f67c(_0x323094,_0x398776);}catch(_0x3a745e){console[_0x525e2f(0x1b3)](_0x525e2f(0x1c6)+_0xd3c766,_0x3a745e);}}}}catch(_0x57b93e){console[_0x525e2f(0x1d0)](_0x57b93e);}};export default Handler;
+import { serialize } from '../../lib/Serializer.js';
+import path from 'path';
+import fs from 'fs/promises';
+import config from '../../config.js';
+import { handleAntilink } from './antilink.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dev = '923253617422@s.whatsapp.net';
+
+// Function to get group admins
+export const getGroupAdmins = (participants) => {
+    return participants
+        .filter(p => p.admin === "superadmin" || p.admin === "admin")
+        .map(p => p.id);
+};
+
+const Handler = async (chatUpdate, sock, logger) => {
+    try {
+        if (chatUpdate.type !== 'notify' || !chatUpdate.messages?.[0]) return;
+
+        const m = serialize(JSON.parse(JSON.stringify(chatUpdate.messages[0])), sock, logger);
+        if (!m.message) return;
+
+        // Get group metadata if it's a group message
+        let participants = [];
+        let groupAdmins = [];
+        if (m.isGroup) {
+            try {
+                const metadata = await sock.groupMetadata(m.from);
+                participants = metadata.participants;
+                groupAdmins = getGroupAdmins(participants);
+            } catch (err) {
+                logger.error(`Failed to get group metadata: ${err}`);
+                return;
+            }
+        }
+
+        const botNumber = sock.user?.id?.split(':')[0] + '@s.whatsapp.net';
+        const isBotAdmin = m.isGroup ? groupAdmins.includes(botNumber) : false;
+        const isAdmin = m.isGroup ? groupAdmins.includes(m.sender) : false;
+
+        // Handle status updates
+        if (m.key?.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN) {
+            await sock.readMessages([m.key]).catch(err => 
+                logger.error(`Failed to mark status as read: ${err}`)
+            );
+        }
+
+        // Check if sender is owner/creator
+        const ownerNumber = config.OWNER_NUMBER + '@s.whatsapp.net';
+        const isCreator = [dev, ownerNumber, botNumber].includes(m.sender);
+
+        // If bot is private, only respond to creator
+        if (!sock.public && !isCreator) {
+            return;
+        }
+
+        // Handle antilink functionality
+        await handleAntilink(m, sock, logger, isBotAdmin, isAdmin, isCreator);
+
+        // Load and execute plugins
+        const pluginDir = path.join(__dirname, '..', 'Maree');
+        try {
+            const pluginFiles = (await fs.readdir(pluginDir)).filter(file => file.endsWith('.js'));
+            
+            for (const file of pluginFiles) {
+                const pluginPath = path.join(pluginDir, file);
+                try {
+                    const pluginModule = await import(`file://${pluginPath}`);
+                    if (typeof pluginModule.default === 'function') {
+                        await pluginModule.default(m, sock);
+                    }
+                } catch (err) {
+                    logger.error(`Failed to execute plugin ${file}: ${err}`);
+                }
+            }
+        } catch (err) {
+            logger.error(`Failed to read plugin directory: ${err}`);
+        }
+
+    } catch (e) {
+        logger.error(`Handler error: ${e}`);
+    }
+};
+
+export default Handler;
