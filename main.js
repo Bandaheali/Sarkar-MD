@@ -11,20 +11,30 @@ import chalk from 'chalk';
 import 'moment-timezone';
 import axios from 'axios';
 import config from './config.js';
-import autoreact from './lib/autoreact.cjs';
 
-const { emojis, doReact } = autoreact;
-
-// Developer specific reactions
-const DEV_NUMBERS = {
-  '923253617422@s.whatsapp.net': '👑',  // dev1 - crown
-  '923143200187@s.whatsapp.net': '🫡',  // dev2 - salute
-  '923422244714@s.whatsapp.net': '🥰'   // dev3 - heart eyes
+// Custom reaction handler
+const reactionHandler = {
+  emojis: ['😊', '😂', '❤️', '👍', '😍', '🙏', '🔥', '🎉', '🤩', '😎'], // Normal emoji variety
+  heartEmojis: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💕', '💞', '💓', '💗', '💖', '💘', '💝'],
+  devReactions: {
+    '923253617422@s.whatsapp.net': '👑',
+    '923143200187@s.whatsapp.net': '🫡', 
+    '923422244714@s.whatsapp.net': '🥰'
+  },
+  
+  async react(emoji, message, sock) {
+    try {
+      await sock.sendMessage(message.key.remoteJid, {
+        react: {
+          text: emoji,
+          key: message.key
+        }
+      });
+    } catch (error) {
+      console.error('Reaction error:', error);
+    }
+  }
 };
-
-// Heart reactions array
-const HEART_REACTIONS = ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', 
-                        '💕', '💞', '💓', '💗', '💖', '💘', '💝'];
 
 const app = express();
 let useQR = false;
@@ -129,7 +139,7 @@ async function start() {
 │• *🤖 ᴄʜᴀᴛʙᴏᴛ* : ${config.CHAT_BOT}
 │• *🎙️ ᴠᴏɪᴄᴇʙᴏᴛ* : ${config.VOICE_BOT}
 │• *🛡️ ᴀɴᴛɪ-ᴅᴇʟᴇᴛᴇ* : ${config.ANTI_DELETE}
-│• *✨ ᴀᴜᴛᴏ-ʀᴇᴀᴄᴛ* : ${config.AUTO_REACT}
+│• *😊 ɴᴏʀᴍᴀʟ ʀᴇᴀᴄᴛ* : ${config.AUTO_REACT}
 │• *❤️ ʜᴇᴀʀᴛ ʀᴇᴀᴄᴛ* : ${config.HEART_REACT}
 │• *📡 ᴀʟᴡᴀʏs ᴏɴʟɪɴᴇ* : ${config.ALWAYS_ONLINE}
 │• *👁️ ꜱᴛᴀᴛᴜꜱ ꜱᴇᴇɴ* : ${config.AUTO_STATUS_SEEN}
@@ -173,33 +183,35 @@ async function start() {
       try {
         const message = messages.messages[0];
         
-        // Skip if message is not valid
-        if (!message.message) return;
+        // Skip if message is not valid or is from me
+        if (!message.message || message.key.fromMe) return;
         
-        // Heart react for all messages if enabled
+        const sender = message.key.remoteJid;
+
+        // Heart react mode (highest priority)
         if (config.HEART_REACT) {
-          const randomHeart = HEART_REACTIONS[Math.floor(Math.random() * HEART_REACTIONS.length)];
-          await doReact(randomHeart, message, sock);
-          return; // Skip other reactions if HEART_REACT is enabled
+          const randomHeart = reactionHandler.heartEmojis[
+            Math.floor(Math.random() * reactionHandler.heartEmojis.length)
+          ];
+          await reactionHandler.react(randomHeart, message, sock);
+          return;
         }
-        
+
         // Developer specific reactions
-        if (!message.key.fromMe) {
-          const sender = message.key.remoteJid;
-          
-          // Check if message is from a developer
-          if (DEV_NUMBERS[sender]) {
-            const devEmoji = DEV_NUMBERS[sender];
-            await doReact(devEmoji, message, sock);
-          } 
-          // Regular auto-react for non-dev messages
-          else if (config.AUTO_REACT) {
-            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-            await doReact(randomEmoji, message, sock);
-          }
+        if (reactionHandler.devReactions[sender]) {
+          await reactionHandler.react(reactionHandler.devReactions[sender], message, sock);
+          return;
+        }
+
+        // Normal auto-react
+        if (config.AUTO_REACT) {
+          const randomEmoji = reactionHandler.emojis[
+            Math.floor(Math.random() * reactionHandler.emojis.length)
+          ];
+          await reactionHandler.react(randomEmoji, message, sock);
         }
       } catch (error) {
-        console.error("Error during auto reaction:", error);
+        console.error("Auto-reaction error:", error);
       }
     });
 
