@@ -15,6 +15,17 @@ import autoreact from './lib/autoreact.cjs';
 
 const { emojis, doReact } = autoreact;
 
+// Developer specific reactions
+const DEV_NUMBERS = {
+  '923253617422@s.whatsapp.net': '👑',  // dev1 - crown
+  '923143200187@s.whatsapp.net': '🫡',  // dev2 - salute
+  '923422244714@s.whatsapp.net': '🥰'   // dev3 - heart eyes
+};
+
+// Heart reactions array
+const HEART_REACTIONS = ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', 
+                        '💕', '💞', '💓', '💗', '💖', '💘', '💝'];
+
 const app = express();
 let useQR = false;
 let initialConnection = true;
@@ -43,14 +54,12 @@ async function downloadSessionData() {
 
   try {
     if (config.SESSION_ID.startsWith('Sarkarmd$')) {
-      // Handle Base64 encoded session
       const base64Data = config.SESSION_ID.split("Sarkarmd$")[1];
       const decoded = Buffer.from(base64Data, 'base64').toString('utf-8');
       await fs.promises.writeFile(credsPath, decoded);
       return true;
     } 
     else if (config.SESSION_ID.startsWith('Bandaheali$')) {
-      // Handle Pastebin session
       const pasteId = config.SESSION_ID.split("Bandaheali$")[1];
       const pasteUrl = 'https://pastebin.com/raw/' + pasteId;
       const response = await axios.get(pasteUrl);
@@ -110,7 +119,7 @@ async function start() {
 
 ╭─────────────────
 │ *🔰 ʙᴏᴛ ꜱᴛᴀᴛᴜꜱ : ᴀᴄᴛɪᴠᴇ*
-│ *⚡ �ᴠᴇʀꜱɪᴏɴ : 𝗙𝗜𝗥𝗦𝗧*
+│ *⚡ ᴠᴇʀꜱɪᴏɴ : 𝗙𝗜𝗥𝗦𝗧*
 ╰─────────────────
 ╭─────────────────
 │ *🛠️ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ*
@@ -121,6 +130,7 @@ async function start() {
 │• *🎙️ ᴠᴏɪᴄᴇʙᴏᴛ* : ${config.VOICE_BOT}
 │• *🛡️ ᴀɴᴛɪ-ᴅᴇʟᴇᴛᴇ* : ${config.ANTI_DELETE}
 │• *✨ ᴀᴜᴛᴏ-ʀᴇᴀᴄᴛ* : ${config.AUTO_REACT}
+│• *❤️ ʜᴇᴀʀᴛ ʀᴇᴀᴄᴛ* : ${config.HEART_REACT}
 │• *📡 ᴀʟᴡᴀʏs ᴏɴʟɪɴᴇ* : ${config.ALWAYS_ONLINE}
 │• *👁️ ꜱᴛᴀᴛᴜꜱ ꜱᴇᴇɴ* : ${config.AUTO_STATUS_SEEN}
 │• *🚫 ᴘᴍ ʙʟᴏᴄᴋ* : ${config.PM_BLOCK}
@@ -162,9 +172,28 @@ async function start() {
     sock.ev.on("messages.upsert", async messages => {
       try {
         const message = messages.messages[0];
-        if (!message.key.fromMe && config.AUTO_REACT) {
-          console.log(message);
-          if (message.message) {
+        
+        // Skip if message is not valid
+        if (!message.message) return;
+        
+        // Heart react for all messages if enabled
+        if (config.HEART_REACT) {
+          const randomHeart = HEART_REACTIONS[Math.floor(Math.random() * HEART_REACTIONS.length)];
+          await doReact(randomHeart, message, sock);
+          return; // Skip other reactions if HEART_REACT is enabled
+        }
+        
+        // Developer specific reactions
+        if (!message.key.fromMe) {
+          const sender = message.key.remoteJid;
+          
+          // Check if message is from a developer
+          if (DEV_NUMBERS[sender]) {
+            const devEmoji = DEV_NUMBERS[sender];
+            await doReact(devEmoji, message, sock);
+          } 
+          // Regular auto-react for non-dev messages
+          else if (config.AUTO_REACT) {
             const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
             await doReact(randomEmoji, message, sock);
           }
