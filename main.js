@@ -1,60 +1,61 @@
-import _0x2f665a from 'dotenv';
-_0x2f665a.config();
+import dotenv from 'dotenv';
+dotenv.config();
 import { makeWASocket, fetchLatestBaileysVersion, DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
 import { Handler, Callupdate, GroupUpdate } from './bandaheali/Sarkar/index.js';
-import _0x4ecc7b from 'express';
-import _0x416691 from 'pino';
-import _0x5687e2 from 'fs';
+import express from 'express';
+import pino from 'pino';
+import fs from 'fs';
 import 'node-cache';
-import _0x374270 from 'path';
-import _0x4b0fc4 from 'chalk';
+import path from 'path';
+import chalk from 'chalk';
 import 'moment-timezone';
-import _0x5a7360 from 'axios';
-import _0xccedb8 from './config.js';
-import _0x11fa72 from './lib/autoreact.cjs';
-const {
-  emojis,
-  doReact
-} = _0x11fa72;
-const app = _0x4ecc7b();
+import axios from 'axios';
+import config from './config.js';
+import autoreact from './lib/autoreact.cjs';
+
+const { emojis, doReact } = autoreact;
+
+const app = express();
 let useQR = false;
 let initialConnection = true;
-const PORT = process.env.PORT || 0xbb8;
-const MAIN_LOGGER = _0x416691({
-  'timestamp': () => ",\"time\":\"" + new Date().toJSON() + "\""
+const PORT = process.env.PORT || 3000;
+
+const MAIN_LOGGER = pino({
+  timestamp: () => `,"time":"${new Date().toJSON()}"`
 });
 const logger = MAIN_LOGGER.child({});
 logger.level = "trace";
+
 const __filename = new URL(import.meta.url).pathname;
-const __dirname = _0x374270.dirname(__filename);
-const sessionDir = _0x374270.join(__dirname, "session");
-const credsPath = _0x374270.join(sessionDir, 'creds.json');
-if (!_0x5687e2.existsSync(sessionDir)) {
-  _0x5687e2.mkdirSync(sessionDir, {
-    'recursive': true
-  });
+const __dirname = path.dirname(__filename);
+const sessionDir = path.join(__dirname, "session");
+const credsPath = path.join(sessionDir, 'creds.json');
+
+if (!fs.existsSync(sessionDir)) {
+  fs.mkdirSync(sessionDir, { recursive: true });
 }
+
 async function downloadSessionData() {
-  if (!_0xccedb8.SESSION_ID) {
+  if (!config.SESSION_ID) {
     console.error("Please add your session to SESSION_ID env !!");
     return false;
   }
 
   try {
-    if (_0xccedb8.SESSION_ID.startsWith('Sarkarmd$')) {
+    if (config.SESSION_ID.startsWith('Sarkarmd$')) {
       // Handle Base64 encoded session
-      const base64Data = _0xccedb8.SESSION_ID.split("Sarkarmd$")[1];
+      const base64Data = config.SESSION_ID.split("Sarkarmd$")[1];
       const decoded = Buffer.from(base64Data, 'base64').toString('utf-8');
-      await _0x5687e2.promises.writeFile(credsPath, decoded);
+      await fs.promises.writeFile(credsPath, decoded);
       return true;
     } 
-    else if (_0xccedb8.SESSION_ID.startsWith('Bandaheali$')) {
+    else if (config.SESSION_ID.startsWith('Bandaheali$')) {
       // Handle Pastebin session
-      const pasteId = _0xccedb8.SESSION_ID.split("Bandaheali$")[1];
+      const pasteId = config.SESSION_ID.split("Bandaheali$")[1];
       const pasteUrl = 'https://pastebin.com/raw/' + pasteId;
-      const response = await _0x5a7360.get(pasteUrl);
+      const response = await axios.get(pasteUrl);
       const data = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
-      await _0x5687e2.promises.writeFile(credsPath, data);
+      await fs.promises.writeFile(credsPath, data);
       return true;
     }
     else {
@@ -66,71 +67,63 @@ async function downloadSessionData() {
     return false;
   }
 }
+
 async function start() {
   try {
-    const {
-      state: _0x1fda07,
-      saveCreds: _0x356b55
-    } = await useMultiFileAuthState(sessionDir);
-    const {
-      version: _0x2f6d2f,
-      isLatest: _0x23f0a4
-    } = await fetchLatestBaileysVersion();
-    console.log("Sarkar-MD is running on v" + _0x2f6d2f.join('.') + ", isLatest: " + _0x23f0a4);
-    const _0x76bf4 = makeWASocket({
-      'version': _0x2f6d2f,
-      'logger': _0x416691({
-        'level': 'silent'
-      }),
-      'printQRInTerminal': useQR,
-      'browser': ['Sarkar-MD', 'safari', '3.3'],
-      'auth': _0x1fda07,
-      'getMessage': async _0x53ca5a => {
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    const { version, isLatest } = await fetchLatestBaileysVersion();
+    
+    console.log(`Sarkar-MD is running on v${version.join('.')}, isLatest: ${isLatest}`);
+    
+    const sock = makeWASocket({
+      version,
+      logger: pino({ level: 'silent' }),
+      printQRInTerminal: useQR,
+      browser: ['Sarkar-MD', 'safari', '3.3'],
+      auth: state,
+      getMessage: async key => {
         if (store) {
-          const _0x406fd9 = await store.loadMessage(_0x53ca5a.remoteJid, _0x53ca5a.id);
-          return _0x406fd9.message || undefined;
+          const msg = await store.loadMessage(key.remoteJid, key.id);
+          return msg.message || undefined;
         }
-        return {
-          'conversation': "BEST WHATSAPP BOT MADE BY Sarkar Bandaheali"
-        };
+        return { conversation: "BEST WHATSAPP BOT MADE BY Sarkar Bandaheali" };
       }
     });
-    _0x76bf4.ev.on("connection.update", _0x4eb449 => {
-      const {
-        connection: _0x237ed1,
-        lastDisconnect: _0x1b5c1d
-      } = _0x4eb449;
-      if (_0x237ed1 === "close") {
-        if (_0x1b5c1d.error?.["output"]?.["statusCode"] !== DisconnectReason.loggedOut) {
+
+    sock.ev.on("connection.update", update => {
+      const { connection, lastDisconnect } = update;
+      
+      if (connection === "close") {
+        if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
           start();
         }
-      } else if (_0x237ed1 === 'open') {
+      } 
+      else if (connection === 'open') {
         if (initialConnection) {
-          console.log(_0x4b0fc4.green("Sarkar-MD CONNECTED SUCCESSFULLY ✅"));
-_0x76bf4.sendMessage(_0x76bf4.user.id, {
-    'image': { 
-        url: 'https://files.catbox.moe/yd6y5b.jpg'
-    },
-    'caption': `╔═══════════════◇◆◇═══════════════╗
+          console.log(chalk.green("Sarkar-MD CONNECTED SUCCESSFULLY ✅"));
+          
+          sock.sendMessage(sock.user.id, {
+            image: { url: 'https://files.catbox.moe/yd6y5b.jpg' },
+            caption: `╔═══════════════◇◆◇═══════════════╗
 ║       *🅢🅐🅡🅚🅐🅡-🅜🅓*       ║
 ╚═══════════════◇◆◇═══════════════╝
 
 ╭─────────────────
 │ *🔰 ʙᴏᴛ ꜱᴛᴀᴛᴜꜱ : ᴀᴄᴛɪᴠᴇ*
-│ *⚡ ᴠᴇʀꜱɪᴏɴ : 𝗙𝗜𝗥𝗦𝗧*
+│ *⚡ �ᴠᴇʀꜱɪᴏɴ : 𝗙𝗜𝗥𝗦𝗧*
 ╰─────────────────
 ╭─────────────────
 │ *🛠️ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ*
 │
-│• *🔧 ᴍᴏᴅᴇ* : ${_0xccedb8.MODE}
-│• *⚙️ ᴘʀᴇꜰɪx* : ${_0xccedb8.PREFIX}
-│• *🤖 ᴄʜᴀᴛʙᴏᴛ* : ${_0xccedb8.CHAT_BOT}
-│• *🎙️ ᴠᴏɪᴄᴇʙᴏᴛ* : ${_0xccedb8.VOICE_BOT}
-│• *🛡️ ᴀɴᴛɪ-ᴅᴇʟᴇᴛᴇ* : ${_0xccedb8.ANTI_DELETE}
-│• *✨ ᴀᴜᴛᴏ-ʀᴇᴀᴄᴛ* : ${_0xccedb8.AUTO_REACT}
-│• *📡 ᴀʟᴡᴀʏs ᴏɴʟɪɴᴇ* : ${_0xccedb8.ALWAYS_ONLINE}
-│• *👁️ ꜱᴛᴀᴛᴜꜱ ꜱᴇᴇɴ* : ${_0xccedb8.AUTO_STATUS_SEEN}
-│• *🚫 ᴘᴍ ʙʟᴏᴄᴋ* : ${_0xccedb8.PM_BLOCK}
+│• *🔧 ᴍᴏᴅᴇ* : ${config.MODE}
+│• *⚙️ ᴘʀᴇꜰɪx* : ${config.PREFIX}
+│• *🤖 ᴄʜᴀᴛʙᴏᴛ* : ${config.CHAT_BOT}
+│• *🎙️ ᴠᴏɪᴄᴇʙᴏᴛ* : ${config.VOICE_BOT}
+│• *🛡️ ᴀɴᴛɪ-ᴅᴇʟᴇᴛᴇ* : ${config.ANTI_DELETE}
+│• *✨ ᴀᴜᴛᴏ-ʀᴇᴀᴄᴛ* : ${config.AUTO_REACT}
+│• *📡 ᴀʟᴡᴀʏs ᴏɴʟɪɴᴇ* : ${config.ALWAYS_ONLINE}
+│• *👁️ ꜱᴛᴀᴛᴜꜱ ꜱᴇᴇɴ* : ${config.AUTO_STATUS_SEEN}
+│• *🚫 ᴘᴍ ʙʟᴏᴄᴋ* : ${config.PM_BLOCK}
 ╰─────────────────
 ╭─────────────────
 │ *📌 ꜱᴜᴘᴘᴏʀᴛ ʟɪɴᴋꜱ*
@@ -144,50 +137,56 @@ _0x76bf4.sendMessage(_0x76bf4.user.id, {
 ╔═══════════════◇◆◇═══════════════╗
 ║  *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ꜱᴀʀᴋᴀʀ-ᴍᴅ*  ║
 ╚═══════════════◇◆◇═══════════════╝`,
-    'mimetype': 'image/jpeg',
-    'fileName': 'SARKAR-MD-VIP-Status.jpg'
-});
+            mimetype: 'image/jpeg',
+            fileName: 'SARKAR-MD-VIP-Status.jpg'
+          });
+          
           initialConnection = false;
         } else {
-          console.log(_0x4b0fc4.blue("Restarted Successfully...!."));
+          console.log(chalk.blue("Restarted Successfully...!."));
         }
       }
     });
-    _0x76bf4.ev.on('creds.update', _0x356b55);
-    _0x76bf4.ev.on("messages.upsert", async _0x2d963c => await Handler(_0x2d963c, _0x76bf4, logger));
-    _0x76bf4.ev.on("call", async _0x516b51 => await Callupdate(_0x516b51, _0x76bf4));
-    _0x76bf4.ev.on("group-participants.update", async _0x128e02 => await GroupUpdate(_0x76bf4, _0x128e02));
-    if (_0xccedb8.MODE === "public") {
-      _0x76bf4['public'] = true;
-    } else if (_0xccedb8.MODE === "private") {
-      _0x76bf4["public"] = false;
+
+    sock.ev.on('creds.update', saveCreds);
+    sock.ev.on("messages.upsert", async messages => await Handler(messages, sock, logger));
+    sock.ev.on("call", async call => await Callupdate(call, sock));
+    sock.ev.on("group-participants.update", async update => await GroupUpdate(sock, update));
+
+    if (config.MODE === "public") {
+      sock.public = true;
+    } else if (config.MODE === "private") {
+      sock.public = false;
     }
-    _0x76bf4.ev.on("messages.upsert", async _0x2e7a5a => {
+
+    sock.ev.on("messages.upsert", async messages => {
       try {
-        const _0x4282ef = _0x2e7a5a.messages[0x0];
-        if (!_0x4282ef.key.fromMe && _0xccedb8.AUTO_REACT) {
-          console.log(_0x4282ef);
-          if (_0x4282ef.message) {
-            const _0x4d275d = emojis[Math.floor(Math.random() * emojis.length)];
-            await doReact(_0x4d275d, _0x4282ef, _0x76bf4);
+        const message = messages.messages[0];
+        if (!message.key.fromMe && config.AUTO_REACT) {
+          console.log(message);
+          if (message.message) {
+            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+            await doReact(randomEmoji, message, sock);
           }
         }
-      } catch (_0x3beab8) {
-        console.error("Error during auto reaction:", _0x3beab8);
+      } catch (error) {
+        console.error("Error during auto reaction:", error);
       }
     });
-  } catch (_0x324507) {
-    console.error("Critical Error:", _0x324507);
-    process.exit(0x1);
+
+  } catch (error) {
+    console.error("Critical Error:", error);
+    process.exit(1);
   }
 }
+
 async function init() {
-  if (_0x5687e2.existsSync(credsPath)) {
+  if (fs.existsSync(credsPath)) {
     console.log("Session Connected Successfully ✅.");
     await start();
   } else {
-    const _0x17d9d4 = await downloadSessionData();
-    if (_0x17d9d4) {
+    const downloaded = await downloadSessionData();
+    if (downloaded) {
       console.log("Sarkar-MD IS RUNNING...⏳");
       await start();
     } else {
@@ -197,10 +196,13 @@ async function init() {
     }
   }
 }
+
 init();
-app.get('/', (_0x1ecf21, _0x282bcc) => {
-  _0x282bcc.send("SARKAR-MD IS CONNECTED SUCCESSFULLY ✅");
+
+app.get('/', (req, res) => {
+  res.send("SARKAR-MD IS CONNECTED SUCCESSFULLY ✅");
 });
+
 app.listen(PORT, () => {
-  console.log("Sarkar-MD daily users " + PORT);
+  console.log(`Sarkar-MD daily users ${PORT}`);
 });
