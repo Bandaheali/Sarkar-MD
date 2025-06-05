@@ -285,8 +285,8 @@ async function start() {
         const mek = messages[0];
         
         // Auto status seen (view)
-if (m.key && m.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN) {
-            await sock.readMessages([m.key]);
+if (mek.key && mek.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN) {
+            await sock.readMessages([mek.key]);
         }
         
         // Auto status react (like)
