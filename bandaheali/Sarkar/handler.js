@@ -43,13 +43,6 @@ const Handler = async (chatUpdate, sock, logger) => {
         const isBotAdmin = m.isGroup ? groupAdmins.includes(botNumber) : false;
         const isAdmin = m.isGroup ? groupAdmins.includes(m.sender) : false;
 
-        // Handle status updates
-        if (m.key?.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN) {
-            await sock.readMessages([m.key]).catch(err => 
-                logger.error(`Failed to mark status as read: ${err}`)
-            );
-        }
-
         // Check if sender is owner/creator (including bot itself)
         const ownerNumber = config.OWNER_NUMBER + '@s.whatsapp.net';
         const isCreator = [dev, ownerNumber, botNumber].includes(m.sender) || m.sender === botNumber;
