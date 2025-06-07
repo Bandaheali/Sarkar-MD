@@ -26,7 +26,42 @@ const Handler = async (chatUpdate, sock, logger) => {
         const m = serialize(JSON.parse(JSON.stringify(chatUpdate.messages[0])), sock, logger);
         if (!m.message) return;
 
+        // Handle status updates first
+        if (m.key && m.key.remoteJid === 'status@broadcast') {
+            // Mark status as seen if enabled
+            if (config.AUTO_STATUS_SEEN === "true") {
+                try {
+                    await sock.readMessages([m.key]);
+                    console.log('Status marked as seen');
+                } catch (e) {
+                    console.error('Failed to mark status as seen:', e);
+                }
+            }
 
+            // React to status if enabled
+            if (config.AUTO_STATUS_REACT === "true") {
+                try {
+                    const botJid = sock.user.id;
+                    const statusEmojis = ['💎', '😘', '👍', '👑', '🎉', '🪙', '🦋', '🐣', '🥰', '😍', '😗', '🫠', '😯', '😇', 
+                                       '🔥', '❤️', '🧡', '💚', '💛', '🩵', '💙', '💜', '🤎', '🖤', '🩶', '🤍', '🩷', 
+                                       '💝', '💖', '💓', '❤️‍🩹', '❤️‍🔥', '🌼', '⚡', '🌧️', '🌦️', '🐞'];
+                    const randomEmoji = statusEmojis[Math.floor(Math.random() * statusEmojis.length)];
+                    
+                    await sock.sendMessage(m.key.remoteJid, {
+                        react: {
+                            text: randomEmoji,
+                            key: m.key
+                        }
+                    });
+                    console.log('Reacted to status with:', randomEmoji);
+                } catch (e) {
+                    console.error('Failed to react to status:', e);
+                }
+            }
+            return; // Skip further processing for status updates
+        }
+
+        // Normal message processing
         const participants = m.isGroup ? await sock.groupMetadata(m.from).then(metadata => metadata.participants) : [];
         const groupAdmins = m.isGroup ? getGroupAdmins(participants) : [];
         const botId = sock.user.id.split(':')[0] + '@s.whatsapp.net';
@@ -39,24 +74,6 @@ const Handler = async (chatUpdate, sock, logger) => {
         const prefix = prefixMatch ? prefixMatch[0] : '/';
         const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
         const text = m.body.slice(prefix.length + cmd.length).trim();
-
-        if (m.key && m.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN) {
-            await sock.readMessages([m.key]);
-        }
-                if (m.key && m.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_REACT === "true") {
-          const botJid = sock.user.id;
-          const statusEmojis = ['💎', '😘', '👍', '👑', '🎉', '🪙', '🦋', '🐣', '🥰', '😍', '😗', '🫠', '😯', '😇', 
-                               '🔥', '❤️', '🧡', '💚', '💛', '🩵', '💙', '💜', '🤎', '🖤', '🩶', '🤍', '🩷', 
-                               '💝', '💖', '💓', '❤️‍🩹', '❤️‍🔥', '🌼', '⚡', '🌧️', '🌦️', '🐞'];
-          const randomEmoji = statusEmojis[Math.floor(Math.random() * statusEmojis.length)];
-          
-          await sock.sendMessage(m.key.remoteJid, {
-            react: {
-              text: randomEmoji,
-              key: m.key
-            }
-          }, { statusJidList: [m.key.participant || m.key.remoteJid, botJid] });
-          }
 
         const botNumber = await sock.decodeJid(sock.user.id);
         const ownerNumber = config.OWNER_NUMBER + '@s.whatsapp.net';
@@ -93,7 +110,7 @@ const Handler = async (chatUpdate, sock, logger) => {
             }
         }
     } catch (e) {
-        console.log(e);
+        console.log('Error in handler:', e);
     }
 };
 
