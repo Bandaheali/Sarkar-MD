@@ -25,15 +25,13 @@ const block = async (m, sock) => {
       if (m.mentionedJid && m.mentionedJid.length > 0) {
         targetUser = m.mentionedJid[0];
       } 
-      // Check quoted message - FIXED VERSION
+      // Check quoted message - SIMPLIFIED AND FIXED
       else if (m.quoted) {
-        // Proper way to get quoted sender
-        targetUser = m.quoted.participant || m.quoted.sender;
+        targetUser = m.quoted.sender || m.quoted.participant;
         
-        // If it's a group message, we need to get the actual sender
-        if (m.quoted.key.remoteJid.includes('@g.us')) {
-          const quotedMsg = await sock.loadMessage(m.quoted.key.remoteJid, m.quoted.key.id);
-          targetUser = quotedMsg.key.participant || quotedMsg.key.sender;
+        // For group messages, use participant if available
+        if (m.quoted.key?.remoteJid?.includes('@g.us')) {
+          targetUser = m.quoted.participant || m.quoted.sender;
         }
       }
       // Check direct number input
