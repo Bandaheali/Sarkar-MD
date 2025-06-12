@@ -59,7 +59,7 @@ const isCreater = [owner, bot, dev].includes(m.sender);
       await m.reply("✅ Text status posted.");
       
     } catch (error) {
-      await m.reply("⚠️ Failed to post status.");
+      await m.reply("⚠️ Failed to post status.", error);
       console.error(error);
     }
   }
