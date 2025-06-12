@@ -6,7 +6,7 @@ const block = async (m, sock) => {
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
 
-  if (["block"].includes(cmd)) {
+  if (["block2"].includes(cmd)) {
     // Check if user is owner/creator
     const owner = config.OWNER_NUMBER;
     const bot = await sock.decodeJid(sock.user.id);
@@ -19,18 +19,24 @@ const block = async (m, sock) => {
     }
 
     try {
-      // Get mentioned or quoted user
       let targetUser = null;
 
       // Check mentions first
       if (m.mentionedJid && m.mentionedJid.length > 0) {
         targetUser = m.mentionedJid[0];
       } 
-      // Check quoted message
+      // Check quoted message - FIXED VERSION
       else if (m.quoted) {
-        targetUser = m.quoted.sender;
+        // Proper way to get quoted sender
+        targetUser = m.quoted.participant || m.quoted.sender;
+        
+        // If it's a group message, we need to get the actual sender
+        if (m.quoted.key.remoteJid.includes('@g.us')) {
+          const quotedMsg = await sock.loadMessage(m.quoted.key.remoteJid, m.quoted.key.id);
+          targetUser = quotedMsg.key.participant || quotedMsg.key.sender;
+        }
       }
-      // Check if argument is direct phone number
+      // Check direct number input
       else {
         const args = m.body.slice(prefix.length).trim().split(' ');
         if (args.length > 1) {
@@ -45,14 +51,19 @@ const block = async (m, sock) => {
         return await m.reply(`*Usage:*\n- Mention a user (@user)\n- Reply to a user's message\n- Or provide a number: ${prefix}block 923001234567`);
       }
 
-      // Validate the JID
+      // Validate and format JID
       targetUser = targetUser.includes('@') ? targetUser : targetUser + '@s.whatsapp.net';
+      
+      // Verify the user exists on WhatsApp
+      const contact = await sock.onWhatsApp(targetUser);
+      if (!contact || contact.length === 0) {
+        return await m.reply("❌ User not found on WhatsApp");
+      }
 
       // Block the user
       await sock.updateBlockStatus(targetUser, 'block');
       
-      // Get the user's name for confirmation
-      const contact = await sock.onWhatsApp(targetUser);
+      // Get the user's name
       const userName = contact[0]?.name || targetUser.split('@')[0];
       
       await m.reply(`✅ Successfully blocked ${userName} (${targetUser})`);
