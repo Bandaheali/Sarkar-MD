@@ -1,5 +1,12 @@
 import config from '../../config.js';
-import { default as fetch } from 'node-fetch';
+import axios from 'axios';
+import fs from 'fs';
+import { tmpdir } from 'os';
+import { promisify } from 'util';
+import { Sticker, createSticker, StickerTypes } from 'wa-sticker-formatter';
+
+const writeFile = promisify(fs.writeFile);
+const unlink = promisify(fs.unlink);
 
 const getpp = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -7,83 +14,91 @@ const getpp = async (m, sock) => {
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
 
-  if (cmd !== 'getpp') return;
-
-  try {
-    // Determine target user with proper priority: reply > mention > command sender
-    let targetUser = m.quoted?.sender 
-      || (m.mentionedJid?.length ? m.mentionedJid[0] 
-      : m.sender);
-
-    // If someone is mentioned in the command (not just replied to)
-    if (m.mentionedJid?.length && !m.quoted) {
-      targetUser = m.mentionedJid[0];
-    }
-
-    // Normalize JID (ensure it's in correct format)
-    targetUser = targetUser.includes('@') 
-      ? targetUser.split('@')[0] + '@s.whatsapp.net' 
-      : targetUser + '@s.whatsapp.net';
-
-    // Check if user exists
-    const check = await sock.onWhatsApp(targetUser);
-    if (!check?.[0]?.exists) {
-      return m.reply('❌ *This number is not on WhatsApp!*');
-    }
-
-    // Fetch profile picture
-    let ppUrl;
+  if (["getpp", "getprofilepic", "dp"].includes(cmd)) {
     try {
-      ppUrl = await sock.profilePictureUrl(targetUser, 'image');
-    } catch {
-      ppUrl = null;
+      // Check if user wants sticker version
+      const isSticker = m.body.includes('--sticker') || m.body.includes('-s');
+
+      // Get target user (quoted or mentioned)
+      let userId;
+      if (m.quoted) {
+        userId = m.quoted.sender || m.quoted.participant;
+      } else if (m.mentionedJid?.length > 0) {
+        userId = m.mentionedJid[0];
+      } else {
+        // Get sender's own DP if no reply/mention
+        userId = m.sender;
+      }
+
+      if (!userId) {
+        return await m.reply("❌ Could not identify user. Reply to a message or mention someone.");
+      }
+
+      // Get high quality profile picture
+      const ppUrl = await sock.profilePictureUrl(userId, 'image', 'preview');
+      
+      // Temporary file path
+      const tempPath = `${tmpdir()}/${Math.random().toString(36)}.jpg`;
+
+      try {
+        // Download the image
+        const response = await axios.get(ppUrl, { responseType: 'arraybuffer' });
+        await writeFile(tempPath, response.data);
+
+        // Get user info
+        const contact = await sock.onWhatsApp(userId);
+        const username = contact[0]?.name || userId.split('@')[0];
+
+        if (isSticker) {
+          // Create sticker
+          const sticker = new Sticker(tempPath, {
+            pack: 'Profile Picture',
+            author: username,
+            type: StickerTypes.FULL,
+            categories: ['🤩', '🎉'],
+            id: '12345',
+            quality: 70,
+          });
+          
+          await sock.sendMessage(
+            m.chat,
+            await sticker.toMessage(),
+            { quoted: m }
+          );
+        } else {
+          // Send as image
+          await sock.sendMessage(
+            m.chat,
+            { 
+              image: fs.readFileSync(tempPath),
+              caption: `🌟 ${username}'s Profile Picture\n@${userId.split('@')[0]}`,
+              mentions: [userId],
+              jpegThumbnail: fs.readFileSync(tempPath),
+            },
+            { quoted: m }
+          );
+        }
+
+      } catch (error) {
+        console.error("Error processing profile picture:", error);
+        // Send default image if error occurs
+        await sock.sendMessage(
+          m.chat,
+          { 
+            image: { url: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' }, 
+            caption: '⚠️ Could not fetch profile picture',
+          },
+          { quoted: m }
+        );
+      } finally {
+        // Clean up temp file
+        try { await unlink(tempPath); } catch {}
+      }
+
+    } catch (error) {
+      console.error("Profile Picture Error:", error);
+      await m.reply("❌ An error occurred while fetching the profile picture");
     }
-
-    if (!ppUrl) {
-      return m.reply('❌ *Profile picture not found or is private!*');
-    }
-
-    // Download image
-    let ppBuffer;
-    try {
-      const res = await fetch(ppUrl);
-      if (!res.ok) throw new Error('Image fetch failed');
-      ppBuffer = await res.buffer();
-    } catch (err) {
-      return m.reply('❌ *Failed to download profile picture!*');
-    }
-
-    // Get name and bio
-    const name = (await sock.getName(targetUser)) || 'Unknown';
-    let bio = 'No bio available';
-    try {
-      const status = await sock.fetchStatus(targetUser);
-      bio = status?.status || bio;
-    } catch {}
-
-    // Send VIP-style message
-    const caption = `
-╭━━〔 *𝐕𝐈𝐏 𝐏𝐑𝐎𝐅𝐈𝐋𝐄 𝐋𝐎𝐎𝐊𝐔𝐏* 〕━━⬣
-┃
-┃ ✦ *Name:* ${name}
-┃ ✦ *Bio:* ${bio}
-┃ ✦ *Number:* wa.me/${targetUser.replace(/@.+/, '')}
-┃
-╰━━━━━━━━━━━━━━━━━━⬣
-`.trim();
-
-    await sock.sendMessage(
-      m.from,
-      {
-        image: ppBuffer,
-        caption,
-        mentions: [targetUser]
-      },
-      { quoted: m }
-    );
-  } catch (e) {
-    console.error('getpp error:', e);
-    await m.reply('❌ *Internal error occurred while fetching profile picture.*');
   }
 };
 
