@@ -6,7 +6,7 @@ const block = async (m, sock) => {
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
 
-  if (["block2"].includes(cmd)) {
+  if (["block"].includes(cmd)) {
     // Check if user is owner/creator
     const owner = config.OWNER_NUMBER;
     const bot = await sock.decodeJid(sock.user.id);
@@ -25,7 +25,7 @@ const block = async (m, sock) => {
       if (m.mentionedJid && m.mentionedJid.length > 0) {
         targetUser = m.mentionedJid[0];
       } 
-      // Check quoted message - SIMPLIFIED AND FIXED
+      // Check quoted message
       else if (m.quoted) {
         targetUser = m.quoted.sender || m.quoted.participant;
         
@@ -52,6 +52,17 @@ const block = async (m, sock) => {
       // Validate and format JID
       targetUser = targetUser.includes('@') ? targetUser : targetUser + '@s.whatsapp.net';
       
+      // Protection against blocking self/owner/dev
+      const protectedUsers = [
+        owner.includes('@') ? owner : owner + '@s.whatsapp.net',
+        bot,
+        dev
+      ];
+      
+      if (protectedUsers.includes(targetUser)) {
+        return await m.reply("❌ I can't block myself or my owner/dev!");
+      }
+
       // Verify the user exists on WhatsApp
       const contact = await sock.onWhatsApp(targetUser);
       if (!contact || contact.length === 0) {
