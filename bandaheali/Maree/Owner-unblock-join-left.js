@@ -39,7 +39,7 @@ const OwnerCmd = async (m, Matrix) => {
       await m.reply("❌ *Failed to leave the group!*");
     }
   }
-
+/*
   // 🚫 Block User (Only Owner & Bot)
   if (cmd === 'block' && isOwnerOrBot) {
     let target = m.quoted ? m.quoted.sender : text.replace(/[^0-9]/g, '') + '@s.whatsapp.net';
@@ -67,7 +67,7 @@ const OwnerCmd = async (m, Matrix) => {
       await m.reply("❌ *Failed to unblock the user!*");
     }
   }
-
+*/
   // 🔥 Owner Reaction (If enabled in config)
   if (config.OWNER_REACT && isOwnerOrBot) {
     try {
@@ -78,7 +78,7 @@ const OwnerCmd = async (m, Matrix) => {
       console.error('Error reacting to owner message:', error);
     }
   }
-
+/*
   // ❤️ Heart Reaction (If enabled in config)
   if (config.HEART_REACT && !isOwnerOrBot) {
     try {
@@ -88,7 +88,8 @@ const OwnerCmd = async (m, Matrix) => {
     } catch (error) {
       console.error('Error reacting to message:', error);
     }
-  }
+  }*/
+  
 };
 
 // POWERED BY BANDAHEALI
