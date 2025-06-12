@@ -97,7 +97,7 @@ const getpp = async (m, sock) => {
 
     } catch (error) {
       console.error("Profile Picture Error:", error);
-      await m.reply("❌ An error occurred while fetching the profile picture");
+      await m.reply("❌ An error occurred while fetching the profile picture", error);
     }
   }
 };
