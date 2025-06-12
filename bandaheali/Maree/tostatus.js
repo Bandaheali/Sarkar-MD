@@ -2,17 +2,16 @@ import config from '../../config.js';
 
 const tostatus = async (m, sock) => {
   const prefix = config.PREFIX;
-const owner = config.OWNER_NUMBER;
-const bot = await sock.decodeJid(sock.user.id);
-const dev = "923253617422@s.whatsapp.net";
-const isCreater = [owner, bot, dev].includes(m.sender);
+  const owner = config.OWNER_NUMBER;
+  const bot = await sock.decodeJid(sock.user.id);
+  const dev = "923253617422@s.whatsapp.net";
+  const isCreater = [owner, bot, dev].includes(m.sender);
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(' ')[0].toLowerCase()
     : '';
 
   if (["tostatus"].includes(cmd)) {
-    // Check if user is owner/creator
-    if(!isCreater) {
+    if (!isCreater) {
       await m.reply("🚫 This command is only for my owner!");
       return;
     }
@@ -22,45 +21,53 @@ const isCreater = [owner, bot, dev].includes(m.sender);
     const q = m.body.slice(prefix.length + cmd.length).trim();
 
     try {
-      if (!q && !quoted) {
-        await m.reply(`*Usage:*\n- Reply to an image, video, or audio\n- Send a text to post it as a status`);
+      if (!quoted) {
+        await m.reply(`*Usage:*\nReply to a message (text/image/video/audio/sticker) to post it as status`);
         return;
       }
 
-      let statusOptions = { statusJidList: Object.keys(global.db.users) };
+      // For text messages
+      if (quoted.text && !mime) {
+        await sock.sendMessage("status@broadcast", { text: quoted.text });
+        await m.reply("✅ Text status posted.");
+        return;
+      }
 
-      if (quoted) {
-        if (/image/.test(mime)) {
-          let image = await sock.downloadAndSaveMediaMessage(quoted);
-          await sock.sendMessage("status@broadcast", { image: { url: image }, caption: q || "" }, statusOptions);
-          await m.reply("✅ Image posted to status.");
-          return;
-        }
-
-        if (/video/.test(mime)) {
-          let video = await sock.downloadAndSaveMediaMessage(quoted);
-          await sock.sendMessage("status@broadcast", { video: { url: video }, caption: q || "" }, statusOptions);
+      // For media messages
+      if (mime) {
+        let media = await sock.downloadAndSaveMediaMessage(quoted);
+        
+        if (/image/.test(mime) || /sticker/.test(mime)) {
+          await sock.sendMessage("status@broadcast", { 
+            image: { url: media },
+            caption: q || ""
+          });
+          await m.reply("✅ Image/Sticker posted to status.");
+        } 
+        else if (/video/.test(mime)) {
+          await sock.sendMessage("status@broadcast", { 
+            video: { url: media },
+            caption: q || ""
+          });
           await m.reply("✅ Video posted to status.");
-          return;
-        }
-
-        if (/audio/.test(mime)) {
-          let audio = await sock.downloadAndSaveMediaMessage(quoted);
-          await sock.sendMessage("status@broadcast", { audio: { url: audio }, mimetype: "audio/mp4", ptt: true }, statusOptions);
+        } 
+        else if (/audio/.test(mime)) {
+          await sock.sendMessage("status@broadcast", { 
+            audio: { url: media },
+            mimetype: "audio/mp4",
+            ptt: true
+          });
           await m.reply("✅ Audio posted to status.");
-          return;
+        } 
+        else {
+          await m.reply("⚠️ Unsupported media type");
         }
-
-        await m.reply("⚠️ Unsupported media type. Reply to an image, video, or audio.");
         return;
       }
 
-      await sock.sendMessage("status@broadcast", { text: q }, statusOptions);
-      await m.reply("✅ Text status posted.");
-      
     } catch (error) {
-      await m.reply("⚠️ Failed to post status.", error);
-      console.error(error);
+      await m.reply("⚠️ Failed to post status: " + error.message);
+      console.error("Status Error:", error);
     }
   }
 };
