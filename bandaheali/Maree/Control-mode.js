@@ -19,7 +19,7 @@ const text = m.body.slice(prefix.length + cmd.length).trim();
         if (['public', 'private'].includes(text)) {
             if (text === 'public') {
                Matrix.public = true;
-               config.MODE = "public";
+               Sarkar.MODE = "public";
                setSetting('mode', "public");
                 m.reply(`*_MODE CHANGED SUCCESSFULLY NOW I AM IN ${text} MODE_*`);
             } else if (text === 'private') {
