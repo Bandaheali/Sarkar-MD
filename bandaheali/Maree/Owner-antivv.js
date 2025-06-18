@@ -29,7 +29,6 @@ const viewOnce = async (m, sock) => {
 
   if (!msg) return m.reply('*This is not a View Once message!*');
 
-
   if (['vv2', 'vv3'].includes(cmd) && !isOwner && !isBot) {
     return m.reply('*Only the Owner or Bot can use this command!*');
   }
@@ -52,13 +51,14 @@ const viewOnce = async (m, sock) => {
     let mimetype = msg.audioMessage?.mimetype || 'audio/ogg';
     let caption = `> *SARKAR-MD VIEWONCE UNLOCKED*`;
 
-    // 📩 Define recipient
+    // 📩 Define recipient - now sending to bot number for vv2/vv3
     let recipient =
       cmd === 'vv2'
-        ? ownerNumber 
+        ? botNumber 
         : cmd === 'vv3'
-        ? ownerNumber 
+        ? botNumber 
         : m.from; 
+        
     if (messageType === 'imageMessage') {
       await sock.sendMessage(recipient, { image: buffer, caption });
     } else if (messageType === 'videoMessage') {
@@ -68,7 +68,6 @@ const viewOnce = async (m, sock) => {
     } else {
       return m.reply('*Unsupported media type!*');
     }
-
 
     if (!(cmd === 'vv2' && isOwner)) {
       await sock.sendMessage(m.from, {
