@@ -8,7 +8,7 @@ const dlSong = async (m, sock) => {
     : '';
   const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  if (cmd === "song" || cmd === "yta") {
+  if (cmd === "play" || cmd === "playx") {
     if (!text) {
       return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
     }
