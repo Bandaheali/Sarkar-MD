@@ -1,25 +1,34 @@
 import yts from 'yt-search';
 import config from '../../config.js';
+import axios from 'axios';
 
-// Updated API Configuration with the new APIs
+// Ultra-fast API Configuration with fallbacks
 const APIS = [
   {
     name: "ExonityTech",
     url: (url) => `https://exonity.tech/api/ytdl-download?url=${encodeURIComponent(url)}&type=audio`,
     getUrl: (data) => data?.data?.url,
-    timeout: 4000
+    timeout: 3000,  // Faster timeout
+    axiosConfig: { maxRedirects: 5 }
   },
   {
     name: "Asepharyana",
     url: (url) => `https://apidl.asepharyana.cloud/api/downloader/ytmp3?url=${encodeURIComponent(url)}`,
     getUrl: (data) => data?.url,
-    timeout: 5000
+    timeout: 4000,
+    axiosConfig: { maxRedirects: 5 }
+  },
+  {
+    name: "FastYTDL",
+    url: (url) => `https://ytdl.sarkar-md.tech/api/download?url=${encodeURIComponent(url)}&format=mp3`,
+    getUrl: (data) => data?.url,
+    timeout: 3500,
+    axiosConfig: { maxRedirects: 5 }
   }
 ];
 
-// Cache with TTL (Time To Live)
-const cache = new Map();
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+// Global request counter for load balancing
+let requestCounter = 0;
 
 const dlplay = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -32,145 +41,144 @@ const dlplay = async (m, sock) => {
     return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
   }
 
-  await m.React('⏳');
+  // Immediate reaction for better UX
+  await Promise.all([
+    m.React('⏳'),
+    sock.sendPresenceUpdate('composing', m.from)
+  ]);
 
   try {
-    // Cache check with video URL as key for better cache hits
-    const videoInfo = await getVideoInfo(query);
-    const cacheKey = videoInfo.url.toLowerCase();
-    
-    if (cache.has(cacheKey)) {
-      const cached = cache.get(cacheKey);
-      if (Date.now() - cached.timestamp < CACHE_TTL) {
-        await sendAudioMessage(sock, m, cached.data);
-        await m.React('✅');
-        return;
-      }
-      cache.delete(cacheKey); // Remove expired cache
-    }
-
-    // Parallel API requests with race condition
-    const audioUrl = await Promise.race([
-      tryApisParallel(videoInfo.url),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout after 8 seconds')), 8000))
+    // Ultra-fast video info lookup with parallel fallback
+    const videoInfo = await Promise.race([
+      getVideoInfo(query),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 5000))
     ]);
 
-    if (!audioUrl) throw new Error("All Downloaders failed to respond in time");
+    // Load balancing - rotate through APIs
+    requestCounter++;
+    const apiIndex = requestCounter % APIS.length;
+    const prioritizedApis = [
+      APIS[apiIndex],  // Primary API (rotated)
+      ...APIS.filter((_, i) => i !== apiIndex)  // Others as fallbacks
+    ];
 
-    // Cache the result
-    cache.set(cacheKey, {
-      timestamp: Date.now(),
-      data: {
+    // Blazing-fast parallel download attempts
+    const audioUrl = await Promise.race([
+      tryApisUltraFast(prioritizedApis, videoInfo.url),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Download timeout (5s)')), 5000))
+    ]);
+
+    if (!audioUrl) throw new Error("No working downloader available");
+
+    // Stream the audio while preparing metadata
+    await Promise.all([
+      m.React('✅'),
+      sendUltraFastAudio(sock, m, {
         audioUrl,
         title: videoInfo.title,
         thumbnail: videoInfo.thumbnail,
         url: videoInfo.url
-      }
-    });
-
-    await m.React('✅');
-    await sendAudioMessage(sock, m, {
-      audioUrl,
-      title: videoInfo.title,
-      thumbnail: videoInfo.thumbnail,
-      url: videoInfo.url
-    });
+      })
+    ]);
 
   } catch (error) {
     console.error("Error:", error);
-    await m.React('❌');
-    sock.sendMessage(m.from, { 
-      text: `❌ Failed to download audio!\nError: ${error.message}` 
-    }, { quoted: m });
+    await Promise.all([
+      m.React('❌'),
+      sock.sendMessage(m.from, { 
+        text: `❌ Failed to process!\n${error.message}\n\nTry again or use a different query.` 
+      }, { quoted: m })
+    ]);
+  } finally {
+    await sock.sendPresenceUpdate('paused', m.from);
   }
 };
 
-// Optimized Helper Functions
+// Lightning-fast video info fetcher
 async function getVideoInfo(query) {
-  if (query.match(/youtube\.com|youtu\.be/)) {
-    const vid = query.match(/[?&]v=([^&]+)/)?.[1] || query.split('/').pop();
+  const isUrl = query.match(/youtube\.com|youtu\.be/);
+  const vid = isUrl ? (query.match(/[?&]v=([^&]+)/)?.[1] || query.split('/').pop() : null;
+  
+  if (isUrl) {
     const url = query.includes('://') ? query : `https://${query}`;
-    
-    // Try to get title from YouTube if possible
-    try {
-      const info = await yts({ videoId: vid });
-      return {
-        url,
-        title: info.title || "YouTube Audio",
-        thumbnail: `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
-      };
-    } catch {
-      return {
-        url,
-        title: "YouTube Audio",
-        thumbnail: `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
-      };
-    }
+    return {
+      url,
+      title: "YouTube Audio",  // Default title for speed
+      thumbnail: `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
+    };
   }
 
-  const results = await yts(query);
+  // Parallel search with timeout
+  const results = await Promise.race([
+    yts(query),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 4000))
+  ]);
+
   if (!results.videos.length) throw new Error("No results found");
-  const video = results.videos[0];
   return {
-    url: video.url,
-    title: video.title,
-    thumbnail: video.thumbnail
+    url: results.videos[0].url,
+    title: results.videos[0].title,
+    thumbnail: results.videos[0].thumbnail
   };
 }
 
-async function tryApisParallel(videoUrl) {
-  const apiPromises = APIS.map(api => 
+// Ultra-fast API trying with immediate failures
+async function tryApisUltraFast(apis, videoUrl) {
+  const controller = new AbortController();
+  
+  const apiPromises = apis.map(api => 
     Promise.race([
-      fetchApi(api, videoUrl),
+      fetchApiUltraFast(api, videoUrl, controller.signal),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(`API ${api.name} timeout`)), api.timeout)
+        setTimeout(() => reject(new Error(`${api.name} timeout`)), api.timeout)
       )
-    ]).catch(e => {
-      console.error(`${api.name} failed:`, e.message);
-      return null;
-    })
+    ])
+    .catch(e => null)  // Silent fail for individual APIs
   );
 
-  // Wait for the first successful response
-  for (const promise of apiPromises) {
-    try {
-      const result = await promise;
-      if (result) return result;
-    } catch (e) {
-      continue;
-    }
-  }
-  return null;
+  // Return the first successful response
+  const results = await Promise.all(apiPromises);
+  controller.abort();  // Cancel all pending requests
+  
+  return results.find(url => url) || null;
 }
 
-async function fetchApi(api, videoUrl) {
+// Ultra-fast fetching with axios and proper cleanup
+async function fetchApiUltraFast(api, videoUrl, signal) {
   try {
-    const res = await fetch(api.url(videoUrl));
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const audioUrl = api.getUrl(data);
-    if (!audioUrl) throw new Error("No download URL found");
-    console.log(`✅ Success with ${api.name}`);
+    const response = await axios.get(api.url(videoUrl), {
+      timeout: api.timeout,
+      signal,
+      ...api.axiosConfig
+    });
+    
+    const audioUrl = api.getUrl(response.data);
+    if (!audioUrl) throw new Error("Invalid response format");
+    
+    console.log(`⚡ ${api.name} success in ${response.duration}ms`);
     return audioUrl;
   } catch (e) {
-    console.error(`❌ ${api.name} error:`, e.message);
+    if (e.name !== 'AbortError') {
+      console.error(`🚫 ${api.name} failed:`, e.message);
+    }
     throw e;
   }
 }
 
-async function sendAudioMessage(sock, m, { audioUrl, title, thumbnail, url }) {
-  return sock.sendMessage(
+// Stream-optimized audio sending
+async function sendUltraFastAudio(sock, m, { audioUrl, title, thumbnail, url }) {
+  // Start streaming immediately while preparing metadata
+  const messagePromise = sock.sendMessage(
     m.from,
     {
       audio: { url: audioUrl },
       mimetype: "audio/mpeg",
       ptt: false,
-      fileName: `${title.substring(0, 50)}.mp3`, // Limit filename length
-      caption: `🎵 *${title}*\n⬇️ *Downloaded via Sarkar-MD*`,
+      fileName: `${title.substring(0, 36)}.mp3`,  // Shorter filename
       contextInfo: {
         externalAdReply: {
-          title: "⚡ Super-Fast Audio Downloader ⚡",
-          body: "Powered by Sarkar-MD",
+          title: "⚡ Instant Audio Delivery ⚡",
+          body: title.length > 20 ? `${title.substring(0, 20)}...` : title,
           thumbnailUrl: thumbnail,
           sourceUrl: url,
           mediaType: 1
@@ -179,6 +187,15 @@ async function sendAudioMessage(sock, m, { audioUrl, title, thumbnail, url }) {
     },
     { quoted: m }
   );
+
+  // Send caption separately for faster appearance
+  const captionPromise = sock.sendMessage(
+    m.from,
+    { text: `🎧 *${title}*\n⬇️ Instant download via @Sarkar-MD` },
+    { quoted: m }
+  );
+
+  await Promise.race([messagePromise, captionPromise]);
 }
 
 export default dlplay;
