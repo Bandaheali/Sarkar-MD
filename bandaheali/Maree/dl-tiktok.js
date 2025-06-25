@@ -153,7 +153,7 @@ async function sendVideoWithRetry(m, sock, videoUrl, caption, retries = 2) {
     throw error;
   }
 }
-
+/*
 async function sendProcessingMessage(m, sock) {
   await sock.sendMessage(
     m.from,
@@ -167,7 +167,7 @@ async function sendProcessingMessage(m, sock) {
     { quoted: m }
   );
 }
-
+*/
 function sendErrorMessage(m, sock, message) {
   return sock.sendMessage(
     m.from,
