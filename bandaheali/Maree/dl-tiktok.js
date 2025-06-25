@@ -49,8 +49,10 @@ const TIKTOK_APIS = [
     processor: (data) => {
       if (!data.status) return null;
       const video = data.data.meta.media.find(v => v.type === "video");
+      const audio = data.data.meta.media.find(v => v.type === "audio");
       return {
         videoUrl: video.org,
+        musicUrl: audio?.org,
         author: data.data.author.nickname,
         username: data.data.author.username,
         description: data.data.title,
@@ -73,22 +75,33 @@ const tiktok = async (m, sock) => {
 
   if (!["tiktok", "ttdl", "tt", "tiktokdl"].includes(cmd)) return;
 
+  // Add loading reaction
+  await m.React('🔄');
+
   const link = text.trim();
   if (!link) {
+    await m.React('❌');
     return sendErrorMessage(m, sock, "*❌ Please provide a TikTok video link.*");
   }
 
   if (!link.includes("tiktok.com") && !link.includes("vt.tiktok.com")) {
+    await m.React('❌');
     return sendErrorMessage(m, sock, "*❌ Invalid TikTok link. Please provide a valid TikTok URL.*");
   }
 
-  await sendProcessingMessage(m, sock);
-
   try {
+    // Send processing message
+    await sock.sendPresenceUpdate('composing', m.from);
+    await sock.sendMessage(m.from, { 
+      text: "*🔄 Downloading your TikTok video...*",
+      contextInfo: { forwardingScore: 999 } 
+    }, { quoted: m });
+
     // Try all APIs sequentially until one succeeds
     const result = await tryAllTikTokApis(link);
     
     if (!result) {
+      await m.React('❌');
       return sendErrorMessage(m, sock, "*❌ All download services failed. Please try again later.*");
     }
 
@@ -97,9 +110,20 @@ const tiktok = async (m, sock) => {
     // Send video with retry mechanism
     await sendVideoWithRetry(m, sock, result.videoUrl, caption);
 
+    // Send audio if available
+    if (result.musicUrl) {
+      await sendAudioWithRetry(m, sock, result.musicUrl, `🔊 Audio from: ${result.description || 'TikTok video'}`);
+    }
+
+    // Success reaction
+    await m.React('✅');
+
   } catch (error) {
     console.error("TikTok Download Error:", error);
+    await m.React('❌');
     sendErrorMessage(m, sock, `*❌ Download failed: ${error.message}*`);
+  } finally {
+    await sock.sendPresenceUpdate('paused', m.from);
   }
 };
 
@@ -140,7 +164,13 @@ async function sendVideoWithRetry(m, sock, videoUrl, caption, retries = 2) {
         contextInfo: {
           mentionedJid: [m.sender],
           forwardingScore: 999,
-          isForwarded: true
+          isForwarded: true,
+          externalAdReply: {
+            title: "⚡ TikTok Downloader ⚡",
+            body: "Powered by Sarkar-MD",
+            thumbnailUrl: "https://i.ibb.co/5KqYjbB/tiktok-icon.png",
+            mediaType: 1
+          }
         }
       },
       { quoted: m }
@@ -153,21 +183,31 @@ async function sendVideoWithRetry(m, sock, videoUrl, caption, retries = 2) {
     throw error;
   }
 }
-/*
-async function sendProcessingMessage(m, sock) {
-  await sock.sendMessage(
-    m.from,
-    {
-      text: "*🔄 Processing your TikTok video... Please wait*",
-      contextInfo: {
-        forwardingScore: 999,
-        isForwarded: true
-      }
-    },
-    { quoted: m }
-  );
+
+async function sendAudioWithRetry(m, sock, audioUrl, caption, retries = 2) {
+  try {
+    await sock.sendMessage(
+      m.from,
+      {
+        audio: { url: audioUrl },
+        mimetype: 'audio/mpeg',
+        caption: caption,
+        contextInfo: {
+          mentionedJid: [m.sender],
+          forwardingScore: 999
+        }
+      },
+      { quoted: m }
+    );
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Retrying audio send... (${retries} left)`);
+      return sendAudioWithRetry(m, sock, audioUrl, caption, retries - 1);
+    }
+    console.error("Failed to send audio:", error.message);
+  }
 }
-*/
+
 function sendErrorMessage(m, sock, message) {
   return sock.sendMessage(
     m.from,
