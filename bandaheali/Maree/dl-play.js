@@ -5,21 +5,21 @@ import axios from 'axios';
 // Reliable API Configuration with fallbacks
 const APIS = [
   {
-    name: "Y2Mate",
+    name: "Temp",
     url: (url) => `https://y2mate-api.sarkar-md.tech/api/ytmp3?id=${extractVideoId(url)}`,
     getUrl: (data) => data?.result?.url || data?.url,
     timeout: 5000,
     axiosConfig: { maxRedirects: 3 }
   },
   {
-    name: "ExonityTech",
+    name: "Fastest",
     url: (url) => `https://exonity.tech/api/ytdl-download?url=${encodeURIComponent(url)}&type=audio`,
     getUrl: (data) => data?.data?.url,
     timeout: 5000,
     axiosConfig: { maxRedirects: 3 }
   },
   {
-    name: "Asepharyana",
+    name: "Faster",
     url: (url) => `https://apidl.asepharyana.cloud/api/downloader/ytmp3?url=${encodeURIComponent(url)}`,
     getUrl: (data) => data?.url,
     timeout: 5000,
@@ -154,8 +154,8 @@ async function sendAudioWithRetry(sock, m, { audioUrl, title, thumbnail, url }, 
         caption: `🎵 *${title}*\n⬇️ Downloaded via @Sarkar-MD`,
         contextInfo: {
           externalAdReply: {
-            title: "⚡ Instant Audio Delivery ⚡",
-            body: truncate(title, 30),
+            title: "⚡ Instant Audio Downloader ⚡",
+            body: "Sarkar-MD",
             thumbnailUrl: thumbnail,
             sourceUrl: url,
             mediaType: 1
