@@ -1,5 +1,5 @@
 import axios from 'axios';
-import config from '../../config.cjs';
+import config from '../../config.js';
 
 // TikTok Downloader APIs with fallback system
 const TIKTOK_APIS = [
