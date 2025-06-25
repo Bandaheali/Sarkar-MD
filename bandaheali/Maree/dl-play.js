@@ -2,33 +2,36 @@ import yts from 'yt-search';
 import config from '../../config.js';
 import axios from 'axios';
 
-// Ultra-fast API Configuration with fallbacks
+// Reliable API Configuration with fallbacks
 const APIS = [
+  {
+    name: "Y2Mate",
+    url: (url) => `https://y2mate-api.sarkar-md.tech/api/ytmp3?id=${extractVideoId(url)}`,
+    getUrl: (data) => data?.result?.url || data?.url,
+    timeout: 5000,
+    axiosConfig: { maxRedirects: 3 }
+  },
   {
     name: "ExonityTech",
     url: (url) => `https://exonity.tech/api/ytdl-download?url=${encodeURIComponent(url)}&type=audio`,
     getUrl: (data) => data?.data?.url,
-    timeout: 3000,  // Faster timeout
-    axiosConfig: { maxRedirects: 5 }
+    timeout: 5000,
+    axiosConfig: { maxRedirects: 3 }
   },
   {
     name: "Asepharyana",
     url: (url) => `https://apidl.asepharyana.cloud/api/downloader/ytmp3?url=${encodeURIComponent(url)}`,
     getUrl: (data) => data?.url,
-    timeout: 4000,
-    axiosConfig: { maxRedirects: 5 }
-  },
-  {
-    name: "FastYTDL",
-    url: (url) => `https://ytdl.sarkar-md.tech/api/download?url=${encodeURIComponent(url)}&format=mp3`,
-    getUrl: (data) => data?.url,
-    timeout: 3500,
-    axiosConfig: { maxRedirects: 5 }
+    timeout: 5000,
+    axiosConfig: { maxRedirects: 3 }
   }
 ];
 
-// Global request counter for load balancing
-let requestCounter = 0;
+function extractVideoId(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
 
 const dlplay = async (m, sock) => {
   const prefix = config.PREFIX;
@@ -41,161 +44,141 @@ const dlplay = async (m, sock) => {
     return sock.sendMessage(m.from, { text: "🔎 Please provide a song name or YouTube link!" }, { quoted: m });
   }
 
-  // Immediate reaction for better UX
-  await Promise.all([
-    m.React('⏳'),
-    sock.sendPresenceUpdate('composing', m.from)
-  ]);
+  await m.React('⏳');
 
   try {
-    // Ultra-fast video info lookup with parallel fallback
-    const videoInfo = await Promise.race([
-      getVideoInfo(query),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 5000))
-    ]);
+    // Get video info with fallback
+    const videoInfo = await getVideoInfoWithFallback(query);
+    
+    // Try all APIs sequentially with proper error handling
+    const audioUrl = await tryApisSequentially(videoInfo.url);
+    
+    if (!audioUrl) {
+      throw new Error("All download services are currently unavailable. Please try again later.");
+    }
 
-    // Load balancing - rotate through APIs
-    requestCounter++;
-    const apiIndex = requestCounter % APIS.length;
-    const prioritizedApis = [
-      APIS[apiIndex],  // Primary API (rotated)
-      ...APIS.filter((_, i) => i !== apiIndex)  // Others as fallbacks
-    ];
-
-    // Blazing-fast parallel download attempts
-    const audioUrl = await Promise.race([
-      tryApisUltraFast(prioritizedApis, videoInfo.url),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Download timeout (5s)')), 5000))
-    ]);
-
-    if (!audioUrl) throw new Error("No working downloader available");
-
-    // Stream the audio while preparing metadata
-    await Promise.all([
-      m.React('✅'),
-      sendUltraFastAudio(sock, m, {
-        audioUrl,
-        title: videoInfo.title,
-        thumbnail: videoInfo.thumbnail,
-        url: videoInfo.url
-      })
-    ]);
+    await m.React('✅');
+    
+    // Send audio with proper error handling
+    await sendAudioWithRetry(sock, m, {
+      audioUrl,
+      title: videoInfo.title,
+      thumbnail: videoInfo.thumbnail,
+      url: videoInfo.url
+    });
 
   } catch (error) {
     console.error("Error:", error);
-    await Promise.all([
-      m.React('❌'),
-      sock.sendMessage(m.from, { 
-        text: `❌ Failed to process!\n${error.message}\n\nTry again or use a different query.` 
-      }, { quoted: m })
-    ]);
-  } finally {
-    await sock.sendPresenceUpdate('paused', m.from);
+    await m.React('❌');
+    await sock.sendMessage(m.from, { 
+      text: `❌ Error: ${error.message}\n\nTry again or use a different query.` 
+    }, { quoted: m });
   }
 };
 
-// Lightning-fast video info fetcher
-async function getVideoInfo(query) {
-  const isUrl = query.match(/youtube\.com|youtu\.be/);
-  const vid = isUrl ? (query.match(/[?&]v=([^&]+)/)?.[1] || query.split('/').pop() : null;
-  
-  if (isUrl) {
-    const url = query.includes('://') ? query : `https://${query}`;
+async function getVideoInfoWithFallback(query) {
+  try {
+    if (query.match(/youtube\.com|youtu\.be/)) {
+      const vid = extractVideoId(query);
+      if (!vid) throw new Error("Invalid YouTube URL");
+      
+      const url = query.includes('://') ? query : `https://${query}`;
+      const info = await yts({ videoId: vid });
+      
+      return {
+        url,
+        title: info.title || "YouTube Audio",
+        thumbnail: `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
+      };
+    }
+
+    const results = await yts(query);
+    if (!results.videos.length) throw new Error("No results found");
+    
     return {
-      url,
-      title: "YouTube Audio",  // Default title for speed
-      thumbnail: `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
+      url: results.videos[0].url,
+      title: results.videos[0].title,
+      thumbnail: results.videos[0].thumbnail
     };
+  } catch (error) {
+    console.error("Video info error:", error);
+    throw new Error("Couldn't get video information. Please check your query.");
   }
-
-  // Parallel search with timeout
-  const results = await Promise.race([
-    yts(query),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 4000))
-  ]);
-
-  if (!results.videos.length) throw new Error("No results found");
-  return {
-    url: results.videos[0].url,
-    title: results.videos[0].title,
-    thumbnail: results.videos[0].thumbnail
-  };
 }
 
-// Ultra-fast API trying with immediate failures
-async function tryApisUltraFast(apis, videoUrl) {
-  const controller = new AbortController();
-  
-  const apiPromises = apis.map(api => 
-    Promise.race([
-      fetchApiUltraFast(api, videoUrl, controller.signal),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(`${api.name} timeout`)), api.timeout)
-      )
-    ])
-    .catch(e => null)  // Silent fail for individual APIs
-  );
-
-  // Return the first successful response
-  const results = await Promise.all(apiPromises);
-  controller.abort();  // Cancel all pending requests
-  
-  return results.find(url => url) || null;
+async function tryApisSequentially(videoUrl) {
+  for (const api of APIS) {
+    try {
+      console.log(`Trying ${api.name}...`);
+      const audioUrl = await fetchApiWithRetry(api, videoUrl);
+      if (audioUrl) {
+        console.log(`Success with ${api.name}`);
+        return audioUrl;
+      }
+    } catch (error) {
+      console.error(`${api.name} failed:`, error.message);
+    }
+  }
+  return null;
 }
 
-// Ultra-fast fetching with axios and proper cleanup
-async function fetchApiUltraFast(api, videoUrl, signal) {
+async function fetchApiWithRetry(api, videoUrl, retries = 2) {
   try {
     const response = await axios.get(api.url(videoUrl), {
       timeout: api.timeout,
-      signal,
       ...api.axiosConfig
     });
     
     const audioUrl = api.getUrl(response.data);
     if (!audioUrl) throw new Error("Invalid response format");
     
-    console.log(`⚡ ${api.name} success in ${response.duration}ms`);
     return audioUrl;
-  } catch (e) {
-    if (e.name !== 'AbortError') {
-      console.error(`🚫 ${api.name} failed:`, e.message);
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Retrying ${api.name}... (${retries} left)`);
+      return fetchApiWithRetry(api, videoUrl, retries - 1);
     }
-    throw e;
+    throw error;
   }
 }
 
-// Stream-optimized audio sending
-async function sendUltraFastAudio(sock, m, { audioUrl, title, thumbnail, url }) {
-  // Start streaming immediately while preparing metadata
-  const messagePromise = sock.sendMessage(
-    m.from,
-    {
-      audio: { url: audioUrl },
-      mimetype: "audio/mpeg",
-      ptt: false,
-      fileName: `${title.substring(0, 36)}.mp3`,  // Shorter filename
-      contextInfo: {
-        externalAdReply: {
-          title: "⚡ Instant Audio Delivery ⚡",
-          body: title.length > 20 ? `${title.substring(0, 20)}...` : title,
-          thumbnailUrl: thumbnail,
-          sourceUrl: url,
-          mediaType: 1
+async function sendAudioWithRetry(sock, m, { audioUrl, title, thumbnail, url }, retries = 2) {
+  try {
+    await sock.sendMessage(
+      m.from,
+      {
+        audio: { url: audioUrl },
+        mimetype: "audio/mpeg",
+        ptt: false,
+        fileName: `${cleanFilename(title)}.mp3`,
+        caption: `🎵 *${title}*\n⬇️ Downloaded via @Sarkar-MD`,
+        contextInfo: {
+          externalAdReply: {
+            title: "⚡ Instant Audio Delivery ⚡",
+            body: truncate(title, 30),
+            thumbnailUrl: thumbnail,
+            sourceUrl: url,
+            mediaType: 1
+          }
         }
-      }
-    },
-    { quoted: m }
-  );
+      },
+      { quoted: m }
+    );
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Retrying audio send... (${retries} left)`);
+      return sendAudioWithRetry(sock, m, { audioUrl, title, thumbnail, url }, retries - 1);
+    }
+    throw new Error("Failed to send audio after multiple attempts");
+  }
+}
 
-  // Send caption separately for faster appearance
-  const captionPromise = sock.sendMessage(
-    m.from,
-    { text: `🎧 *${title}*\n⬇️ Instant download via @Sarkar-MD` },
-    { quoted: m }
-  );
+function cleanFilename(str) {
+  return str.replace(/[^\w\s.-]/gi, '').substring(0, 50);
+}
 
-  await Promise.race([messagePromise, captionPromise]);
+function truncate(str, n) {
+  return str.length > n ? str.substring(0, n) + "..." : str;
 }
 
 export default dlplay;
